@@ -1,9 +1,10 @@
-package cmd
+package constants
 
 const ANVIL_LONG_DESCRIPTION = `Anvil can be used to automate actions for multiple purposes. A common one 
 is installation and personal tool configuration.`
 
 const SETUP_COMMAND_LONG_DESCRIPTION = `Setup assets automatically.`
+
 const PUSH_COMMAND_LONG_DESCRIPTION = `Push allows the storage of assets on Github.
 The ARG passed to this command identifies which type of asset should be pushed.`
 

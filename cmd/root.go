@@ -18,6 +18,11 @@ package cmd
 import (
 	"os"
 
+	"github.com/rocajuanma/anvil/cmd/draw"
+	"github.com/rocajuanma/anvil/cmd/pull"
+	"github.com/rocajuanma/anvil/cmd/push"
+	"github.com/rocajuanma/anvil/cmd/setup"
+	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/figure"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +31,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "anvil",
 	Short: "Anvil is a simple automation tool to safe time",
-	Long:  ANVIL_LONG_DESCRIPTION,
+	Long:  constants.ANVIL_LONG_DESCRIPTION,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
@@ -44,6 +49,10 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddCommand(setup.SetupCmd)
+	rootCmd.AddCommand(pull.PullCmd)
+	rootCmd.AddCommand(push.PushCmd)
+	rootCmd.AddCommand(draw.DrawCmd)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
