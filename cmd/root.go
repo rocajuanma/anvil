@@ -18,6 +18,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/rocajuanma/anvil/pkg/figure"
 	"github.com/spf13/cobra"
 )
 
@@ -25,15 +26,12 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "anvil",
 	Short: "Anvil is a simple automation tool to safe time",
-	Long: `Anvil can be used to automation scripts for multiple purposes. A common one 
-is application installation and personal tool setup. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  ANVIL_LONG_DESCRIPTION,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		figure.Draw("anvil", "doh")
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
