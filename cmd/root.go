@@ -1,11 +1,11 @@
 /*
-Copyright © 2022 Juanma Roca juanma.rocaa@gmail.com
+Copyright © 2022 Juanma Roca juanmaxroca@gmail.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,12 @@ package cmd
 import (
 	"os"
 
+	"github.com/rocajuanma/anvil/cmd/draw"
+	"github.com/rocajuanma/anvil/cmd/pull"
+	"github.com/rocajuanma/anvil/cmd/push"
+	"github.com/rocajuanma/anvil/cmd/setup"
+	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/figure"
 	"github.com/spf13/cobra"
 )
 
@@ -25,15 +31,12 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "anvil",
 	Short: "Anvil is a simple automation tool to safe time",
-	Long: `Anvil can be used to automation scripts for multiple purposes. A common one 
-is application installation and personal tool setup. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  constants.ANVIL_LONG_DESCRIPTION,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		figure.Draw("anvil", "doh")
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -46,6 +49,10 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddCommand(setup.SetupCmd)
+	rootCmd.AddCommand(pull.PullCmd)
+	rootCmd.AddCommand(push.PushCmd)
+	rootCmd.AddCommand(draw.DrawCmd)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.

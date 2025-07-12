@@ -1,2 +1,3 @@
 # anvil
-Anvil 2.0
+
+Simple CLI automation tool that speeds up appications and tool configuration.
