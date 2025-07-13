@@ -17,6 +17,7 @@ limitations under the License.
 package initcmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/rocajuanma/anvil/pkg/config"
@@ -34,22 +35,23 @@ var InitCmd = &cobra.Command{
 	Short: "Bootstrap and initialize your Anvil CLI environment",
 	Long:  constants.INIT_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
-		runInitCommand()
+		if err := runInitCommand(); err != nil {
+			terminal.PrintError("Initialization failed: %v", err)
+			os.Exit(1)
+		}
 	},
 }
 
 // runInitCommand executes the complete initialization process for Anvil CLI
 // This function orchestrates all initialization stages and handles errors gracefully
-func runInitCommand() {
+func runInitCommand() error {
 	terminal.PrintHeader("Anvil Initialization")
 
 	// Stage 1: Tool validation and installation
 	// This stage ensures all required tools are available and installs missing ones
 	terminal.PrintStage("Validating and installing required tools...")
 	if err := tools.ValidateAndInstallTools(); err != nil {
-		terminal.PrintError("Failed to validate/install tools: %v", err)
-		terminal.PrintError("Please ensure you have the necessary permissions and try again")
-		os.Exit(1)
+		return fmt.Errorf("failed to validate/install tools: %w", err)
 	}
 	terminal.PrintSuccess("All required tools are available")
 
@@ -57,9 +59,7 @@ func runInitCommand() {
 	// This stage creates the Anvil configuration directory structure
 	terminal.PrintStage("Creating necessary directories...")
 	if err := config.CreateDirectories(); err != nil {
-		terminal.PrintError("Failed to create directories: %v", err)
-		terminal.PrintError("Please check your home directory permissions and try again")
-		os.Exit(1)
+		return fmt.Errorf("failed to create directories: %w", err)
 	}
 	terminal.PrintSuccess("Directories created successfully")
 
@@ -67,9 +67,7 @@ func runInitCommand() {
 	// This stage creates the main configuration file with sensible defaults
 	terminal.PrintStage("Generating default settings.yaml...")
 	if err := config.GenerateDefaultSettings(); err != nil {
-		terminal.PrintError("Failed to generate settings.yaml: %v", err)
-		terminal.PrintError("Please check your home directory permissions and try again")
-		os.Exit(1)
+		return fmt.Errorf("failed to generate settings.yaml: %w", err)
 	}
 	terminal.PrintSuccess("Default settings.yaml generated")
 
@@ -107,6 +105,8 @@ func runInitCommand() {
 	terminal.PrintInfo("  • 'anvil setup' to install development tools")
 	terminal.PrintInfo("  • 'anvil pull/push' to synchronize assets with GitHub")
 	terminal.PrintInfo("  • Edit ~/.anvil/settings.yaml to customize your configuration")
+
+	return nil
 }
 
 func init() {

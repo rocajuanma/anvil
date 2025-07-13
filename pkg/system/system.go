@@ -1,10 +1,12 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // CommandResult represents the result of a command execution
@@ -16,9 +18,16 @@ type CommandResult struct {
 	Success  bool
 }
 
-// RunCommand executes a system command and returns the result
+// RunCommand executes a system command with a default timeout of 5 minutes
 func RunCommand(command string, args ...string) (*CommandResult, error) {
-	cmd := exec.Command(command, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	return RunCommandWithTimeout(ctx, command, args...)
+}
+
+// RunCommandWithTimeout executes a system command with the given context
+func RunCommandWithTimeout(ctx context.Context, command string, args ...string) (*CommandResult, error) {
+	cmd := exec.CommandContext(ctx, command, args...)
 
 	// Capture both stdout and stderr
 	output, err := cmd.CombinedOutput()
@@ -41,7 +50,14 @@ func RunCommand(command string, args ...string) (*CommandResult, error) {
 
 // RunCommandWithOutput executes a command and prints output in real-time
 func RunCommandWithOutput(command string, args ...string) error {
-	cmd := exec.Command(command, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+	return RunCommandWithOutputTimeout(ctx, command, args...)
+}
+
+// RunCommandWithOutputTimeout executes a command with context and prints output in real-time
+func RunCommandWithOutputTimeout(ctx context.Context, command string, args ...string) error {
+	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -61,7 +77,14 @@ func GetCommandPath(command string) (string, error) {
 
 // RunCommandInDirectory executes a command in a specific directory
 func RunCommandInDirectory(dir, command string, args ...string) (*CommandResult, error) {
-	cmd := exec.Command(command, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	return RunCommandInDirectoryWithTimeout(ctx, dir, command, args...)
+}
+
+// RunCommandInDirectoryWithTimeout executes a command in a specific directory with context
+func RunCommandInDirectoryWithTimeout(ctx context.Context, dir, command string, args ...string) (*CommandResult, error) {
+	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()

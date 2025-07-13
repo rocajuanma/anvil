@@ -42,18 +42,18 @@ var SetupCmd = &cobra.Command{
 	},
 }
 
-// Command flags for individual tool installation
-var (
-	gitFlag      bool
-	zshFlag      bool
-	iterm2Flag   bool
-	vscodeFlag   bool
-	slackFlag    bool
-	chromeFlag   bool
-	passwordFlag bool
-	listFlag     bool
-	dryRunFlag   bool
-)
+// SetupFlags encapsulates all setup command flags
+type SetupFlags struct {
+	Git      bool
+	Zsh      bool
+	Iterm2   bool
+	Vscode   bool
+	Slack    bool
+	Chrome   bool
+	Password bool
+	List     bool
+	DryRun   bool
+}
 
 // runSetupCommand executes the setup process for groups or individual tools
 func runSetupCommand(cmd *cobra.Command, args []string) {
@@ -62,20 +62,36 @@ func runSetupCommand(cmd *cobra.Command, args []string) {
 		terminal.PrintWarning("Setup command is currently optimized for macOS. Some features may not work on other platforms.")
 	}
 
+	// Extract flags from command
+	flags := &SetupFlags{
+		Git:      cmd.Flag("git").Changed,
+		Zsh:      cmd.Flag("zsh").Changed,
+		Iterm2:   cmd.Flag("iterm2").Changed,
+		Vscode:   cmd.Flag("vscode").Changed,
+		Slack:    cmd.Flag("slack").Changed,
+		Chrome:   cmd.Flag("chrome").Changed,
+		Password: cmd.Flag("1password").Changed,
+		List:     cmd.Flag("list").Changed,
+		DryRun:   cmd.Flag("dry-run").Changed,
+	}
+
 	// Handle list flag
-	if listFlag {
+	if flags.List {
 		listAvailableGroups()
 		return
 	}
 
 	// Handle dry run flag
-	if dryRunFlag {
+	if flags.DryRun {
 		terminal.PrintInfo("Dry run mode - no actual installations will be performed")
 	}
 
 	// Check individual tool flags
-	if hasIndividualToolFlags(cmd) {
-		runIndividualToolSetup(cmd)
+	if hasIndividualToolFlags(flags) {
+		if err := runIndividualToolSetup(flags); err != nil {
+			terminal.PrintError("Individual tool setup failed: %v", err)
+			os.Exit(1)
+		}
 		return
 	}
 
@@ -86,99 +102,111 @@ func runSetupCommand(cmd *cobra.Command, args []string) {
 	}
 
 	groupName := args[0]
-	runGroupSetup(groupName)
+	if err := runGroupSetup(groupName, flags); err != nil {
+		terminal.PrintError("Group setup failed: %v", err)
+		os.Exit(1)
+	}
 }
 
 // hasIndividualToolFlags checks if any individual tool flags are set
-func hasIndividualToolFlags(cmd *cobra.Command) bool {
-	return gitFlag || zshFlag || iterm2Flag || vscodeFlag || slackFlag || chromeFlag || passwordFlag
+func hasIndividualToolFlags(flags *SetupFlags) bool {
+	return flags.Git || flags.Zsh || flags.Iterm2 || flags.Vscode || flags.Slack || flags.Chrome || flags.Password
 }
 
 // runIndividualToolSetup installs individual tools based on flags
-func runIndividualToolSetup(cmd *cobra.Command) {
+func runIndividualToolSetup(flags *SetupFlags) error {
 	terminal.PrintHeader("Individual Tool Setup")
 
 	var toolsToInstall []string
 
-	if gitFlag {
+	if flags.Git {
 		toolsToInstall = append(toolsToInstall, "git")
 	}
-	if zshFlag {
+	if flags.Zsh {
 		toolsToInstall = append(toolsToInstall, "zsh")
 	}
-	if iterm2Flag {
+	if flags.Iterm2 {
 		toolsToInstall = append(toolsToInstall, "iterm2")
 	}
-	if vscodeFlag {
+	if flags.Vscode {
 		toolsToInstall = append(toolsToInstall, "vscode")
 	}
-	if slackFlag {
+	if flags.Slack {
 		toolsToInstall = append(toolsToInstall, "slack")
 	}
-	if chromeFlag {
+	if flags.Chrome {
 		toolsToInstall = append(toolsToInstall, "chrome")
 	}
-	if passwordFlag {
+	if flags.Password {
 		toolsToInstall = append(toolsToInstall, "1password")
 	}
 
 	if len(toolsToInstall) == 0 {
-		terminal.PrintError("No tools specified for installation")
-		return
+		return fmt.Errorf("no tools specified for installation")
 	}
 
 	terminal.PrintInfo("Installing individual tools: %s", strings.Join(toolsToInstall, ", "))
 
+	var installErrors []string
+	successCount := 0
 	for i, tool := range toolsToInstall {
 		terminal.PrintProgress(i+1, len(toolsToInstall), fmt.Sprintf("Installing %s", tool))
 
-		if dryRunFlag {
-			terminal.PrintInfo("Would install: %s", tool)
-			continue
-		}
-
-		if err := installTool(tool); err != nil {
-			terminal.PrintError("Failed to install %s: %v", tool, err)
-			continue
-		}
-
-		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool))
-	}
-
-	terminal.PrintHeader("Individual Tool Setup Complete!")
-}
-
-// runGroupSetup installs tools for a specific group
-func runGroupSetup(groupName string) {
-	terminal.PrintHeader(fmt.Sprintf("Setting up '%s' group", groupName))
-
-	// Get tools for the group
-	tools, err := config.GetGroupTools(groupName)
-	if err != nil {
-		terminal.PrintError("Failed to get tools for group '%s': %v", groupName, err)
-		terminal.PrintInfo("Use 'anvil setup --list' to see available groups")
-		return
-	}
-
-	if len(tools) == 0 {
-		terminal.PrintWarning("No tools configured for group '%s'", groupName)
-		return
-	}
-
-	terminal.PrintInfo("Installing tools for group '%s': %s", groupName, strings.Join(tools, ", "))
-
-	// Install each tool in the group
-	successCount := 0
-	for i, tool := range tools {
-		terminal.PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
-
-		if dryRunFlag {
+		if flags.DryRun {
 			terminal.PrintInfo("Would install: %s", tool)
 			successCount++
 			continue
 		}
 
 		if err := installTool(tool); err != nil {
+			installErrors = append(installErrors, fmt.Sprintf("%s: %v", tool, err))
+			terminal.PrintError("Failed to install %s: %v", tool, err)
+			continue
+		}
+
+		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool))
+		successCount++
+	}
+
+	terminal.PrintHeader("Individual Tool Setup Complete!")
+
+	if len(installErrors) > 0 {
+		return fmt.Errorf("failed to install tools: %s", strings.Join(installErrors, ", "))
+	}
+
+	return nil
+}
+
+// runGroupSetup installs tools for a specific group
+func runGroupSetup(groupName string, flags *SetupFlags) error {
+	terminal.PrintHeader(fmt.Sprintf("Setting up '%s' group", groupName))
+
+	// Get tools for the group
+	tools, err := config.GetGroupTools(groupName)
+	if err != nil {
+		return fmt.Errorf("failed to get tools for group '%s': %w", groupName, err)
+	}
+
+	if len(tools) == 0 {
+		return fmt.Errorf("no tools configured for group '%s'", groupName)
+	}
+
+	terminal.PrintInfo("Installing tools for group '%s': %s", groupName, strings.Join(tools, ", "))
+
+	// Install each tool in the group
+	successCount := 0
+	var installErrors []string
+	for i, tool := range tools {
+		terminal.PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
+
+		if flags.DryRun {
+			terminal.PrintInfo("Would install: %s", tool)
+			successCount++
+			continue
+		}
+
+		if err := installTool(tool); err != nil {
+			installErrors = append(installErrors, fmt.Sprintf("%s: %v", tool, err))
 			terminal.PrintError("Failed to install %s: %v", tool, err)
 			continue
 		}
@@ -193,7 +221,10 @@ func runGroupSetup(groupName string) {
 
 	if successCount < len(tools) {
 		terminal.PrintWarning("Some tools failed to install. Check the output above for details.")
+		return fmt.Errorf("failed to install %d tools in group '%s': %s", len(tools)-successCount, groupName, strings.Join(installErrors, ", "))
 	}
+
+	return nil
 }
 
 // installTool installs a specific tool
@@ -318,15 +349,15 @@ func showUsageAndGroups() {
 
 func init() {
 	// Individual tool flags
-	SetupCmd.Flags().BoolVar(&gitFlag, "git", false, "Install and configure Git")
-	SetupCmd.Flags().BoolVar(&zshFlag, "zsh", false, "Install Zsh with oh-my-zsh configuration")
-	SetupCmd.Flags().BoolVar(&iterm2Flag, "iterm2", false, "Install iTerm2 terminal emulator")
-	SetupCmd.Flags().BoolVar(&vscodeFlag, "vscode", false, "Install Visual Studio Code")
-	SetupCmd.Flags().BoolVar(&slackFlag, "slack", false, "Install Slack communication app")
-	SetupCmd.Flags().BoolVar(&chromeFlag, "chrome", false, "Install Google Chrome browser")
-	SetupCmd.Flags().BoolVar(&passwordFlag, "1password", false, "Install 1Password password manager")
+	SetupCmd.Flags().Bool("git", false, "Install and configure Git")
+	SetupCmd.Flags().Bool("zsh", false, "Install Zsh with oh-my-zsh configuration")
+	SetupCmd.Flags().Bool("iterm2", false, "Install iTerm2 terminal emulator")
+	SetupCmd.Flags().Bool("vscode", false, "Install Visual Studio Code")
+	SetupCmd.Flags().Bool("slack", false, "Install Slack communication app")
+	SetupCmd.Flags().Bool("chrome", false, "Install Google Chrome browser")
+	SetupCmd.Flags().Bool("1password", false, "Install 1Password password manager")
 
 	// Utility flags
-	SetupCmd.Flags().BoolVar(&listFlag, "list", false, "List all available groups and tools")
-	SetupCmd.Flags().BoolVar(&dryRunFlag, "dry-run", false, "Show what would be installed without actually installing")
+	SetupCmd.Flags().Bool("list", false, "List all available groups and tools")
+	SetupCmd.Flags().Bool("dry-run", false, "Show what would be installed without actually installing")
 }
