@@ -15,6 +15,7 @@ type AnvilConfig struct {
 	Version     string            `yaml:"version"`
 	Directories AnvilDirectories  `yaml:"directories"`
 	Tools       AnvilTools        `yaml:"tools"`
+	Groups      AnvilGroups       `yaml:"groups"`
 	Git         GitConfig         `yaml:"git"`
 	Environment map[string]string `yaml:"environment"`
 }
@@ -30,6 +31,13 @@ type AnvilDirectories struct {
 type AnvilTools struct {
 	RequiredTools []string `yaml:"required_tools"`
 	OptionalTools []string `yaml:"optional_tools"`
+}
+
+// AnvilGroups represents grouped tool configurations
+type AnvilGroups struct {
+	Dev       []string            `yaml:"dev"`
+	NewLaptop []string            `yaml:"new-laptop"`
+	Custom    map[string][]string `yaml:"custom"`
 }
 
 // GitConfig represents git configuration
@@ -52,6 +60,11 @@ func GetDefaultConfig() *AnvilConfig {
 		Tools: AnvilTools{
 			RequiredTools: []string{"git", "curl"},
 			OptionalTools: []string{"brew", "docker", "kubectl"},
+		},
+		Groups: AnvilGroups{
+			Dev:       []string{"git", "zsh", "iterm2", "vscode"},
+			NewLaptop: []string{"slack", "chrome", "1password"},
+			Custom:    make(map[string][]string),
 		},
 		Git: GitConfig{
 			Username: "",
@@ -151,6 +164,60 @@ func SaveConfig(config *AnvilConfig) error {
 	}
 
 	return nil
+}
+
+// GetGroupTools returns the tools for a specific group
+func GetGroupTools(groupName string) ([]string, error) {
+	config, err := LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	switch groupName {
+	case "dev":
+		return config.Groups.Dev, nil
+	case "new-laptop":
+		return config.Groups.NewLaptop, nil
+	default:
+		if tools, exists := config.Groups.Custom[groupName]; exists {
+			return tools, nil
+		}
+		return nil, fmt.Errorf("group '%s' not found", groupName)
+	}
+}
+
+// GetAvailableGroups returns all available groups
+func GetAvailableGroups() (map[string][]string, error) {
+	config, err := LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	groups := make(map[string][]string)
+	groups["dev"] = config.Groups.Dev
+	groups["new-laptop"] = config.Groups.NewLaptop
+
+	for name, tools := range config.Groups.Custom {
+		groups[name] = tools
+	}
+
+	return groups, nil
+}
+
+// AddCustomGroup adds a new custom group
+func AddCustomGroup(name string, tools []string) error {
+	config, err := LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if config.Groups.Custom == nil {
+		config.Groups.Custom = make(map[string][]string)
+	}
+
+	config.Groups.Custom[name] = tools
+
+	return SaveConfig(config)
 }
 
 // CheckEnvironmentConfigurations checks local environment configurations
