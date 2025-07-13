@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/rocajuanma/anvil/cmd/draw"
+	"github.com/rocajuanma/anvil/cmd/initcmd"
 	"github.com/rocajuanma/anvil/cmd/pull"
 	"github.com/rocajuanma/anvil/cmd/push"
 	"github.com/rocajuanma/anvil/cmd/setup"
@@ -49,6 +50,7 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddCommand(initcmd.InitCmd)
 	rootCmd.AddCommand(setup.SetupCmd)
 	rootCmd.AddCommand(pull.PullCmd)
 	rootCmd.AddCommand(push.PushCmd)
