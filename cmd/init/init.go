@@ -9,7 +9,7 @@ import (
 
 var PullCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initiatizes Anvil CLI tool",
+	Short: "Initializes Anvil CLI tool",
 	Long:  constants.INIT_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("init called")
