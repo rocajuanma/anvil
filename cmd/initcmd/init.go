@@ -17,7 +17,6 @@ limitations under the License.
 package initcmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/rocajuanma/anvil/pkg/config"
@@ -51,7 +50,7 @@ func runInitCommand() error {
 	// This stage ensures all required tools are available and installs missing ones
 	terminal.PrintStage("Validating and installing required tools...")
 	if err := tools.ValidateAndInstallTools(); err != nil {
-		return fmt.Errorf("failed to validate/install tools: %w", err)
+		return constants.NewAnvilError(constants.OpInit, "validate-tools", err)
 	}
 	terminal.PrintSuccess("All required tools are available")
 
@@ -59,7 +58,7 @@ func runInitCommand() error {
 	// This stage creates the Anvil configuration directory structure
 	terminal.PrintStage("Creating necessary directories...")
 	if err := config.CreateDirectories(); err != nil {
-		return fmt.Errorf("failed to create directories: %w", err)
+		return constants.NewAnvilError(constants.OpInit, "create-directories", err)
 	}
 	terminal.PrintSuccess("Directories created successfully")
 
@@ -67,7 +66,7 @@ func runInitCommand() error {
 	// This stage creates the main configuration file with sensible defaults
 	terminal.PrintStage("Generating default settings.yaml...")
 	if err := config.GenerateDefaultSettings(); err != nil {
-		return fmt.Errorf("failed to generate settings.yaml: %w", err)
+		return constants.NewAnvilError(constants.OpInit, "generate-settings", err)
 	}
 	terminal.PrintSuccess("Default settings.yaml generated")
 

@@ -71,11 +71,13 @@ func installWithConfig(config InstallConfig) error {
 	}
 
 	if err := brew.InstallPackage(config.PackageName); err != nil {
-		return fmt.Errorf("failed to install %s: %w", config.Description, err)
+		return constants.NewAnvilError(constants.OpSetup, config.Description, err)
 	}
 
 	if config.PostInstall != nil {
-		return config.PostInstall()
+		if err := config.PostInstall(); err != nil {
+			return constants.NewAnvilError(constants.OpSetup, config.Description, err)
+		}
 	}
 	return nil
 }
@@ -167,7 +169,7 @@ func runIndividualToolSetup(flags *SetupFlags) error {
 	}
 
 	if len(toolsToInstall) == 0 {
-		return fmt.Errorf("no tools specified for installation")
+		return constants.NewAnvilError(constants.OpSetup, "individual-tools", fmt.Errorf("no tools specified for installation"))
 	}
 
 	terminal.PrintInfo("Installing individual tools: %s", strings.Join(toolsToInstall, ", "))
@@ -196,7 +198,7 @@ func runIndividualToolSetup(flags *SetupFlags) error {
 	terminal.PrintHeader("Individual Tool Setup Complete!")
 
 	if len(installErrors) > 0 {
-		return fmt.Errorf("failed to install tools: %s", strings.Join(installErrors, ", "))
+		return constants.NewAnvilError(constants.OpSetup, "individual-tools", fmt.Errorf("failed to install tools: %s", strings.Join(installErrors, ", ")))
 	}
 
 	return nil
@@ -209,11 +211,11 @@ func runGroupSetup(groupName string, flags *SetupFlags) error {
 	// Get tools for the group
 	tools, err := config.GetGroupTools(groupName)
 	if err != nil {
-		return fmt.Errorf("failed to get tools for group '%s': %w", groupName, err)
+		return constants.NewAnvilError(constants.OpSetup, groupName, err)
 	}
 
 	if len(tools) == 0 {
-		return fmt.Errorf("no tools configured for group '%s'", groupName)
+		return constants.NewAnvilError(constants.OpSetup, groupName, fmt.Errorf("no tools configured for group"))
 	}
 
 	terminal.PrintInfo("Installing tools for group '%s': %s", groupName, strings.Join(tools, ", "))
@@ -246,7 +248,7 @@ func runGroupSetup(groupName string, flags *SetupFlags) error {
 
 	if successCount < len(tools) {
 		terminal.PrintWarning("Some tools failed to install. Check the output above for details.")
-		return fmt.Errorf("failed to install %d tools in group '%s': %s", len(tools)-successCount, groupName, strings.Join(installErrors, ", "))
+		return constants.NewAnvilError(constants.OpSetup, groupName, fmt.Errorf("failed to install %d tools: %s", len(tools)-successCount, strings.Join(installErrors, ", ")))
 	}
 
 	return nil
@@ -271,7 +273,10 @@ func installTool(toolName string) error {
 		return install1Password()
 	default:
 		// Try to install as a brew package
-		return brew.InstallPackage(toolName)
+		if err := brew.InstallPackage(toolName); err != nil {
+			return constants.NewAnvilError(constants.OpSetup, toolName, err)
+		}
+		return nil
 	}
 }
 
