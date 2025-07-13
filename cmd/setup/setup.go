@@ -55,6 +55,31 @@ type SetupFlags struct {
 	DryRun   bool
 }
 
+// InstallConfig represents the configuration for installing a tool
+type InstallConfig struct {
+	PackageName  string
+	PreCheck     func() bool
+	PostInstall  func() error
+	SkipIfExists bool
+	Description  string
+}
+
+// installWithConfig installs a tool based on the provided configuration
+func installWithConfig(config InstallConfig) error {
+	if config.SkipIfExists && config.PreCheck() {
+		return nil
+	}
+
+	if err := brew.InstallPackage(config.PackageName); err != nil {
+		return fmt.Errorf("failed to install %s: %w", config.Description, err)
+	}
+
+	if config.PostInstall != nil {
+		return config.PostInstall()
+	}
+	return nil
+}
+
 // runSetupCommand executes the setup process for groups or individual tools
 func runSetupCommand(cmd *cobra.Command, args []string) {
 	// Check if we're on macOS (required for most installations)
@@ -252,59 +277,76 @@ func installTool(toolName string) error {
 
 // installGit installs and configures Git
 func installGit() error {
-	if system.CommandExists("git") {
-		return nil // Already installed
-	}
-
-	return brew.InstallPackage("git")
+	return installWithConfig(InstallConfig{
+		PackageName:  "git",
+		PreCheck:     func() bool { return system.CommandExists("git") },
+		SkipIfExists: true,
+		Description:  "Git",
+	})
 }
 
 // installZsh installs and configures Zsh
 func installZsh() error {
-	if err := brew.InstallPackage("zsh"); err != nil {
-		return fmt.Errorf("failed to install zsh: %w", err)
-	}
+	return installWithConfig(InstallConfig{
+		PackageName: "zsh",
+		PostInstall: func() error {
+			// Install oh-my-zsh if not present
+			homeDir, _ := os.UserHomeDir()
+			ohmyzshDir := fmt.Sprintf("%s/.oh-my-zsh", homeDir)
 
-	// Install oh-my-zsh if not present
-	homeDir, _ := os.UserHomeDir()
-	ohmyzshDir := fmt.Sprintf("%s/.oh-my-zsh", homeDir)
+			if _, err := os.Stat(ohmyzshDir); os.IsNotExist(err) {
+				terminal.PrintInfo("Installing oh-my-zsh...")
+				installCmd := `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
 
-	if _, err := os.Stat(ohmyzshDir); os.IsNotExist(err) {
-		terminal.PrintInfo("Installing oh-my-zsh...")
-		installCmd := `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
-
-		result, err := system.RunCommand("sh", "-c", installCmd)
-		if err != nil || !result.Success {
-			return fmt.Errorf("failed to install oh-my-zsh: %v", err)
-		}
-	}
-
-	return nil
+				result, err := system.RunCommand("sh", "-c", installCmd)
+				if err != nil || !result.Success {
+					return fmt.Errorf("failed to install oh-my-zsh: %v", err)
+				}
+			}
+			return nil
+		},
+		Description: "Zsh with oh-my-zsh",
+	})
 }
 
 // installIterm2 installs iTerm2
 func installIterm2() error {
-	return brew.InstallPackage("iterm2")
+	return installWithConfig(InstallConfig{
+		PackageName: "iterm2",
+		Description: "iTerm2",
+	})
 }
 
 // installVSCode installs Visual Studio Code
 func installVSCode() error {
-	return brew.InstallPackage("visual-studio-code")
+	return installWithConfig(InstallConfig{
+		PackageName: "visual-studio-code",
+		Description: "Visual Studio Code",
+	})
 }
 
 // installSlack installs Slack
 func installSlack() error {
-	return brew.InstallPackage("slack")
+	return installWithConfig(InstallConfig{
+		PackageName: "slack",
+		Description: "Slack",
+	})
 }
 
 // installChrome installs Google Chrome
 func installChrome() error {
-	return brew.InstallPackage("google-chrome")
+	return installWithConfig(InstallConfig{
+		PackageName: "google-chrome",
+		Description: "Google Chrome",
+	})
 }
 
 // install1Password installs 1Password
 func install1Password() error {
-	return brew.InstallPackage("1password")
+	return installWithConfig(InstallConfig{
+		PackageName: "1password",
+		Description: "1Password",
+	})
 }
 
 // listAvailableGroups lists all available groups and their tools
