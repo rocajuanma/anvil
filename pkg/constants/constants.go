@@ -3,7 +3,7 @@ package constants
 const ANVIL_LONG_DESCRIPTION = `Anvil can be used to automate actions for multiple purposes. A common one 
 is installation and personal tool configuration.`
 
-const INIT_LONG_DESCRIPTION = `Initializes all required tooling, directories and configurations for the Anvil CLI tool to be correctly bootstaped.`
+const INIT_COMMAND_LONG_DESCRIPTION = `Initializes all required tooling, directories and configurations for the Anvil CLI tool to be correctly bootstaped.`
 
 const SETUP_COMMAND_LONG_DESCRIPTION = `Setup assets automatically.`
 
