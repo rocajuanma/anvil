@@ -283,8 +283,8 @@ func installTool(toolName string) error {
 // installGit installs and configures Git
 func installGit() error {
 	return installWithConfig(InstallConfig{
-		PackageName:  "git",
-		PreCheck:     func() bool { return system.CommandExists("git") },
+		PackageName:  constants.PkgGit,
+		PreCheck:     func() bool { return system.CommandExists(constants.GitCommand) },
 		SkipIfExists: true,
 		Description:  "Git",
 	})
@@ -293,17 +293,16 @@ func installGit() error {
 // installZsh installs and configures Zsh
 func installZsh() error {
 	return installWithConfig(InstallConfig{
-		PackageName: "zsh",
+		PackageName: constants.PkgZsh,
 		PostInstall: func() error {
 			// Install oh-my-zsh if not present
 			homeDir, _ := os.UserHomeDir()
-			ohmyzshDir := fmt.Sprintf("%s/.oh-my-zsh", homeDir)
+			ohmyzshDir := fmt.Sprintf("%s/%s", homeDir, constants.OhMyZshDir)
 
 			if _, err := os.Stat(ohmyzshDir); os.IsNotExist(err) {
 				terminal.PrintInfo("Installing oh-my-zsh...")
-				installCmd := `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
 
-				result, err := system.RunCommand("sh", "-c", installCmd)
+				result, err := system.RunCommand(constants.ShCommand, "-c", constants.OhMyZshInstallCmd)
 				if err != nil || !result.Success {
 					return fmt.Errorf("failed to install oh-my-zsh: %v", err)
 				}
@@ -317,7 +316,7 @@ func installZsh() error {
 // installIterm2 installs iTerm2
 func installIterm2() error {
 	return installWithConfig(InstallConfig{
-		PackageName: "iterm2",
+		PackageName: constants.PkgIterm2,
 		Description: "iTerm2",
 	})
 }
@@ -325,7 +324,7 @@ func installIterm2() error {
 // installVSCode installs Visual Studio Code
 func installVSCode() error {
 	return installWithConfig(InstallConfig{
-		PackageName: "visual-studio-code",
+		PackageName: constants.PkgVSCode,
 		Description: "Visual Studio Code",
 	})
 }
@@ -333,7 +332,7 @@ func installVSCode() error {
 // installSlack installs Slack
 func installSlack() error {
 	return installWithConfig(InstallConfig{
-		PackageName: "slack",
+		PackageName: constants.PkgSlack,
 		Description: "Slack",
 	})
 }
@@ -341,7 +340,7 @@ func installSlack() error {
 // installChrome installs Google Chrome
 func installChrome() error {
 	return installWithConfig(InstallConfig{
-		PackageName: "google-chrome",
+		PackageName: constants.PkgChrome,
 		Description: "Google Chrome",
 	})
 }
@@ -349,7 +348,7 @@ func installChrome() error {
 // install1Password installs 1Password
 func install1Password() error {
 	return installWithConfig(InstallConfig{
-		PackageName: "1password",
+		PackageName: constants.Pkg1Password,
 		Description: "1Password",
 	})
 }

@@ -40,6 +40,73 @@ const (
 	OpDraw  = "draw"
 )
 
+// System command constants
+const (
+	BrewCommand = "brew"
+	GitCommand  = "git"
+	CurlCommand = "curl"
+	ShCommand   = "sh"
+)
+
+// Brew subcommand constants
+const (
+	BrewInstall = "install"
+	BrewList    = "list"
+	BrewInfo    = "info"
+	BrewUpdate  = "update"
+)
+
+// Git subcommand constants
+const (
+	GitConfig    = "config"
+	GitGlobal    = "--global"
+	GitUserName  = "user.name"
+	GitUserEmail = "user.email"
+)
+
+// Directory and file constants
+const (
+	AnvilConfigDir = ".anvil"
+	SSHDir         = ".ssh"
+	OhMyZshDir     = ".oh-my-zsh"
+	ConfigFileName = "settings.yaml"
+	CacheSubDir    = "cache"
+	DataSubDir     = "data"
+)
+
+// Homebrew package names
+const (
+	PkgGit       = "git"
+	PkgZsh       = "zsh"
+	PkgIterm2    = "iterm2"
+	PkgVSCode    = "visual-studio-code"
+	PkgSlack     = "slack"
+	PkgChrome    = "google-chrome"
+	Pkg1Password = "1password"
+	PkgDocker    = "docker"
+	PkgKubectl   = "kubectl"
+)
+
+// Environment variables
+const (
+	EnvEditor = "EDITOR"
+	EnvShell  = "SHELL"
+	EnvTerm   = "TERM"
+	EnvHome   = "HOME"
+)
+
+// Oh-my-zsh installation URL
+const (
+	OhMyZshInstallURL = "https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+	OhMyZshInstallCmd = `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
+)
+
+// Common directory permissions
+const (
+	DirPerm  = 0755
+	FilePerm = 0644
+)
+
 // Long descriptions for commands
 const ANVIL_LONG_DESCRIPTION = `Anvil is a powerful automation CLI tool designed to streamline development workflows 
 and personal tool configuration. It provides a comprehensive suite of commands for managing

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"gopkg.in/yaml.v2"
 )
@@ -89,17 +90,17 @@ func GetDefaultConfig() *AnvilConfig {
 	return &AnvilConfig{
 		Version: "1.0.0",
 		Directories: AnvilDirectories{
-			Config: filepath.Join(homeDir, ".anvil"),
-			Cache:  filepath.Join(homeDir, ".anvil", "cache"),
-			Data:   filepath.Join(homeDir, ".anvil", "data"),
+			Config: filepath.Join(homeDir, constants.AnvilConfigDir),
+			Cache:  filepath.Join(homeDir, constants.AnvilConfigDir, constants.CacheSubDir),
+			Data:   filepath.Join(homeDir, constants.AnvilConfigDir, constants.DataSubDir),
 		},
 		Tools: AnvilTools{
-			RequiredTools: []string{"git", "curl"},
-			OptionalTools: []string{"brew", "docker", "kubectl"},
+			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
+			OptionalTools: []string{constants.BrewCommand, constants.PkgDocker, constants.PkgKubectl},
 		},
 		Groups: AnvilGroups{
-			Dev:       []string{"git", "zsh", "iterm2", "vscode"},
-			NewLaptop: []string{"slack", "chrome", "1password"},
+			Dev:       []string{constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
+			NewLaptop: []string{constants.PkgSlack, constants.PkgChrome, constants.Pkg1Password},
 			Custom:    make(map[string][]string),
 		},
 		Git: GitConfig{
@@ -113,7 +114,7 @@ func GetDefaultConfig() *AnvilConfig {
 // GetConfigPath returns the path to the anvil configuration file
 func GetConfigPath() string {
 	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, ".anvil", "settings.yaml")
+	return filepath.Join(homeDir, constants.AnvilConfigDir, constants.ConfigFileName)
 }
 
 // CreateDirectories creates necessary directories for anvil
@@ -127,7 +128,7 @@ func CreateDirectories() error {
 	}
 
 	for _, dir := range directories {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, constants.DirPerm); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
@@ -147,11 +148,11 @@ func GenerateDefaultSettings() error {
 	config := GetDefaultConfig()
 
 	// Try to populate git configuration from system
-	if gitUser, err := system.RunCommand("git", "config", "--global", "user.name"); err == nil && gitUser.Success {
+	if gitUser, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserName); err == nil && gitUser.Success {
 		config.Git.Username = strings.TrimSpace(gitUser.Output)
 	}
 
-	if gitEmail, err := system.RunCommand("git", "config", "--global", "user.email"); err == nil && gitEmail.Success {
+	if gitEmail, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserEmail); err == nil && gitEmail.Success {
 		config.Git.Email = strings.TrimSpace(gitEmail.Output)
 	}
 
@@ -162,7 +163,7 @@ func GenerateDefaultSettings() error {
 	}
 
 	// Write to file
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := os.WriteFile(configPath, data, constants.FilePerm); err != nil {
 		return fmt.Errorf("failed to write settings.yaml: %w", err)
 	}
 
@@ -195,7 +196,7 @@ func SaveConfig(config *AnvilConfig) error {
 		return fmt.Errorf("failed to marshal config to YAML: %w", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := os.WriteFile(configPath, data, constants.FilePerm); err != nil {
 		return fmt.Errorf("failed to write settings.yaml: %w", err)
 	}
 
@@ -264,17 +265,17 @@ func CheckEnvironmentConfigurations() []string {
 	var warnings []string
 
 	// Check Git configuration
-	if gitUser, err := system.RunCommand("git", "config", "--global", "user.name"); err != nil || !gitUser.Success || strings.TrimSpace(gitUser.Output) == "" {
-		warnings = append(warnings, "Configure git user.name: git config --global user.name 'Your Name'")
+	if gitUser, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserName); err != nil || !gitUser.Success || strings.TrimSpace(gitUser.Output) == "" {
+		warnings = append(warnings, fmt.Sprintf("Configure git user.name: %s %s %s %s 'Your Name'", constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserName))
 	}
 
-	if gitEmail, err := system.RunCommand("git", "config", "--global", "user.email"); err != nil || !gitEmail.Success || strings.TrimSpace(gitEmail.Output) == "" {
-		warnings = append(warnings, "Configure git user.email: git config --global user.email 'your.email@example.com'")
+	if gitEmail, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserEmail); err != nil || !gitEmail.Success || strings.TrimSpace(gitEmail.Output) == "" {
+		warnings = append(warnings, fmt.Sprintf("Configure git user.email: %s %s %s %s 'your.email@example.com'", constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserEmail))
 	}
 
 	// Check SSH keys
 	homeDir, _ := os.UserHomeDir()
-	sshDir := filepath.Join(homeDir, ".ssh")
+	sshDir := filepath.Join(homeDir, constants.SSHDir)
 	if _, err := os.Stat(sshDir); os.IsNotExist(err) {
 		warnings = append(warnings, "Set up SSH keys for GitHub: ssh-keygen -t ed25519 -C 'your.email@example.com'")
 	} else {
@@ -288,12 +289,12 @@ func CheckEnvironmentConfigurations() []string {
 			}
 		}
 		if !hasKey {
-			warnings = append(warnings, "No SSH keys found in ~/.ssh - consider generating SSH keys for GitHub")
+			warnings = append(warnings, fmt.Sprintf("No SSH keys found in ~/%s - consider generating SSH keys for GitHub", constants.SSHDir))
 		}
 	}
 
 	// Check for common environment variables
-	envVars := []string{"EDITOR", "SHELL"}
+	envVars := []string{constants.EnvEditor, constants.EnvShell}
 	for _, envVar := range envVars {
 		if os.Getenv(envVar) == "" {
 			warnings = append(warnings, fmt.Sprintf("Consider setting %s environment variable", envVar))
@@ -306,15 +307,15 @@ func CheckEnvironmentConfigurations() []string {
 // GetConfigDirectory returns the anvil configuration directory
 func GetConfigDirectory() string {
 	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, ".anvil")
+	return filepath.Join(homeDir, constants.AnvilConfigDir)
 }
 
 // GetCacheDirectory returns the anvil cache directory
 func GetCacheDirectory() string {
-	return filepath.Join(GetConfigDirectory(), "cache")
+	return filepath.Join(GetConfigDirectory(), constants.CacheSubDir)
 }
 
 // GetDataDirectory returns the anvil data directory
 func GetDataDirectory() string {
-	return filepath.Join(GetConfigDirectory(), "data")
+	return filepath.Join(GetConfigDirectory(), constants.DataSubDir)
 }

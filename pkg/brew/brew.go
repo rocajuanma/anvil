@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
@@ -19,7 +20,7 @@ type BrewPackage struct {
 
 // IsBrewInstalled checks if Homebrew is installed
 func IsBrewInstalled() bool {
-	return system.CommandExists("brew")
+	return system.CommandExists(constants.BrewCommand)
 }
 
 // InstallBrew installs Homebrew if not already installed
@@ -57,7 +58,7 @@ func UpdateBrew() error {
 
 	terminal.PrintInfo("Updating Homebrew...")
 
-	result, err := system.RunCommand("brew", "update")
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewUpdate)
 	if err != nil {
 		return fmt.Errorf("failed to run brew update: %w", err)
 	}
@@ -77,7 +78,7 @@ func InstallPackage(packageName string) error {
 
 	terminal.PrintInfo("Installing %s...", packageName)
 
-	result, err := system.RunCommand("brew", "install", packageName)
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewInstall, packageName)
 	if err != nil {
 		return fmt.Errorf("failed to run brew install: %w", err)
 	}
@@ -95,7 +96,7 @@ func IsPackageInstalled(packageName string) bool {
 		return false
 	}
 
-	result, err := system.RunCommand("brew", "list", "--formula", packageName)
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, "--formula", packageName)
 	if err != nil {
 		return false
 	}
@@ -109,7 +110,7 @@ func GetInstalledPackages() ([]BrewPackage, error) {
 		return nil, fmt.Errorf("Homebrew is not installed")
 	}
 
-	result, err := system.RunCommand("brew", "list", "--formula")
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, "--formula")
 	if err != nil {
 		return nil, fmt.Errorf("failed to run brew list: %w", err)
 	}
@@ -161,7 +162,7 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 		return nil, fmt.Errorf("Homebrew is not installed")
 	}
 
-	result, err := system.RunCommand("brew", "info", packageName)
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewInfo, packageName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run brew info: %w", err)
 	}

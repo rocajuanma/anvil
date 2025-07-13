@@ -3,6 +3,8 @@ package terminal
 import (
 	"fmt"
 	"os"
+
+	"github.com/rocajuanma/anvil/pkg/constants"
 )
 
 // Color constants for terminal output
@@ -69,5 +71,5 @@ func Confirm(message string) bool {
 
 // IsTerminalSupported checks if the terminal supports colored output
 func IsTerminalSupported() bool {
-	return os.Getenv("TERM") != "dumb"
+	return os.Getenv(constants.EnvTerm) != "dumb"
 }
