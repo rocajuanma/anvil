@@ -97,15 +97,19 @@ anvil/
 ├── cmd/                    # Command implementations
 │   ├── initcmd/           # Init command
 │   ├── setup/             # Setup command
+│   ├── draw/              # Draw command
+│   ├── pull/              # Pull command
+│   ├── push/              # Push command
 │   └── root.go            # Root command configuration
 ├── pkg/                   # Reusable packages
 │   ├── brew/              # Homebrew integration
 │   ├── config/            # Configuration management
+│   ├── constants/         # Application constants and error types
+│   ├── figure/            # ASCII art generation
 │   ├── system/            # System command execution
 │   ├── terminal/          # Terminal output formatting
 │   └── tools/             # Tool validation and installation
 ├── docs/                  # Documentation
-├── .local/                # Development guidelines
 ├── go.mod                 # Go module definition
 ├── go.sum                 # Go module checksums
 ├── main.go                # Application entry point
@@ -231,13 +235,14 @@ git checkout -b fix/issue-number-short-description
 
 ### 2. Make Changes
 
-Follow our [development rules](.local/anvil-rules.md) for:
+Follow our development standards for:
 
-- Package organization
-- Error handling patterns
-- Terminal output formatting
-- Configuration management
-- Documentation standards
+- **Package organization** - Use appropriate package structure with clear separation of concerns
+- **Error handling patterns** - Use `constants.AnvilError` for structured error handling with operation context
+- **Terminal output formatting** - Use `terminal` package for consistent output formatting
+- **Configuration management** - Use cached configuration access for optimal performance
+- **Constants usage** - Use constants from `pkg/constants/` instead of magic strings
+- **Documentation standards** - Update relevant documentation for any changes
 
 ### 3. Test Changes
 

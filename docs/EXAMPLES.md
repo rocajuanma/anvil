@@ -172,8 +172,8 @@ $ anvil init
 # Install development tools
 $ anvil setup dev
 
-# Add Docker for containerization
-$ anvil setup --docker
+# Add Docker through custom group configuration
+# (See settings.yaml custom group setup)
 
 # Create custom backend group in settings.yaml
 ```
@@ -209,14 +209,14 @@ $ anvil init
 # Install all development tools
 $ anvil setup dev
 
-# Add containers and communication tools
-$ anvil setup --docker --slack
+# Add communication tools
+$ anvil setup --slack
 
 # Add browser for testing
 $ anvil setup --chrome
 
-# Optional: Add database tools
-$ anvil setup --postgresql --redis
+# Optional: Add custom tools through group configuration
+# (See settings.yaml for custom group setup)
 ```
 
 ## Team Scenarios
@@ -243,9 +243,9 @@ anvil setup dev
 echo "💬 Installing communication tools..."
 anvil setup --slack
 
-# Install additional tools
-echo "🐳 Installing Docker and container tools..."
-anvil setup --docker --kubectl
+# Install additional tools through custom groups
+echo "🔧 Installing additional tools..."
+# (Define custom groups in settings.yaml for additional tools)
 
 # Custom team tools
 echo "🛠️  Installing team-specific tools..."
@@ -334,7 +334,7 @@ anvil setup frontend  # or backend, qa
 ```bash
 anvil init
 anvil setup dev
-anvil setup --docker --slack
+anvil setup --slack
 ```
 
 **Linux team member**:
@@ -342,8 +342,8 @@ anvil setup --docker --slack
 ```bash
 anvil init
 # May see platform warnings
-anvil setup --git --vscode --docker
-# Install Slack manually or via platform package manager
+anvil setup --git --vscode
+# Install additional tools manually or via platform package manager
 ```
 
 **Windows team member**:
@@ -420,7 +420,7 @@ anvil setup design
 ```bash
 anvil init
 anvil setup dev
-anvil setup --docker --postgresql
+# Additional tools through custom groups
 ```
 
 **Production Environment**:
@@ -502,7 +502,7 @@ sudo apt update
 sudo apt install -y git curl build-essential
 
 anvil init
-anvil setup --git --vscode --docker
+anvil setup --git --vscode
 
 # Linux-specific additions
 sudo apt install -y zsh vim tmux
@@ -668,14 +668,13 @@ setup-dev:
 	@echo "Setting up development environment..."
 	anvil init
 	anvil setup dev
-	anvil setup --docker
 	@echo "Development setup complete!"
 
 setup-team:
 	@echo "Setting up team environment..."
 	anvil init
 	anvil setup dev
-	anvil setup --slack --docker
+	anvil setup --slack
 	@echo "Team setup complete!"
 
 clean-anvil:
@@ -744,12 +743,12 @@ case $choice in
     2)
         echo "⚙️ Setting up Backend Development..."
         anvil setup dev
-        anvil setup --docker
+        # Additional tools through custom groups
         ;;
     3)
         echo "🔄 Setting up Full-Stack Development..."
         anvil setup dev
-        anvil setup --docker --chrome
+        anvil setup --chrome
         ;;
     4)
         echo "📱 Setting up Mobile Development..."

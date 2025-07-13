@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](#platform-support)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](docs/CHANGELOG.md)
 
 > A powerful automation CLI tool designed to streamline development workflows and personal tool configuration
 
@@ -258,14 +259,22 @@ Anvil is built with a modular architecture:
 ```
 anvil/
 ├── cmd/           # Command implementations
+│   ├── initcmd/   # Init command
+│   ├── setup/     # Setup command
+│   ├── draw/      # Draw command
+│   ├── pull/      # Pull command
+│   ├── push/      # Push command
+│   └── root.go    # Root command configuration
 ├── pkg/           # Reusable packages
 │   ├── brew/      # Homebrew integration
 │   ├── config/    # Configuration management
+│   ├── constants/ # Application constants and error types
+│   ├── figure/    # ASCII art generation
 │   ├── system/    # System command execution
 │   ├── terminal/  # Terminal output formatting
 │   └── tools/     # Tool validation and installation
 ├── docs/          # Documentation
-└── .local/        # Development guidelines
+└── main.go        # Application entry point
 ```
 
 ## 📄 License

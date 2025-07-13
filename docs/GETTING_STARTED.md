@@ -217,8 +217,8 @@ anvil setup dev
 # Step 3: Add essential applications
 anvil setup new-laptop
 
-# Step 4: Add any additional tools
-anvil setup --docker --kubectl
+# Step 4: Add any additional tools as needed
+# (Additional tools can be installed through custom groups)
 ```
 
 ### Workflow 2: Team Onboarding
@@ -235,9 +235,8 @@ anvil setup dev
 # Add team communication tools
 anvil setup --slack
 
-# Preview additional tools first
-anvil setup --docker --kubectl --dry-run
-anvil setup --docker --kubectl
+# Additional tools can be defined in custom groups
+# See configuration section for custom group setup
 ```
 
 ### Workflow 3: Selective Tool Installation

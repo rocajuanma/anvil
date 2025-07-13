@@ -27,6 +27,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Memory usage optimization for large tool sets
 
+## [1.0.1] - 2024-01-XX
+
+### Added
+
+- **Configuration Caching** - Thread-safe configuration caching with double-checked locking pattern
+- **Context-Aware Commands** - Command execution with configurable timeouts to prevent hanging
+- **Structured Error Handling** - `AnvilError` struct with operation and command context
+- **Constants Extraction** - Centralized constants for system commands, package names, and environment variables
+
+### Changed
+
+- **Improved Error Handling** - Commands now return proper errors instead of calling `os.Exit(1)` directly
+- **Unified Installation Patterns** - Consolidated installation logic using `InstallConfig` struct
+- **Eliminated Global Variables** - Replaced global flags with struct-based approach in setup command
+- **Enhanced Performance** - Configuration loading optimized with caching, eliminating repeated file I/O
+
+### Fixed
+
+- **Resource Management** - Commands now use timeouts to prevent indefinite hanging
+- **Code Duplication** - Eliminated ~50 lines of duplicate installation code
+- **Magic Strings** - Extracted ~30 magic strings to constants for better maintainability
+- **Thread Safety** - Configuration access is now thread-safe with proper locking
+
 ## [1.0.0] - 2024-01-XX
 
 ### Added

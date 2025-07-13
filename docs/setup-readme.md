@@ -87,14 +87,14 @@ groups:
   custom:
     frontend:
       - git
-      - node
-      - yarn
+      - zsh
+      - vscode
       - chrome
     backend:
       - git
-      - docker
-      - postgresql
-      - redis
+      - zsh
+      - vscode
+      - slack
 ```
 
 ## Individual Tool Installation

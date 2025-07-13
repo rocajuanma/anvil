@@ -25,11 +25,11 @@ The init command validates and installs required system tools:
 - **Git** - Essential for version control and asset synchronization
 - **cURL** - Required for downloading resources and API interactions
 
-**Optional Tools (installed if available):**
+**Optional Tools (detected if available):**
 
 - **Homebrew** (macOS only) - Package manager for additional tool installations
-- **Docker** - Container runtime for advanced workflows
-- **kubectl** - Kubernetes command-line tool for container orchestration
+- **Docker** - Container runtime (detected but not installed)
+- **kubectl** - Kubernetes command-line tool (detected but not installed)
 
 **Process:**
 
