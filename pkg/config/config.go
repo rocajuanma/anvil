@@ -5,9 +5,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/rocajuanma/anvil/pkg/system"
 	"gopkg.in/yaml.v2"
+)
+
+// Configuration cache to avoid repeated file I/O operations
+var (
+	configCache      *AnvilConfig
+	configCacheMutex sync.RWMutex
 )
 
 // AnvilConfig represents the main anvil configuration
@@ -44,6 +51,35 @@ type AnvilGroups struct {
 type GitConfig struct {
 	Username string `yaml:"username"`
 	Email    string `yaml:"email"`
+}
+
+// getCachedConfig returns the cached configuration or loads it if not cached
+func getCachedConfig() (*AnvilConfig, error) {
+	configCacheMutex.RLock()
+	if configCache != nil {
+		configCacheMutex.RUnlock()
+		return configCache, nil
+	}
+	configCacheMutex.RUnlock()
+
+	configCacheMutex.Lock()
+	defer configCacheMutex.Unlock()
+
+	// Double-check after acquiring write lock
+	if configCache != nil {
+		return configCache, nil
+	}
+
+	var err error
+	configCache, err = LoadConfig()
+	return configCache, err
+}
+
+// invalidateCache clears the configuration cache
+func invalidateCache() {
+	configCacheMutex.Lock()
+	defer configCacheMutex.Unlock()
+	configCache = nil
 }
 
 // GetDefaultConfig returns the default anvil configuration
@@ -163,12 +199,15 @@ func SaveConfig(config *AnvilConfig) error {
 		return fmt.Errorf("failed to write settings.yaml: %w", err)
 	}
 
+	// Invalidate cache after saving
+	invalidateCache()
+
 	return nil
 }
 
 // GetGroupTools returns the tools for a specific group
 func GetGroupTools(groupName string) ([]string, error) {
-	config, err := LoadConfig()
+	config, err := getCachedConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
@@ -188,7 +227,7 @@ func GetGroupTools(groupName string) ([]string, error) {
 
 // GetAvailableGroups returns all available groups
 func GetAvailableGroups() (map[string][]string, error) {
-	config, err := LoadConfig()
+	config, err := getCachedConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
@@ -206,7 +245,7 @@ func GetAvailableGroups() (map[string][]string, error) {
 
 // AddCustomGroup adds a new custom group
 func AddCustomGroup(name string, tools []string) error {
-	config, err := LoadConfig()
+	config, err := getCachedConfig()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
