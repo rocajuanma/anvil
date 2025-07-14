@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
@@ -104,7 +105,16 @@ func runInitCommand() error {
 	terminal.PrintInfo("  • 'anvil setup [app]' to install any individual application")
 	terminal.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
 
-	terminal.PrintInfo("\nAvailable groups: dev, new-laptop")
+	// Show available groups dynamically
+	if groups, err := config.GetAvailableGroups(); err == nil {
+		builtInGroups := config.GetBuiltInGroups()
+		terminal.PrintInfo("\nAvailable groups: %s", strings.Join(builtInGroups, ", "))
+		if len(groups) > len(builtInGroups) {
+			terminal.PrintInfo("Custom groups: %d defined", len(groups)-len(builtInGroups))
+		}
+	} else {
+		terminal.PrintInfo("\nAvailable groups: dev, new-laptop")
+	}
 	terminal.PrintInfo("Example: 'anvil setup dev' or 'anvil setup firefox'")
 
 	return nil

@@ -50,6 +50,12 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 			fmt.Errorf("setup command is only supported on macOS"))
 	}
 
+	// Check for list flag
+	listGroups, _ := cmd.Flags().GetBool("list")
+	if listGroups {
+		return listAvailableGroups()
+	}
+
 	// Check for dry-run flag
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	if dryRun {
@@ -161,48 +167,59 @@ func installIndividualApp(appName string, dryRun bool) error {
 	return nil
 }
 
-// installSingleTool installs a single tool, handling special cases
+// installSingleTool installs a single tool, handling special cases dynamically
 func installSingleTool(toolName string) error {
-	// Handle special installation cases
-	switch toolName {
-	case constants.PkgZsh:
-		return installZshWithOhMyZsh()
-	case constants.PkgGit:
-		return installGitWithConfig()
-	default:
-		// For all other tools, use the dynamic brew installation
-		return brew.InstallPackage(toolName)
-	}
-}
-
-// installZshWithOhMyZsh installs Zsh and configures oh-my-zsh
-func installZshWithOhMyZsh() error {
-	// Install Zsh via brew
-	if err := brew.InstallPackage(constants.PkgZsh); err != nil {
-		return fmt.Errorf("failed to install zsh: %w", err)
+	// Get tool-specific configuration
+	toolConfig, err := config.GetToolConfig(toolName)
+	if err != nil {
+		terminal.PrintWarning("Failed to get tool config for %s: %v", toolName, err)
+		// Continue with default installation
 	}
 
-	// Install oh-my-zsh if not present
-	// Check if oh-my-zsh directory already exists
-	if _, err := brew.GetPackageInfo("oh-my-zsh"); err != nil {
-		terminal.PrintInfo("Installing oh-my-zsh...")
-		// oh-my-zsh is not a brew package, install via script
-		if err := installOhMyZsh(); err != nil {
-			terminal.PrintWarning("Failed to install oh-my-zsh: %v", err)
+	// Install the tool via brew
+	if err := brew.InstallPackage(toolName); err != nil {
+		return fmt.Errorf("failed to install %s: %w", toolName, err)
+	}
+
+	// Handle post-install script if configured
+	if toolConfig != nil && toolConfig.PostInstallScript != "" {
+		terminal.PrintInfo("Running post-install script for %s...", toolName)
+		if err := runPostInstallScript(toolConfig.PostInstallScript); err != nil {
+			terminal.PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
 			// Don't fail the whole installation for this
+		}
+	}
+
+	// Handle config check if configured
+	if toolConfig != nil && toolConfig.ConfigCheck {
+		if err := checkToolConfiguration(toolName); err != nil {
+			terminal.PrintWarning("Configuration check failed for %s: %v", toolName, err)
 		}
 	}
 
 	return nil
 }
 
-// installGitWithConfig installs Git and ensures basic configuration
-func installGitWithConfig() error {
-	if err := brew.InstallPackage(constants.PkgGit); err != nil {
-		return fmt.Errorf("failed to install git: %w", err)
-	}
+// runPostInstallScript runs a post-install script for a tool
+func runPostInstallScript(script string) error {
+	// For now, just provide instructions to the user
+	terminal.PrintInfo("To complete setup, run:")
+	terminal.PrintInfo("  %s", script)
+	return nil
+}
 
-	// Check if git is configured, provide guidance if not
+// checkToolConfiguration checks if a tool is properly configured
+func checkToolConfiguration(toolName string) error {
+	switch toolName {
+	case constants.PkgGit:
+		return checkGitConfiguration()
+	default:
+		return nil
+	}
+}
+
+// checkGitConfiguration checks if git is properly configured
+func checkGitConfiguration() error {
 	config, err := config.LoadConfig()
 	if err == nil && (config.Git.Username == "" || config.Git.Email == "") {
 		terminal.PrintInfo("Git installed successfully")
@@ -210,16 +227,49 @@ func installGitWithConfig() error {
 		terminal.PrintInfo("  git config --global user.name 'Your Name'")
 		terminal.PrintInfo("  git config --global user.email 'your.email@example.com'")
 	}
-
 	return nil
 }
 
-// installOhMyZsh installs oh-my-zsh via the official script
-func installOhMyZsh() error {
-	// This would require the system package to run the installation script
-	// For now, we'll just provide instructions
-	terminal.PrintInfo("To complete zsh setup, run:")
-	terminal.PrintInfo("  %s", constants.OhMyZshInstallCmd)
+// listAvailableGroups shows all available groups and their tools
+func listAvailableGroups() error {
+	terminal.PrintHeader("Available Groups")
+
+	groups, err := config.GetAvailableGroups()
+	if err != nil {
+		return constants.NewAnvilError(constants.OpSetup, "list",
+			fmt.Errorf("failed to load groups: %w", err))
+	}
+
+	builtInGroups := config.GetBuiltInGroups()
+
+	// Show built-in groups first
+	terminal.PrintInfo("Built-in Groups:")
+	for _, groupName := range builtInGroups {
+		if tools, exists := groups[groupName]; exists {
+			terminal.PrintInfo("  • %s: %s", groupName, strings.Join(tools, ", "))
+		}
+	}
+
+	// Show custom groups
+	hasCustomGroups := false
+	for groupName := range groups {
+		if !config.IsBuiltInGroup(groupName) {
+			if !hasCustomGroups {
+				terminal.PrintInfo("\nCustom Groups:")
+				hasCustomGroups = true
+			}
+			terminal.PrintInfo("  • %s: %s", groupName, strings.Join(groups[groupName], ", "))
+		}
+	}
+
+	if !hasCustomGroups {
+		terminal.PrintInfo("\nNo custom groups defined.")
+		terminal.PrintInfo("Add custom groups in ~/.anvil/settings.yaml")
+	}
+
+	terminal.PrintInfo("\nUsage: anvil setup [group-name]")
+	terminal.PrintInfo("Example: anvil setup dev")
+
 	return nil
 }
 

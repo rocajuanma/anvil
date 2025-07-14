@@ -156,7 +156,9 @@ This command intelligently determines if the argument is a group name (defined i
 or an application name. If it's not a group, it attempts to install the application directly
 using Homebrew. All installations are validated and errors are handled gracefully.
 
-Supported groups: dev, new-laptop, and custom groups defined in your configuration.`
+Supported groups: dev, new-laptop, and custom groups defined in your configuration.
+
+Use 'anvil setup --list' to see all available groups.`
 
 const PUSH_COMMAND_LONG_DESCRIPTION = `The push command enables you to upload and synchronize your local assets, configurations,
 and dotfiles to GitHub for backup and sharing purposes.
