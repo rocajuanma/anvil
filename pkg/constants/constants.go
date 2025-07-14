@@ -54,6 +54,8 @@ const (
 	BrewList    = "list"
 	BrewInfo    = "info"
 	BrewUpdate  = "update"
+	BrewUpgrade = "upgrade"
+	BrewSearch  = "search"
 )
 
 // Git subcommand constants
@@ -74,7 +76,7 @@ const (
 	DataSubDir     = "data"
 )
 
-// Homebrew package names
+// macOS package names (Homebrew formulae and casks)
 const (
 	PkgGit       = "git"
 	PkgZsh       = "zsh"
@@ -85,6 +87,17 @@ const (
 	Pkg1Password = "1password"
 	PkgDocker    = "docker"
 	PkgKubectl   = "kubectl"
+	PkgNode      = "node"
+	PkgPython    = "python3"
+	PkgGo        = "go"
+	PkgMysql     = "mysql"
+	PkgPostgres  = "postgresql"
+	PkgRedis     = "redis"
+	PkgVim       = "vim"
+	PkgTmux      = "tmux"
+	PkgFigma     = "figma"
+	PkgNotion    = "notion"
+	PkgObsidian  = "obsidian"
 )
 
 // Environment variables
@@ -93,9 +106,10 @@ const (
 	EnvShell  = "SHELL"
 	EnvTerm   = "TERM"
 	EnvHome   = "HOME"
+	EnvPath   = "PATH"
 )
 
-// Oh-my-zsh installation URL
+// Oh-my-zsh installation
 const (
 	OhMyZshInstallURL = "https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
 	OhMyZshInstallCmd = `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
@@ -108,42 +122,41 @@ const (
 )
 
 // Long descriptions for commands
-const ANVIL_LONG_DESCRIPTION = `Anvil is a powerful automation CLI tool designed to streamline development workflows 
+const ANVIL_LONG_DESCRIPTION = `Anvil is a powerful macOS automation CLI tool designed to streamline development workflows 
 and personal tool configuration. It provides a comprehensive suite of commands for managing
-development environments, automating installations, and maintaining consistent configurations
-across different systems.
+development environments, automating installations, and maintaining consistent configurations.
 
 Key features:
-- Automated tool installation and validation
+- Automated tool installation via Homebrew
+- Dynamic group and individual app installation
 - Environment configuration management
-- Asset synchronization with GitHub
 - ASCII art generation for enhanced terminal output
-- Cross-platform compatibility with intelligent defaults`
+- Optimized specifically for macOS`
 
 const INIT_COMMAND_LONG_DESCRIPTION = `The init command bootstraps your Anvil CLI environment by performing a complete
 initialization process. This is the first command you should run after installing Anvil.
 
 What it does:
-• Validates and installs required system tools (Git, cURL, Homebrew on macOS)
+• Validates and installs required system tools (Git, cURL, Homebrew)
 • Creates necessary configuration directories (~/.anvil, ~/.anvil/cache, ~/.anvil/data)
 • Generates a default settings.yaml configuration file with your system preferences
 • Checks your local environment for common development configurations
 • Provides actionable recommendations for completing your setup
 
-The init command is designed to be idempotent - it can be run multiple times safely
-without overwriting existing configurations. It will only create missing components
-and warn you about any environment issues that need attention.
+This command is designed specifically for macOS and requires Homebrew for tool management.`
 
-This command is essential for ensuring Anvil has the proper foundation to operate
-effectively in your development environment.`
+const SETUP_COMMAND_LONG_DESCRIPTION = `The setup command provides dynamic installation of development tools and applications 
+using Homebrew on macOS.
 
-const SETUP_COMMAND_LONG_DESCRIPTION = `The setup command provides automated batch installation of development tools and
-applications using Homebrew (on macOS) or other package managers.
+Usage:
+• anvil setup [group-name]    - Install all tools in a predefined group
+• anvil setup [app-name]      - Install any individual application via brew
 
-This command reads from your Anvil configuration to install predefined sets of
-tools, ensuring consistent development environments across different machines.
-It's particularly useful for setting up new development machines or maintaining
-tool consistency across team members.`
+This command intelligently determines if the argument is a group name (defined in settings.yaml)
+or an application name. If it's not a group, it attempts to install the application directly
+using Homebrew. All installations are validated and errors are handled gracefully.
+
+Supported groups: dev, new-laptop, and custom groups defined in your configuration.`
 
 const PUSH_COMMAND_LONG_DESCRIPTION = `The push command enables you to upload and synchronize your local assets, configurations,
 and dotfiles to GitHub for backup and sharing purposes.

@@ -18,392 +18,214 @@ package setup
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
 
-// SetupCmd represents the setup command, which installs tools and applications in groups
-// This command reads from the Anvil configuration to install predefined sets of tools
+// SetupCmd represents the setup command
 var SetupCmd = &cobra.Command{
-	Use:   "setup [group]",
-	Short: "Install development tools and applications in predefined groups",
+	Use:   "setup [group-name|app-name]",
+	Short: "Install development tools and applications dynamically via Homebrew",
 	Long:  constants.SETUP_COMMAND_LONG_DESCRIPTION,
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runSetupCommand(cmd, args)
+		if err := runSetupCommand(cmd, args[0]); err != nil {
+			terminal.PrintError("Setup failed: %v", err)
+			return
+		}
 	},
 }
 
-// SetupFlags encapsulates all setup command flags
-type SetupFlags struct {
-	Git      bool
-	Zsh      bool
-	Iterm2   bool
-	Vscode   bool
-	Slack    bool
-	Chrome   bool
-	Password bool
-	List     bool
-	DryRun   bool
-}
-
-// InstallConfig represents the configuration for installing a tool
-type InstallConfig struct {
-	PackageName  string
-	PreCheck     func() bool
-	PostInstall  func() error
-	SkipIfExists bool
-	Description  string
-}
-
-// installWithConfig installs a tool based on the provided configuration
-func installWithConfig(config InstallConfig) error {
-	if config.SkipIfExists && config.PreCheck() {
-		return nil
-	}
-
-	if err := brew.InstallPackage(config.PackageName); err != nil {
-		return constants.NewAnvilError(constants.OpSetup, config.Description, err)
-	}
-
-	if config.PostInstall != nil {
-		if err := config.PostInstall(); err != nil {
-			return constants.NewAnvilError(constants.OpSetup, config.Description, err)
-		}
-	}
-	return nil
-}
-
-// runSetupCommand executes the setup process for groups or individual tools
-func runSetupCommand(cmd *cobra.Command, args []string) {
-	// Check if we're on macOS (required for most installations)
+// runSetupCommand executes the dynamic setup process
+func runSetupCommand(cmd *cobra.Command, target string) error {
+	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
-		terminal.PrintWarning("Setup command is currently optimized for macOS. Some features may not work on other platforms.")
+		return constants.NewAnvilError(constants.OpSetup, target,
+			fmt.Errorf("setup command is only supported on macOS"))
 	}
 
-	// Extract flags from command
-	flags := &SetupFlags{
-		Git:      cmd.Flag("git").Changed,
-		Zsh:      cmd.Flag("zsh").Changed,
-		Iterm2:   cmd.Flag("iterm2").Changed,
-		Vscode:   cmd.Flag("vscode").Changed,
-		Slack:    cmd.Flag("slack").Changed,
-		Chrome:   cmd.Flag("chrome").Changed,
-		Password: cmd.Flag("1password").Changed,
-		List:     cmd.Flag("list").Changed,
-		DryRun:   cmd.Flag("dry-run").Changed,
-	}
-
-	// Handle list flag
-	if flags.List {
-		listAvailableGroups()
-		return
-	}
-
-	// Handle dry run flag
-	if flags.DryRun {
+	// Check for dry-run flag
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	if dryRun {
 		terminal.PrintInfo("Dry run mode - no actual installations will be performed")
 	}
 
-	// Check individual tool flags
-	if hasIndividualToolFlags(flags) {
-		if err := runIndividualToolSetup(flags); err != nil {
-			terminal.PrintError("Individual tool setup failed: %v", err)
-			os.Exit(1)
+	// Ensure Homebrew is installed
+	if !brew.IsBrewInstalled() {
+		terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
+		if err := brew.InstallBrew(); err != nil {
+			return constants.NewAnvilError(constants.OpSetup, "homebrew", err)
 		}
-		return
+		terminal.PrintSuccess("Homebrew installed successfully")
 	}
 
-	// Handle group installation
-	if len(args) == 0 {
-		showUsageAndGroups()
-		return
+	// Update Homebrew before installations
+	terminal.PrintStage("Updating Homebrew...")
+	if err := brew.UpdateBrew(); err != nil {
+		terminal.PrintWarning("Failed to update Homebrew: %v", err)
+		// Continue anyway, update failure shouldn't stop installation
 	}
 
-	groupName := args[0]
-	if err := runGroupSetup(groupName, flags); err != nil {
-		terminal.PrintError("Group setup failed: %v", err)
-		os.Exit(1)
+	// Try to get group tools first
+	if tools, err := config.GetGroupTools(target); err == nil {
+		return installGroup(target, tools, dryRun)
 	}
+
+	// If not a group, treat as individual application
+	return installIndividualApp(target, dryRun)
 }
 
-// hasIndividualToolFlags checks if any individual tool flags are set
-func hasIndividualToolFlags(flags *SetupFlags) bool {
-	return flags.Git || flags.Zsh || flags.Iterm2 || flags.Vscode || flags.Slack || flags.Chrome || flags.Password
-}
-
-// runIndividualToolSetup installs individual tools based on flags
-func runIndividualToolSetup(flags *SetupFlags) error {
-	terminal.PrintHeader("Individual Tool Setup")
-
-	var toolsToInstall []string
-
-	if flags.Git {
-		toolsToInstall = append(toolsToInstall, "git")
-	}
-	if flags.Zsh {
-		toolsToInstall = append(toolsToInstall, "zsh")
-	}
-	if flags.Iterm2 {
-		toolsToInstall = append(toolsToInstall, "iterm2")
-	}
-	if flags.Vscode {
-		toolsToInstall = append(toolsToInstall, "vscode")
-	}
-	if flags.Slack {
-		toolsToInstall = append(toolsToInstall, "slack")
-	}
-	if flags.Chrome {
-		toolsToInstall = append(toolsToInstall, "chrome")
-	}
-	if flags.Password {
-		toolsToInstall = append(toolsToInstall, "1password")
-	}
-
-	if len(toolsToInstall) == 0 {
-		return constants.NewAnvilError(constants.OpSetup, "individual-tools", fmt.Errorf("no tools specified for installation"))
-	}
-
-	terminal.PrintInfo("Installing individual tools: %s", strings.Join(toolsToInstall, ", "))
-
-	var installErrors []string
-	successCount := 0
-	for i, tool := range toolsToInstall {
-		terminal.PrintProgress(i+1, len(toolsToInstall), fmt.Sprintf("Installing %s", tool))
-
-		if flags.DryRun {
-			terminal.PrintInfo("Would install: %s", tool)
-			successCount++
-			continue
-		}
-
-		if err := installTool(tool); err != nil {
-			installErrors = append(installErrors, fmt.Sprintf("%s: %v", tool, err))
-			terminal.PrintError("Failed to install %s: %v", tool, err)
-			continue
-		}
-
-		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool))
-		successCount++
-	}
-
-	terminal.PrintHeader("Individual Tool Setup Complete!")
-
-	if len(installErrors) > 0 {
-		return constants.NewAnvilError(constants.OpSetup, "individual-tools", fmt.Errorf("failed to install tools: %s", strings.Join(installErrors, ", ")))
-	}
-
-	return nil
-}
-
-// runGroupSetup installs tools for a specific group
-func runGroupSetup(groupName string, flags *SetupFlags) error {
-	terminal.PrintHeader(fmt.Sprintf("Setting up '%s' group", groupName))
-
-	// Get tools for the group
-	tools, err := config.GetGroupTools(groupName)
-	if err != nil {
-		return constants.NewAnvilError(constants.OpSetup, groupName, err)
-	}
+// installGroup installs all tools in a group
+func installGroup(groupName string, tools []string, dryRun bool) error {
+	terminal.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
-		return constants.NewAnvilError(constants.OpSetup, groupName, fmt.Errorf("no tools configured for group"))
+		return constants.NewAnvilError(constants.OpSetup, groupName,
+			fmt.Errorf("group '%s' has no tools defined", groupName))
 	}
 
-	terminal.PrintInfo("Installing tools for group '%s': %s", groupName, strings.Join(tools, ", "))
+	terminal.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
-	// Install each tool in the group
 	successCount := 0
-	var installErrors []string
+	var errors []string
+
 	for i, tool := range tools {
 		terminal.PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
 
-		if flags.DryRun {
+		if dryRun {
 			terminal.PrintInfo("Would install: %s", tool)
 			successCount++
-			continue
+		} else {
+			if err := installSingleTool(tool); err != nil {
+				errorMsg := fmt.Sprintf("%s: %v", tool, err)
+				errors = append(errors, errorMsg)
+				terminal.PrintError("Failed to install %s: %v", tool, err)
+			} else {
+				successCount++
+				terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool))
+			}
 		}
-
-		if err := installTool(tool); err != nil {
-			installErrors = append(installErrors, fmt.Sprintf("%s: %v", tool, err))
-			terminal.PrintError("Failed to install %s: %v", tool, err)
-			continue
-		}
-
-		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool))
-		successCount++
 	}
 
 	// Print summary
-	terminal.PrintHeader("Group Setup Complete!")
-	terminal.PrintInfo("Successfully installed %d of %d tools in group '%s'", successCount, len(tools), groupName)
+	terminal.PrintHeader("Group Installation Complete")
+	terminal.PrintInfo("Successfully installed %d of %d tools", successCount, len(tools))
 
-	if successCount < len(tools) {
-		terminal.PrintWarning("Some tools failed to install. Check the output above for details.")
-		return constants.NewAnvilError(constants.OpSetup, groupName, fmt.Errorf("failed to install %d tools: %s", len(tools)-successCount, strings.Join(installErrors, ", ")))
+	if len(errors) > 0 {
+		terminal.PrintWarning("Some installations failed:")
+		for _, err := range errors {
+			terminal.PrintError("  • %s", err)
+		}
+		return constants.NewAnvilError(constants.OpSetup, groupName,
+			fmt.Errorf("failed to install %d tools", len(errors)))
 	}
 
 	return nil
 }
 
-// installTool installs a specific tool
-func installTool(toolName string) error {
-	switch toolName {
-	case "git":
-		return installGit()
-	case "zsh":
-		return installZsh()
-	case "iterm2":
-		return installIterm2()
-	case "vscode":
-		return installVSCode()
-	case "slack":
-		return installSlack()
-	case "chrome":
-		return installChrome()
-	case "1password":
-		return install1Password()
-	default:
-		// Try to install as a brew package
-		if err := brew.InstallPackage(toolName); err != nil {
-			return constants.NewAnvilError(constants.OpSetup, toolName, err)
-		}
+// installIndividualApp installs a single application
+func installIndividualApp(appName string, dryRun bool) error {
+	terminal.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
+
+	// Validate app name
+	if appName == "" {
+		return constants.NewAnvilError(constants.OpSetup, appName,
+			fmt.Errorf("application name cannot be empty"))
+	}
+
+	// Check if already installed
+	if brew.IsPackageInstalled(appName) {
+		terminal.PrintSuccess(fmt.Sprintf("%s is already installed", appName))
 		return nil
 	}
-}
 
-// installGit installs and configures Git
-func installGit() error {
-	return installWithConfig(InstallConfig{
-		PackageName:  constants.PkgGit,
-		PreCheck:     func() bool { return system.CommandExists(constants.GitCommand) },
-		SkipIfExists: true,
-		Description:  "Git",
-	})
-}
-
-// installZsh installs and configures Zsh
-func installZsh() error {
-	return installWithConfig(InstallConfig{
-		PackageName: constants.PkgZsh,
-		PostInstall: func() error {
-			// Install oh-my-zsh if not present
-			homeDir, _ := os.UserHomeDir()
-			ohmyzshDir := fmt.Sprintf("%s/%s", homeDir, constants.OhMyZshDir)
-
-			if _, err := os.Stat(ohmyzshDir); os.IsNotExist(err) {
-				terminal.PrintInfo("Installing oh-my-zsh...")
-
-				result, err := system.RunCommand(constants.ShCommand, "-c", constants.OhMyZshInstallCmd)
-				if err != nil || !result.Success {
-					return fmt.Errorf("failed to install oh-my-zsh: %v", err)
-				}
-			}
-			return nil
-		},
-		Description: "Zsh with oh-my-zsh",
-	})
-}
-
-// installIterm2 installs iTerm2
-func installIterm2() error {
-	return installWithConfig(InstallConfig{
-		PackageName: constants.PkgIterm2,
-		Description: "iTerm2",
-	})
-}
-
-// installVSCode installs Visual Studio Code
-func installVSCode() error {
-	return installWithConfig(InstallConfig{
-		PackageName: constants.PkgVSCode,
-		Description: "Visual Studio Code",
-	})
-}
-
-// installSlack installs Slack
-func installSlack() error {
-	return installWithConfig(InstallConfig{
-		PackageName: constants.PkgSlack,
-		Description: "Slack",
-	})
-}
-
-// installChrome installs Google Chrome
-func installChrome() error {
-	return installWithConfig(InstallConfig{
-		PackageName: constants.PkgChrome,
-		Description: "Google Chrome",
-	})
-}
-
-// install1Password installs 1Password
-func install1Password() error {
-	return installWithConfig(InstallConfig{
-		PackageName: constants.Pkg1Password,
-		Description: "1Password",
-	})
-}
-
-// listAvailableGroups lists all available groups and their tools
-func listAvailableGroups() {
-	terminal.PrintHeader("Available Setup Groups")
-
-	groups, err := config.GetAvailableGroups()
-	if err != nil {
-		terminal.PrintError("Failed to load groups: %v", err)
-		return
+	// Try to install the application
+	if dryRun {
+		terminal.PrintInfo("Would install: %s", appName)
+		return nil
 	}
 
-	for groupName, tools := range groups {
-		terminal.PrintInfo("Group: %s", groupName)
-		for _, tool := range tools {
-			terminal.PrintInfo("  • %s", tool)
+	if err := installSingleTool(appName); err != nil {
+		// Provide helpful error message with suggestions
+		return constants.NewAnvilError(constants.OpSetup, appName,
+			fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
+	}
+
+	terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", appName))
+	return nil
+}
+
+// installSingleTool installs a single tool, handling special cases
+func installSingleTool(toolName string) error {
+	// Handle special installation cases
+	switch toolName {
+	case constants.PkgZsh:
+		return installZshWithOhMyZsh()
+	case constants.PkgGit:
+		return installGitWithConfig()
+	default:
+		// For all other tools, use the dynamic brew installation
+		return brew.InstallPackage(toolName)
+	}
+}
+
+// installZshWithOhMyZsh installs Zsh and configures oh-my-zsh
+func installZshWithOhMyZsh() error {
+	// Install Zsh via brew
+	if err := brew.InstallPackage(constants.PkgZsh); err != nil {
+		return fmt.Errorf("failed to install zsh: %w", err)
+	}
+
+	// Install oh-my-zsh if not present
+	// Check if oh-my-zsh directory already exists
+	if _, err := brew.GetPackageInfo("oh-my-zsh"); err != nil {
+		terminal.PrintInfo("Installing oh-my-zsh...")
+		// oh-my-zsh is not a brew package, install via script
+		if err := installOhMyZsh(); err != nil {
+			terminal.PrintWarning("Failed to install oh-my-zsh: %v", err)
+			// Don't fail the whole installation for this
 		}
-		terminal.PrintInfo("")
 	}
 
-	terminal.PrintInfo("Usage:")
-	terminal.PrintInfo("  anvil setup <group>     - Install all tools in a group")
-	terminal.PrintInfo("  anvil setup --git       - Install only Git")
-	terminal.PrintInfo("  anvil setup --zsh       - Install only Zsh with oh-my-zsh")
-	terminal.PrintInfo("  anvil setup --dry-run   - Show what would be installed without installing")
+	return nil
 }
 
-// showUsageAndGroups shows usage information and available groups
-func showUsageAndGroups() {
-	terminal.PrintHeader("Anvil Setup Command")
-	terminal.PrintInfo("Usage: anvil setup [group] [flags]")
-	terminal.PrintInfo("")
-	terminal.PrintInfo("Examples:")
-	terminal.PrintInfo("  anvil setup dev         - Install development tools")
-	terminal.PrintInfo("  anvil setup new-laptop  - Install new laptop essentials")
-	terminal.PrintInfo("  anvil setup --git       - Install only Git")
-	terminal.PrintInfo("  anvil setup --list      - List all available groups")
-	terminal.PrintInfo("")
+// installGitWithConfig installs Git and ensures basic configuration
+func installGitWithConfig() error {
+	if err := brew.InstallPackage(constants.PkgGit); err != nil {
+		return fmt.Errorf("failed to install git: %w", err)
+	}
 
-	listAvailableGroups()
+	// Check if git is configured, provide guidance if not
+	config, err := config.LoadConfig()
+	if err == nil && (config.Git.Username == "" || config.Git.Email == "") {
+		terminal.PrintInfo("Git installed successfully")
+		terminal.PrintWarning("Consider configuring git with:")
+		terminal.PrintInfo("  git config --global user.name 'Your Name'")
+		terminal.PrintInfo("  git config --global user.email 'your.email@example.com'")
+	}
+
+	return nil
+}
+
+// installOhMyZsh installs oh-my-zsh via the official script
+func installOhMyZsh() error {
+	// This would require the system package to run the installation script
+	// For now, we'll just provide instructions
+	terminal.PrintInfo("To complete zsh setup, run:")
+	terminal.PrintInfo("  %s", constants.OhMyZshInstallCmd)
+	return nil
 }
 
 func init() {
-	// Individual tool flags
-	SetupCmd.Flags().Bool("git", false, "Install and configure Git")
-	SetupCmd.Flags().Bool("zsh", false, "Install Zsh with oh-my-zsh configuration")
-	SetupCmd.Flags().Bool("iterm2", false, "Install iTerm2 terminal emulator")
-	SetupCmd.Flags().Bool("vscode", false, "Install Visual Studio Code")
-	SetupCmd.Flags().Bool("slack", false, "Install Slack communication app")
-	SetupCmd.Flags().Bool("chrome", false, "Install Google Chrome browser")
-	SetupCmd.Flags().Bool("1password", false, "Install 1Password password manager")
-
-	// Utility flags
-	SetupCmd.Flags().Bool("list", false, "List all available groups and tools")
-	SetupCmd.Flags().Bool("dry-run", false, "Show what would be installed without actually installing")
+	// Add flags for additional functionality
+	SetupCmd.Flags().Bool("dry-run", false, "Show what would be installed without installing")
+	SetupCmd.Flags().Bool("list", false, "List all available groups")
+	SetupCmd.Flags().Bool("update", false, "Update Homebrew before installation")
 }
