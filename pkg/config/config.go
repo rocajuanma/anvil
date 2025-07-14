@@ -18,6 +18,26 @@ var (
 	configCacheMutex sync.RWMutex
 )
 
+// ToolInstallConfig represents configuration for tool-specific installation
+type ToolInstallConfig struct {
+	PostInstallScript string            `yaml:"post_install_script,omitempty"`
+	EnvironmentSetup  map[string]string `yaml:"environment_setup,omitempty"`
+	ConfigCheck       bool              `yaml:"config_check,omitempty"`
+	Dependencies      []string          `yaml:"dependencies,omitempty"`
+}
+
+// AnvilGroups represents grouped tool configurations
+type AnvilGroups struct {
+	Dev       []string            `yaml:"dev"`
+	NewLaptop []string            `yaml:"new-laptop"`
+	Custom    map[string][]string `yaml:"custom"`
+}
+
+// AnvilToolConfigs represents tool-specific configurations
+type AnvilToolConfigs struct {
+	Tools map[string]ToolInstallConfig `yaml:"tools"`
+}
+
 // AnvilConfig represents the main anvil configuration
 type AnvilConfig struct {
 	Version     string            `yaml:"version"`
@@ -26,6 +46,7 @@ type AnvilConfig struct {
 	Groups      AnvilGroups       `yaml:"groups"`
 	Git         GitConfig         `yaml:"git"`
 	Environment map[string]string `yaml:"environment"`
+	ToolConfigs AnvilToolConfigs  `yaml:"tool_configs,omitempty"`
 }
 
 // AnvilDirectories represents directory configurations
@@ -39,13 +60,6 @@ type AnvilDirectories struct {
 type AnvilTools struct {
 	RequiredTools []string `yaml:"required_tools"`
 	OptionalTools []string `yaml:"optional_tools"`
-}
-
-// AnvilGroups represents grouped tool configurations
-type AnvilGroups struct {
-	Dev       []string            `yaml:"dev"`
-	NewLaptop []string            `yaml:"new-laptop"`
-	Custom    map[string][]string `yaml:"custom"`
 }
 
 // GitConfig represents git configuration
@@ -108,6 +122,19 @@ func GetDefaultConfig() *AnvilConfig {
 			Email:    "",
 		},
 		Environment: make(map[string]string),
+		ToolConfigs: AnvilToolConfigs{
+			Tools: map[string]ToolInstallConfig{
+				constants.PkgZsh: {
+					PostInstallScript: constants.OhMyZshInstallCmd,
+					ConfigCheck:       false,
+					Dependencies:      []string{},
+				},
+				constants.PkgGit: {
+					ConfigCheck:  true,
+					Dependencies: []string{},
+				},
+			},
+		},
 	}
 }
 
@@ -213,17 +240,20 @@ func GetGroupTools(groupName string) ([]string, error) {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
+	// First check built-in groups
 	switch groupName {
 	case "dev":
 		return config.Groups.Dev, nil
 	case "new-laptop":
 		return config.Groups.NewLaptop, nil
-	default:
-		if tools, exists := config.Groups.Custom[groupName]; exists {
-			return tools, nil
-		}
-		return nil, fmt.Errorf("group '%s' not found", groupName)
 	}
+
+	// Then check custom groups
+	if tools, exists := config.Groups.Custom[groupName]; exists {
+		return tools, nil
+	}
+
+	return nil, fmt.Errorf("group '%s' not found", groupName)
 }
 
 // GetAvailableGroups returns all available groups
@@ -234,14 +264,33 @@ func GetAvailableGroups() (map[string][]string, error) {
 	}
 
 	groups := make(map[string][]string)
+
+	// Add built-in groups
 	groups["dev"] = config.Groups.Dev
 	groups["new-laptop"] = config.Groups.NewLaptop
 
+	// Add custom groups
 	for name, tools := range config.Groups.Custom {
 		groups[name] = tools
 	}
 
 	return groups, nil
+}
+
+// GetBuiltInGroups returns the list of built-in group names
+func GetBuiltInGroups() []string {
+	return []string{"dev", "new-laptop"}
+}
+
+// IsBuiltInGroup checks if a group name is a built-in group
+func IsBuiltInGroup(groupName string) bool {
+	builtInGroups := GetBuiltInGroups()
+	for _, group := range builtInGroups {
+		if group == groupName {
+			return true
+		}
+	}
+	return false
 }
 
 // AddCustomGroup adds a new custom group
@@ -318,4 +367,40 @@ func GetCacheDirectory() string {
 // GetDataDirectory returns the anvil data directory
 func GetDataDirectory() string {
 	return filepath.Join(GetConfigDirectory(), constants.DataSubDir)
+}
+
+// GetToolConfig returns the configuration for a specific tool
+func GetToolConfig(toolName string) (*ToolInstallConfig, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
+		return &toolConfig, nil
+	}
+
+	// Return default config if not found
+	return &ToolInstallConfig{
+		PostInstallScript: "",
+		EnvironmentSetup:  make(map[string]string),
+		ConfigCheck:       false,
+		Dependencies:      []string{},
+	}, nil
+}
+
+// SetToolConfig sets the configuration for a specific tool
+func SetToolConfig(toolName string, config ToolInstallConfig) error {
+	anvilConfig, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if anvilConfig.ToolConfigs.Tools == nil {
+		anvilConfig.ToolConfigs.Tools = make(map[string]ToolInstallConfig)
+	}
+
+	anvilConfig.ToolConfigs.Tools[toolName] = config
+
+	return SaveConfig(anvilConfig)
 }
