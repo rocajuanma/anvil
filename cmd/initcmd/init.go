@@ -17,7 +17,9 @@ limitations under the License.
 package initcmd
 
 import (
+	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
@@ -26,12 +28,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// InitCmd represents the init command, which bootstraps the Anvil CLI environment
-// This command performs a complete initialization process including tool validation,
-// directory creation, configuration generation, and environment checking.
+// InitCmd represents the init command for macOS environment setup
 var InitCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Bootstrap and initialize your Anvil CLI environment",
+	Short: "Initialize Anvil CLI environment for macOS",
 	Long:  constants.INIT_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runInitCommand(); err != nil {
@@ -41,13 +41,17 @@ var InitCmd = &cobra.Command{
 	},
 }
 
-// runInitCommand executes the complete initialization process for Anvil CLI
-// This function orchestrates all initialization stages and handles errors gracefully
+// runInitCommand executes the complete initialization process for Anvil CLI on macOS
 func runInitCommand() error {
 	terminal.PrintHeader("Anvil Initialization")
 
+	// Ensure we're running on macOS
+	if runtime.GOOS != "darwin" {
+		return constants.NewAnvilError(constants.OpInit, "platform",
+			fmt.Errorf("Anvil is only supported on macOS"))
+	}
+
 	// Stage 1: Tool validation and installation
-	// This stage ensures all required tools are available and installs missing ones
 	terminal.PrintStage("Validating and installing required tools...")
 	if err := tools.ValidateAndInstallTools(); err != nil {
 		return constants.NewAnvilError(constants.OpInit, "validate-tools", err)
@@ -55,7 +59,6 @@ func runInitCommand() error {
 	terminal.PrintSuccess("All required tools are available")
 
 	// Stage 2: Create necessary directories
-	// This stage creates the Anvil configuration directory structure
 	terminal.PrintStage("Creating necessary directories...")
 	if err := config.CreateDirectories(); err != nil {
 		return constants.NewAnvilError(constants.OpInit, "create-directories", err)
@@ -63,7 +66,6 @@ func runInitCommand() error {
 	terminal.PrintSuccess("Directories created successfully")
 
 	// Stage 3: Generate default settings.yaml
-	// This stage creates the main configuration file with sensible defaults
 	terminal.PrintStage("Generating default settings.yaml...")
 	if err := config.GenerateDefaultSettings(); err != nil {
 		return constants.NewAnvilError(constants.OpInit, "generate-settings", err)
@@ -71,7 +73,6 @@ func runInitCommand() error {
 	terminal.PrintSuccess("Default settings.yaml generated")
 
 	// Stage 4: Check local environment configurations
-	// This stage validates the local development environment and provides recommendations
 	terminal.PrintStage("Checking local environment configurations...")
 	warnings := config.CheckEnvironmentConfigurations()
 	if len(warnings) > 0 {
@@ -84,7 +85,6 @@ func runInitCommand() error {
 	}
 
 	// Stage 5: Print completion message and next steps
-	// This stage provides the user with completion status and actionable next steps
 	terminal.PrintHeader("Initialization Complete!")
 	terminal.PrintInfo("Anvil has been successfully initialized and is ready to use.")
 	terminal.PrintInfo("Configuration files have been created in: %s", config.GetConfigDirectory())
@@ -100,18 +100,18 @@ func runInitCommand() error {
 
 	// Final usage guidance
 	terminal.PrintInfo("\nYou can now use:")
-	terminal.PrintInfo("  • 'anvil --help' to see all available commands")
-	terminal.PrintInfo("  • 'anvil setup' to install development tools")
-	terminal.PrintInfo("  • 'anvil pull/push' to synchronize assets with GitHub")
-	terminal.PrintInfo("  • Edit ~/.anvil/settings.yaml to customize your configuration")
+	terminal.PrintInfo("  • 'anvil setup [group]' to install development tool groups")
+	terminal.PrintInfo("  • 'anvil setup [app]' to install any individual application")
+	terminal.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
+
+	terminal.PrintInfo("\nAvailable groups: dev, new-laptop")
+	terminal.PrintInfo("Example: 'anvil setup dev' or 'anvil setup firefox'")
 
 	return nil
 }
 
 func init() {
-	// Future flag definitions can be added here
-	// Example flags that might be useful:
-	// InitCmd.Flags().BoolP("force", "f", false, "Force re-initialization even if already initialized")
-	// InitCmd.Flags().BoolP("minimal", "m", false, "Perform minimal initialization without optional tools")
-	// InitCmd.Flags().StringP("config", "c", "", "Use custom configuration file")
+	// Add flags for additional functionality
+	InitCmd.Flags().Bool("force", false, "Force re-initialization even if already initialized")
+	InitCmd.Flags().Bool("skip-tools", false, "Skip tool validation and installation")
 }

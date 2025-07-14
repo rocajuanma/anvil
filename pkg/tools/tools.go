@@ -5,11 +5,12 @@ import (
 	"runtime"
 
 	"github.com/rocajuanma/anvil/pkg/brew"
+	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
 
-// Tool represents a system tool
+// Tool represents a macOS system tool
 type Tool struct {
 	Name        string
 	Command     string
@@ -18,36 +19,36 @@ type Tool struct {
 	Description string
 }
 
-// GetRequiredTools returns the list of required tools for anvil
+// GetRequiredTools returns the list of required tools for anvil on macOS
 func GetRequiredTools() []Tool {
 	return []Tool{
 		{
 			Name:        "Git",
-			Command:     "git",
+			Command:     constants.GitCommand,
 			Required:    true,
 			InstallWith: "brew",
 			Description: "Version control system",
 		},
 		{
 			Name:        "cURL",
-			Command:     "curl",
+			Command:     constants.CurlCommand,
 			Required:    true,
 			InstallWith: "system",
 			Description: "Command line tool for transferring data",
 		},
-	}
-}
-
-// GetOptionalTools returns the list of optional tools for anvil
-func GetOptionalTools() []Tool {
-	return []Tool{
 		{
 			Name:        "Homebrew",
-			Command:     "brew",
-			Required:    false,
+			Command:     constants.BrewCommand,
+			Required:    true,
 			InstallWith: "script",
 			Description: "Package manager for macOS",
 		},
+	}
+}
+
+// GetOptionalTools returns the list of optional tools for anvil on macOS
+func GetOptionalTools() []Tool {
+	return []Tool{
 		{
 			Name:        "Docker",
 			Command:     "docker",
@@ -65,17 +66,20 @@ func GetOptionalTools() []Tool {
 	}
 }
 
-// ValidateAndInstallTools validates and installs required tools
+// ValidateAndInstallTools validates and installs required tools on macOS
 func ValidateAndInstallTools() error {
-	// First, ensure Homebrew is installed on macOS
-	if runtime.GOOS == "darwin" {
-		if !brew.IsBrewInstalled() {
-			terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
-			if err := brew.InstallBrew(); err != nil {
-				return fmt.Errorf("failed to install Homebrew: %w", err)
-			}
-			terminal.PrintSuccess("Homebrew installed successfully")
+	// Ensure we're running on macOS
+	if runtime.GOOS != "darwin" {
+		return fmt.Errorf("Anvil only supports macOS")
+	}
+
+	// First, ensure Homebrew is installed
+	if !brew.IsBrewInstalled() {
+		terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
+		if err := brew.InstallBrew(); err != nil {
+			return fmt.Errorf("failed to install Homebrew: %w", err)
 		}
+		terminal.PrintSuccess("Homebrew installed successfully")
 	}
 
 	// Validate required tools
@@ -97,7 +101,7 @@ func ValidateAndInstallTools() error {
 	return nil
 }
 
-// validateTool validates a single tool
+// validateTool validates a single tool on macOS
 func validateTool(tool Tool) error {
 	if system.CommandExists(tool.Command) {
 		terminal.PrintInfo("✓ %s is available", tool.Name)
@@ -114,15 +118,11 @@ func validateTool(tool Tool) error {
 
 	switch tool.InstallWith {
 	case "brew":
-		if runtime.GOOS == "darwin" {
-			if err := brew.InstallPackage(tool.Command); err != nil {
-				return fmt.Errorf("failed to install %s with brew: %w", tool.Name, err)
-			}
-		} else {
-			return fmt.Errorf("%s requires manual installation on %s", tool.Name, runtime.GOOS)
+		if err := brew.InstallPackage(tool.Command); err != nil {
+			return fmt.Errorf("failed to install %s with brew: %w", tool.Name, err)
 		}
 	case "script":
-		if tool.Command == "brew" {
+		if tool.Command == constants.BrewCommand {
 			if err := brew.InstallBrew(); err != nil {
 				return fmt.Errorf("failed to install %s: %w", tool.Name, err)
 			}
@@ -130,8 +130,8 @@ func validateTool(tool Tool) error {
 			return fmt.Errorf("unsupported script installation for %s", tool.Name)
 		}
 	case "system":
-		// System tools should be available by default
-		return fmt.Errorf("%s is not available on this system", tool.Name)
+		// cURL should be available by default on macOS
+		return fmt.Errorf("%s is not available on this macOS system", tool.Name)
 	default:
 		return fmt.Errorf("unknown installation method for %s", tool.Name)
 	}
@@ -158,9 +158,9 @@ func GetToolInfo(toolName string) (*Tool, error) {
 	return nil, fmt.Errorf("tool %s not found", toolName)
 }
 
-// ListTools lists all available tools
+// ListTools lists all available tools for macOS
 func ListTools() {
-	terminal.PrintHeader("Required Tools")
+	terminal.PrintHeader("Required Tools for macOS")
 	for _, tool := range GetRequiredTools() {
 		status := "❌ Not installed"
 		if system.CommandExists(tool.Command) {
@@ -169,7 +169,7 @@ func ListTools() {
 		terminal.PrintInfo("- %s (%s): %s - %s", tool.Name, tool.Command, tool.Description, status)
 	}
 
-	terminal.PrintHeader("Optional Tools")
+	terminal.PrintHeader("Optional Tools for macOS")
 	for _, tool := range GetOptionalTools() {
 		status := "❌ Not installed"
 		if system.CommandExists(tool.Command) {
@@ -179,8 +179,12 @@ func ListTools() {
 	}
 }
 
-// CheckToolsStatus checks the status of all tools
+// CheckToolsStatus checks the status of all tools on macOS
 func CheckToolsStatus() (map[string]bool, error) {
+	if runtime.GOOS != "darwin" {
+		return nil, fmt.Errorf("tool status check only supported on macOS")
+	}
+
 	status := make(map[string]bool)
 
 	allTools := append(GetRequiredTools(), GetOptionalTools()...)
