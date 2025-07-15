@@ -119,8 +119,8 @@ func TestDrawCmd(t *testing.T) {
 
 func TestDrawCmdFlags(t *testing.T) {
 	// Test that the command has proper structure
-	if DrawCmd.Use != "draw" {
-		t.Errorf("Expected Use to be 'draw', got '%s'", DrawCmd.Use)
+	if DrawCmd.Use != "draw [font]" {
+		t.Errorf("Expected Use to be 'draw [font]', got '%s'", DrawCmd.Use)
 	}
 
 	if DrawCmd.Short == "" {

@@ -276,6 +276,4 @@ func GetGlobalOutputHandler() interfaces.OutputHandler {
 }
 
 // Convenience functions that use the global handler
-func PrintWithLevel(level OutputLevel, format string, args ...interface{}) {
-	globalOutputHandler.PrintWithLevel(level, format, args...)
-}
+// PrintWithLevel is removed to avoid interface conflicts

@@ -64,7 +64,6 @@ type OutputHandler interface {
 	PrintProgress(current, total int, message string)
 	Confirm(message string) bool
 	IsSupported() bool
-	PrintWithLevel(level int, format string, args ...interface{})
 }
 
 // ConfigManager defines the interface for configuration management
