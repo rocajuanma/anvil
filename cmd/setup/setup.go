@@ -24,6 +24,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +47,7 @@ var SetupCmd = &cobra.Command{
 func runSetupCommand(cmd *cobra.Command, target string) error {
 	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
-		return constants.NewAnvilError(constants.OpSetup, target,
+		return errors.NewPlatformError(constants.OpSetup, target,
 			fmt.Errorf("setup command is only supported on macOS"))
 	}
 
@@ -66,7 +67,7 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 	if !brew.IsBrewInstalled() {
 		terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
 		if err := brew.InstallBrew(); err != nil {
-			return constants.NewAnvilError(constants.OpSetup, "homebrew", err)
+			return errors.NewInstallationError(constants.OpSetup, "homebrew", err)
 		}
 		terminal.PrintSuccess("Homebrew installed successfully")
 	}
@@ -92,14 +93,14 @@ func installGroup(groupName string, tools []string, dryRun bool) error {
 	terminal.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
-		return constants.NewAnvilError(constants.OpSetup, groupName,
+		return errors.NewInstallationError(constants.OpSetup, groupName,
 			fmt.Errorf("group '%s' has no tools defined", groupName))
 	}
 
 	terminal.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
 	successCount := 0
-	var errors []string
+	var installErrors []string
 
 	for i, tool := range tools {
 		terminal.PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
@@ -110,7 +111,7 @@ func installGroup(groupName string, tools []string, dryRun bool) error {
 		} else {
 			if err := installSingleTool(tool); err != nil {
 				errorMsg := fmt.Sprintf("%s: %v", tool, err)
-				errors = append(errors, errorMsg)
+				installErrors = append(installErrors, errorMsg)
 				terminal.PrintError("Failed to install %s: %v", tool, err)
 			} else {
 				successCount++
@@ -123,13 +124,13 @@ func installGroup(groupName string, tools []string, dryRun bool) error {
 	terminal.PrintHeader("Group Installation Complete")
 	terminal.PrintInfo("Successfully installed %d of %d tools", successCount, len(tools))
 
-	if len(errors) > 0 {
+	if len(installErrors) > 0 {
 		terminal.PrintWarning("Some installations failed:")
-		for _, err := range errors {
+		for _, err := range installErrors {
 			terminal.PrintError("  • %s", err)
 		}
-		return constants.NewAnvilError(constants.OpSetup, groupName,
-			fmt.Errorf("failed to install %d tools", len(errors)))
+		return errors.NewInstallationError(constants.OpSetup, groupName,
+			fmt.Errorf("failed to install %d tools", len(installErrors)))
 	}
 
 	return nil
@@ -141,7 +142,7 @@ func installIndividualApp(appName string, dryRun bool) error {
 
 	// Validate app name
 	if appName == "" {
-		return constants.NewAnvilError(constants.OpSetup, appName,
+		return errors.NewInstallationError(constants.OpSetup, appName,
 			fmt.Errorf("application name cannot be empty"))
 	}
 
@@ -159,7 +160,7 @@ func installIndividualApp(appName string, dryRun bool) error {
 
 	if err := installSingleTool(appName); err != nil {
 		// Provide helpful error message with suggestions
-		return constants.NewAnvilError(constants.OpSetup, appName,
+		return errors.NewInstallationError(constants.OpSetup, appName,
 			fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
 	}
 
@@ -236,7 +237,7 @@ func listAvailableGroups() error {
 
 	groups, err := config.GetAvailableGroups()
 	if err != nil {
-		return constants.NewAnvilError(constants.OpSetup, "list",
+		return errors.NewConfigurationError(constants.OpSetup, "list",
 			fmt.Errorf("failed to load groups: %w", err))
 	}
 

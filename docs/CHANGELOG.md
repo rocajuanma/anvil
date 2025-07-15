@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Configuration Caching** - Thread-safe configuration caching with double-checked locking pattern
 - **Context-Aware Commands** - Command execution with configurable timeouts to prevent hanging
-- **Structured Error Handling** - `AnvilError` struct with operation and command context
+- **Structured Error Handling** - `AnvilError` struct with operation, command context, and error types
 - **Constants Extraction** - Centralized constants for system commands, package names, and environment variables
 
 ### Changed

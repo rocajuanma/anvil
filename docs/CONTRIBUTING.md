@@ -105,7 +105,8 @@ anvil/
 ├── pkg/                   # Reusable packages
 │   ├── brew/              # Homebrew integration
 │   ├── config/            # Configuration management
-│   ├── constants/         # Application constants and error types
+│   ├── constants/         # Application constants
+│   ├── errors/            # Error types and structured error handling
 │   ├── figure/            # ASCII art generation
 │   ├── system/            # System command execution
 │   ├── terminal/          # Terminal output formatting
@@ -239,7 +240,7 @@ git checkout -b fix/issue-number-short-description
 Follow our development standards for:
 
 - **Package organization** - Use appropriate package structure with clear separation of concerns
-- **Error handling patterns** - Use `constants.AnvilError` for structured error handling with operation context
+- **Error handling patterns** - Use `errors.AnvilError` for structured error handling with operation context and error types
 - **Terminal output formatting** - Use `terminal` package for consistent output formatting
 - **Configuration management** - Use cached configuration access for optimal performance
 - **Constants usage** - Use constants from `pkg/constants/` instead of magic strings

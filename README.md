@@ -1,4 +1,4 @@
-# Anvil CLI
+# Anvil
 
 [![Go Version](https://img.shields.io/badge/go-1.17+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
