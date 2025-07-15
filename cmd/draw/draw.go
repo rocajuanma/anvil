@@ -17,21 +17,56 @@ limitations under the License.
 package draw
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/figure"
+	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
 
+// validFonts contains the list of supported fonts
+var validFonts = []string{
+	"standard", "doh", "big", "small", "banner", "block", "bubble", "digital",
+	"ivrit", "lean", "mini", "script", "shadow", "slant", "speed", "term",
+}
+
+// isValidFont checks if the provided font is supported
+func isValidFont(font string) bool {
+	for _, validFont := range validFonts {
+		if font == validFont {
+			return true
+		}
+	}
+	return false
+}
+
 var DrawCmd = &cobra.Command{
-	Use:   "draw",
+	Use:   "draw [font]",
 	Short: "Uses go-figure to generate ASCII text",
 	Long:  constants.DRAW_COMMAND_LONG_DESCRIPTION,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("draw called")
-		figure.Draw("anvil", args[0])
+		// Input validation is handled by cobra.ExactArgs(1)
+		font := args[0]
+
+		// Validate font
+		if !isValidFont(font) {
+			terminal.PrintError("Invalid font '%s'. Available fonts: %s", font, strings.Join(validFonts, ", "))
+			return
+		}
+
+		// Draw the ASCII art
+		figure.Draw("anvil", font)
 	},
 }
 
-func init() {}
+// GetValidFonts returns the list of valid fonts (useful for testing)
+func GetValidFonts() []string {
+	return validFonts
+}
+
+func init() {
+	// Add help text showing available fonts
+	DrawCmd.Long = DrawCmd.Long + "\n\nAvailable fonts: " + strings.Join(validFonts, ", ")
+}
