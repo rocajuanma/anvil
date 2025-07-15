@@ -18,10 +18,9 @@ package cmd
 import (
 	"os"
 
+	"github.com/rocajuanma/anvil/cmd/config"
 	"github.com/rocajuanma/anvil/cmd/draw"
 	"github.com/rocajuanma/anvil/cmd/initcmd"
-	"github.com/rocajuanma/anvil/cmd/pull"
-	"github.com/rocajuanma/anvil/cmd/push"
 	"github.com/rocajuanma/anvil/cmd/setup"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/figure"
@@ -52,8 +51,7 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(initcmd.InitCmd)
 	rootCmd.AddCommand(setup.SetupCmd)
-	rootCmd.AddCommand(pull.PullCmd)
-	rootCmd.AddCommand(push.PushCmd)
+	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(draw.DrawCmd)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
