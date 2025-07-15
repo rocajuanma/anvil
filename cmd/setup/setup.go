@@ -17,14 +17,17 @@ limitations under the License.
 package setup
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/installer"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
@@ -68,13 +71,16 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 			fmt.Errorf("setup command is only supported on macOS"))
 	}
 
-	// List flag is handled in the main Run function, no need to check here
-
 	// Check for dry-run flag
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	if dryRun {
 		terminal.PrintInfo("Dry run mode - no actual installations will be performed")
 	}
+
+	// Check for concurrent flag
+	concurrent, _ := cmd.Flags().GetBool("concurrent")
+	maxWorkers, _ := cmd.Flags().GetInt("workers")
+	timeout, _ := cmd.Flags().GetDuration("timeout")
 
 	// Ensure Homebrew is installed
 	if !brew.IsBrewInstalled() {
@@ -94,7 +100,7 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 
 	// Try to get group tools first
 	if tools, err := config.GetGroupTools(target); err == nil {
-		return installGroup(target, tools, dryRun)
+		return installGroup(target, tools, dryRun, concurrent, maxWorkers, timeout)
 	}
 
 	// If not a group, treat as individual application
@@ -102,7 +108,7 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 }
 
 // installGroup installs all tools in a group
-func installGroup(groupName string, tools []string, dryRun bool) error {
+func installGroup(groupName string, tools []string, dryRun bool, concurrent bool, maxWorkers int, timeout time.Duration) error {
 	terminal.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
@@ -112,6 +118,48 @@ func installGroup(groupName string, tools []string, dryRun bool) error {
 
 	terminal.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
+	// Use concurrent installation if requested
+	if concurrent {
+		return installGroupConcurrent(groupName, tools, dryRun, maxWorkers, timeout)
+	}
+
+	// Use existing serial installation
+	return installGroupSerial(groupName, tools, dryRun)
+}
+
+// installGroupConcurrent installs tools concurrently
+func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWorkers int, timeout time.Duration) error {
+	// Create output handler
+	outputHandler := terminal.NewOutputHandler()
+
+	// Create concurrent installer
+	concurrentInstaller := installer.NewConcurrentInstaller(maxWorkers, outputHandler, dryRun)
+
+	// Set timeout if provided
+	if timeout > 0 {
+		concurrentInstaller.SetTimeout(timeout)
+	}
+
+	// Create context with potential cancellation
+	ctx := context.Background()
+
+	// Install tools concurrently
+	stats, err := concurrentInstaller.InstallTools(ctx, tools)
+
+	// Track successfully installed apps
+	if !dryRun && stats != nil && stats.SuccessfulTools > 0 {
+		terminal.PrintInfo("Updating settings to track installed apps...")
+
+		// For group installations, we don't track individual apps
+		// since they're part of a group
+		terminal.PrintInfo("Group installation tracking not implemented yet")
+	}
+
+	return err
+}
+
+// installGroupSerial installs tools serially (existing logic)
+func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	successCount := 0
 	var installErrors []string
 
@@ -320,4 +368,9 @@ func init() {
 	SetupCmd.Flags().Bool("dry-run", false, "Show what would be installed without installing")
 	SetupCmd.Flags().Bool("list", false, "List all available groups")
 	SetupCmd.Flags().Bool("update", false, "Update Homebrew before installation")
+
+	// Add concurrent installation flags
+	SetupCmd.Flags().Bool("concurrent", false, "Enable concurrent installation for improved performance")
+	SetupCmd.Flags().Int("workers", 0, "Number of concurrent workers (default: number of CPU cores)")
+	SetupCmd.Flags().Duration("timeout", 0, "Timeout for individual tool installations (default: 10 minutes)")
 }
