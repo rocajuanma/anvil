@@ -34,8 +34,25 @@ var SetupCmd = &cobra.Command{
 	Use:   "setup [group-name|app-name]",
 	Short: "Install development tools and applications dynamically via Homebrew",
 	Long:  constants.SETUP_COMMAND_LONG_DESCRIPTION,
-	Args:  cobra.ExactArgs(1),
+	Args: func(cmd *cobra.Command, args []string) error {
+		// Allow no arguments if --list flag is used
+		listFlag, _ := cmd.Flags().GetBool("list")
+		if listFlag {
+			return nil
+		}
+		// Otherwise, require exactly one argument
+		return cobra.ExactArgs(1)(cmd, args)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
+		// Check for list flag first
+		listFlag, _ := cmd.Flags().GetBool("list")
+		if listFlag {
+			if err := listAvailableGroups(); err != nil {
+				terminal.PrintError("Failed to list groups: %v", err)
+			}
+			return
+		}
+
 		if err := runSetupCommand(cmd, args[0]); err != nil {
 			terminal.PrintError("Setup failed: %v", err)
 			return
@@ -51,11 +68,7 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 			fmt.Errorf("setup command is only supported on macOS"))
 	}
 
-	// Check for list flag
-	listGroups, _ := cmd.Flags().GetBool("list")
-	if listGroups {
-		return listAvailableGroups()
-	}
+	// List flag is handled in the main Run function, no need to check here
 
 	// Check for dry-run flag
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -147,24 +160,36 @@ func installIndividualApp(appName string, dryRun bool) error {
 	}
 
 	// Check if already installed
-	if brew.IsPackageInstalled(appName) {
+	alreadyInstalled := brew.IsPackageInstalled(appName)
+	if alreadyInstalled {
 		terminal.PrintSuccess(fmt.Sprintf("%s is already installed", appName))
-		return nil
+	} else {
+		// Try to install the application
+		if dryRun {
+			terminal.PrintInfo("Would install: %s", appName)
+			return nil
+		}
+
+		if err := installSingleTool(appName); err != nil {
+			// Provide helpful error message with suggestions
+			return errors.NewInstallationError(constants.OpSetup, appName,
+				fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
+		}
+
+		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", appName))
 	}
 
-	// Try to install the application
-	if dryRun {
-		terminal.PrintInfo("Would install: %s", appName)
-		return nil
+	// Track the app in settings (both newly installed and already installed)
+	if !dryRun {
+		terminal.PrintInfo("Updating settings to track %s...", appName)
+		if err := config.AddInstalledApp(appName); err != nil {
+			terminal.PrintWarning("Failed to update settings file: %v", err)
+			// Don't return error here as the installation was successful
+		} else {
+			terminal.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
+		}
 	}
 
-	if err := installSingleTool(appName); err != nil {
-		// Provide helpful error message with suggestions
-		return errors.NewInstallationError(constants.OpSetup, appName,
-			fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
-	}
-
-	terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", appName))
 	return nil
 }
 
@@ -268,8 +293,24 @@ func listAvailableGroups() error {
 		terminal.PrintInfo("Add custom groups in ~/.anvil/settings.yaml")
 	}
 
-	terminal.PrintInfo("\nUsage: anvil setup [group-name]")
-	terminal.PrintInfo("Example: anvil setup dev")
+	// Show individually tracked installed apps
+	installedApps, err := config.GetInstalledApps()
+	if err != nil {
+		terminal.PrintWarning("Failed to load installed apps: %v", err)
+	} else if len(installedApps) > 0 {
+		terminal.PrintInfo("\nIndividually Tracked Apps:")
+		terminal.PrintInfo("  %s", strings.Join(installedApps, ", "))
+	} else {
+		terminal.PrintInfo("\nNo individually tracked apps.")
+		terminal.PrintInfo("Apps installed via 'anvil setup [app-name]' will be tracked automatically.")
+	}
+
+	terminal.PrintInfo("\nUsage:")
+	terminal.PrintInfo("  anvil setup [group-name] - Install all apps in a group")
+	terminal.PrintInfo("  anvil setup [app-name]   - Install individual app (auto-tracked)")
+	terminal.PrintInfo("Examples:")
+	terminal.PrintInfo("  anvil setup dev")
+	terminal.PrintInfo("  anvil setup 1password")
 
 	return nil
 }

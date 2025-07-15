@@ -60,6 +60,7 @@ type AnvilDirectories struct {
 type AnvilTools struct {
 	RequiredTools []string `yaml:"required_tools"`
 	OptionalTools []string `yaml:"optional_tools"`
+	InstalledApps []string `yaml:"installed_apps"` // Tracks individually installed applications
 }
 
 // GitConfig represents git configuration
@@ -111,6 +112,7 @@ func GetDefaultConfig() *AnvilConfig {
 		Tools: AnvilTools{
 			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
 			OptionalTools: []string{constants.BrewCommand, constants.PkgDocker, constants.PkgKubectl},
+			InstalledApps: []string{}, // Initialize empty slice for tracking
 		},
 		Groups: AnvilGroups{
 			Dev:       []string{constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
@@ -403,4 +405,121 @@ func SetToolConfig(toolName string, config ToolInstallConfig) error {
 	anvilConfig.ToolConfigs.Tools[toolName] = config
 
 	return SaveConfig(anvilConfig)
+}
+
+// AddInstalledApp adds an app to the installed apps list if it's not already there
+func AddInstalledApp(appName string) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Check if app is already in the installed apps list
+	for _, installedApp := range config.Tools.InstalledApps {
+		if installedApp == appName {
+			return nil // App already tracked, no need to add
+		}
+	}
+
+	// Check if app is already in required or optional tools to avoid duplicates
+	for _, tool := range config.Tools.RequiredTools {
+		if tool == appName {
+			return nil // App is a required tool, no need to track separately
+		}
+	}
+
+	for _, tool := range config.Tools.OptionalTools {
+		if tool == appName {
+			return nil // App is an optional tool, no need to track separately
+		}
+	}
+
+	// Check if app is in any group to avoid duplicates
+	groups, err := GetAvailableGroups()
+	if err == nil {
+		for _, tools := range groups {
+			for _, tool := range tools {
+				if tool == appName {
+					return nil // App is in a group, no need to track separately
+				}
+			}
+		}
+	}
+
+	// Add the app to the installed apps list
+	config.Tools.InstalledApps = append(config.Tools.InstalledApps, appName)
+
+	// Save the updated configuration
+	return SaveConfig(config)
+}
+
+// GetInstalledApps returns the list of individually installed applications
+func GetInstalledApps() ([]string, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	return config.Tools.InstalledApps, nil
+}
+
+// IsAppTracked checks if an app is being tracked in any category
+func IsAppTracked(appName string) (bool, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return false, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Check in required tools
+	for _, tool := range config.Tools.RequiredTools {
+		if tool == appName {
+			return true, nil
+		}
+	}
+
+	// Check in optional tools
+	for _, tool := range config.Tools.OptionalTools {
+		if tool == appName {
+			return true, nil
+		}
+	}
+
+	// Check in installed apps
+	for _, app := range config.Tools.InstalledApps {
+		if app == appName {
+			return true, nil
+		}
+	}
+
+	// Check in groups
+	groups, err := GetAvailableGroups()
+	if err == nil {
+		for _, tools := range groups {
+			for _, tool := range tools {
+				if tool == appName {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
+// RemoveInstalledApp removes an app from the installed apps list
+func RemoveInstalledApp(appName string) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Find and remove the app from the installed apps list
+	for i, app := range config.Tools.InstalledApps {
+		if app == appName {
+			config.Tools.InstalledApps = append(config.Tools.InstalledApps[:i], config.Tools.InstalledApps[i+1:]...)
+			return SaveConfig(config)
+		}
+	}
+
+	return nil // App not found, nothing to remove
 }
