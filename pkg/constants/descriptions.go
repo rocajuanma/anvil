@@ -35,9 +35,13 @@ This command intelligently determines if the argument is a group name (defined i
 or an application name. If it's not a group, it attempts to install the application directly
 using Homebrew. All installations are validated and errors are handled gracefully.
 
+🎯 Automatic App Tracking: Individual apps installed via 'anvil setup [app-name]' are 
+automatically tracked in your settings.yaml file. This creates a personal catalog of 
+installed applications, making it easy to recreate your setup on new machines.
+
 Supported groups: dev, new-laptop, and custom groups defined in your configuration.
 
-Use 'anvil setup --list' to see all available groups.`
+Use 'anvil setup --list' to see all available groups and tracked apps.`
 
 const CONFIG_COMMAND_LONG_DESCRIPTION = `The config command provides centralized management of configuration files and assets
 for your development environment. It serves as a parent command for pull and push operations
