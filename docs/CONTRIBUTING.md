@@ -98,8 +98,9 @@ anvil/
 │   ├── initcmd/           # Init command
 │   ├── setup/             # Setup command
 │   ├── draw/              # Draw command
-│   ├── pull/              # Pull command
-│   ├── push/              # Push command
+│   ├── config/            # Config command (parent for pull/push)
+│   ├── pull/              # Pull subcommand (config pull)
+│   ├── push/              # Push subcommand (config push)
 │   └── root.go            # Root command configuration
 ├── pkg/                   # Reusable packages
 │   ├── brew/              # Homebrew integration

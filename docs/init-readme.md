@@ -176,7 +176,7 @@ These steps are optional but recommended for the best experience.
 You can now use:
   • 'anvil --help' to see all available commands
   • 'anvil setup' to install development tools
-  • 'anvil pull/push' to synchronize assets with GitHub
+  • 'anvil config pull/push' to synchronize configuration files with GitHub
   • Edit ~/.anvil/settings.yaml to customize your configuration
 ```
 
@@ -226,7 +226,7 @@ The init command prepares your system for all other Anvil commands:
 - Uses the directory structure created during initialization
 - References the settings.yaml file for installation preferences
 
-### Pull/Push Commands
+### Config Commands (Pull/Push)
 
 - Depend on Git configuration validated during init
 - Use SSH keys whose presence is checked during initialization

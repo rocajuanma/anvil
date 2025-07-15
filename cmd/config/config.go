@@ -1,0 +1,23 @@
+package config
+
+import (
+	"github.com/rocajuanma/anvil/cmd/pull"
+	"github.com/rocajuanma/anvil/cmd/push"
+	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/spf13/cobra"
+)
+
+var ConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "Manage configuration files and assets",
+	Long:  constants.CONFIG_COMMAND_LONG_DESCRIPTION,
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
+}
+
+func init() {
+	// Add pull and push as sub-commands of config
+	ConfigCmd.AddCommand(pull.PullCmd)
+	ConfigCmd.AddCommand(push.PushCmd)
+}
