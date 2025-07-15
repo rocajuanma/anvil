@@ -24,6 +24,7 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/rocajuanma/anvil/pkg/tools"
 	"github.com/spf13/cobra"
@@ -48,28 +49,28 @@ func runInitCommand() error {
 
 	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
-		return constants.NewAnvilError(constants.OpInit, "platform",
+		return errors.NewPlatformError(constants.OpInit, "platform",
 			fmt.Errorf("Anvil is only supported on macOS"))
 	}
 
 	// Stage 1: Tool validation and installation
 	terminal.PrintStage("Validating and installing required tools...")
 	if err := tools.ValidateAndInstallTools(); err != nil {
-		return constants.NewAnvilError(constants.OpInit, "validate-tools", err)
+		return errors.NewValidationError(constants.OpInit, "validate-tools", err)
 	}
 	terminal.PrintSuccess("All required tools are available")
 
 	// Stage 2: Create necessary directories
 	terminal.PrintStage("Creating necessary directories...")
 	if err := config.CreateDirectories(); err != nil {
-		return constants.NewAnvilError(constants.OpInit, "create-directories", err)
+		return errors.NewFileSystemError(constants.OpInit, "create-directories", err)
 	}
 	terminal.PrintSuccess("Directories created successfully")
 
 	// Stage 3: Generate default settings.yaml
 	terminal.PrintStage("Generating default settings.yaml...")
 	if err := config.GenerateDefaultSettings(); err != nil {
-		return constants.NewAnvilError(constants.OpInit, "generate-settings", err)
+		return errors.NewConfigurationError(constants.OpInit, "generate-settings", err)
 	}
 	terminal.PrintSuccess("Default settings.yaml generated")
 

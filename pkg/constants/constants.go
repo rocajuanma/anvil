@@ -1,36 +1,5 @@
 package constants
 
-import "fmt"
-
-// AnvilError represents a structured error with operation and command context
-type AnvilError struct {
-	Op      string
-	Command string
-	Err     error
-}
-
-// Error implements the error interface
-func (e *AnvilError) Error() string {
-	if e.Command != "" {
-		return fmt.Sprintf("anvil %s %s: %v", e.Op, e.Command, e.Err)
-	}
-	return fmt.Sprintf("anvil %s: %v", e.Op, e.Err)
-}
-
-// Unwrap returns the underlying error
-func (e *AnvilError) Unwrap() error {
-	return e.Err
-}
-
-// NewAnvilError creates a new AnvilError
-func NewAnvilError(op, command string, err error) *AnvilError {
-	return &AnvilError{
-		Op:      op,
-		Command: command,
-		Err:     err,
-	}
-}
-
 // Command operation constants
 const (
 	OpInit   = "init"
