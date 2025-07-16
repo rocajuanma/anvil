@@ -68,8 +68,6 @@ type AnvilConfig struct {
 // AnvilDirectories represents directory configurations
 type AnvilDirectories struct {
 	Config string `yaml:"config"`
-	Cache  string `yaml:"cache"`
-	Data   string `yaml:"data"`
 }
 
 // AnvilTools represents tool configurations
@@ -122,8 +120,6 @@ func GetDefaultConfig() *AnvilConfig {
 		Version: "1.0.0",
 		Directories: AnvilDirectories{
 			Config: filepath.Join(homeDir, constants.AnvilConfigDir),
-			Cache:  filepath.Join(homeDir, constants.AnvilConfigDir, constants.CacheSubDir),
-			Data:   filepath.Join(homeDir, constants.AnvilConfigDir, constants.DataSubDir),
 		},
 		Tools: AnvilTools{
 			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
@@ -166,16 +162,9 @@ func GetConfigPath() string {
 func CreateDirectories() error {
 	config := GetDefaultConfig()
 
-	directories := []string{
-		config.Directories.Config,
-		config.Directories.Cache,
-		config.Directories.Data,
-	}
-
-	for _, dir := range directories {
-		if err := os.MkdirAll(dir, constants.DirPerm); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dir, err)
-		}
+	// Only create the main config directory
+	if err := os.MkdirAll(config.Directories.Config, constants.DirPerm); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", config.Directories.Config, err)
 	}
 
 	return nil
@@ -375,16 +364,6 @@ func CheckEnvironmentConfigurations() []string {
 func GetConfigDirectory() string {
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, constants.AnvilConfigDir)
-}
-
-// GetCacheDirectory returns the anvil cache directory
-func GetCacheDirectory() string {
-	return filepath.Join(GetConfigDirectory(), constants.CacheSubDir)
-}
-
-// GetDataDirectory returns the anvil data directory
-func GetDataDirectory() string {
-	return filepath.Join(GetConfigDirectory(), constants.DataSubDir)
 }
 
 // GetToolConfig returns the configuration for a specific tool

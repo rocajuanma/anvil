@@ -58,8 +58,6 @@ const (
 	SSHDir         = ".ssh"
 	OhMyZshDir     = ".oh-my-zsh"
 	ConfigFileName = "settings.yaml"
-	CacheSubDir    = "cache"
-	DataSubDir     = "data"
 )
 
 // macOS package names (Homebrew formulae and casks)

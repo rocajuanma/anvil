@@ -20,6 +20,31 @@ Anvil provides a streamlined approach to managing development environments on ma
 - **🔍 Dry-run Support** - Preview installations before execution
 - **🎨 Beautiful Terminal Output** - Colored, structured progress indicators
 
+## 🔧 Configuration Management
+
+Anvil provides powerful configuration management through the `config` command, allowing you to sync configuration files and dotfiles across machines:
+
+### Pull Configurations
+
+```bash
+# Pull configuration files from your remote repository
+anvil config pull
+```
+
+### Push Configurations
+
+```bash
+# Push local configuration files to your remote repository
+anvil config push
+```
+
+### Key Benefits
+
+- **🔄 Cross-machine sync** - Keep configurations consistent across all your devices
+- **📁 Dotfile management** - Centralized management of shell configs, editor settings, etc.
+- **🛡️ Backup safety** - Your configurations are safely stored in version control
+- **👥 Team sharing** - Share team configurations and best practices
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -51,6 +76,10 @@ anvil setup new-laptop
 
 # Preview before installing
 anvil setup docker --dry-run
+
+# Manage configurations (if you have a config repository)
+anvil config pull   # Pull latest configs
+anvil config push   # Push local changes
 ```
 
 ## 📋 Dynamic Setup Command
@@ -178,8 +207,6 @@ Anvil stores configuration in `~/.anvil/settings.yaml`:
 version: 1.0.0
 directories:
   config: /Users/username/.anvil
-  cache: /Users/username/.anvil/cache
-  data: /Users/username/.anvil/data
 tools:
   required_tools: [git, curl, brew]
   optional_tools: [docker, kubectl]
@@ -214,11 +241,14 @@ Anvil is optimized specifically for macOS and leverages:
 
 ### Core Commands
 
-| Command         | Description                  | Example               |
-| --------------- | ---------------------------- | --------------------- |
-| `init`          | Initialize Anvil environment | `anvil init`          |
-| `setup [app]`   | Install any application      | `anvil setup firefox` |
-| `setup [group]` | Install tool group           | `anvil setup dev`     |
+| Command         | Description                          | Example               |
+| --------------- | ------------------------------------ | --------------------- |
+| `init`          | Initialize Anvil environment         | `anvil init`          |
+| `setup [app]`   | Install any application              | `anvil setup firefox` |
+| `setup [group]` | Install tool group                   | `anvil setup dev`     |
+| `config pull`   | Pull configuration files from remote | `anvil config pull`   |
+| `config push`   | Push configuration files to remote   | `anvil config push`   |
+| `draw [font]`   | Generate ASCII art text              | `anvil draw banner`   |
 
 ### Setup Flags
 
@@ -242,8 +272,9 @@ anvil/
 │   ├── initcmd/           # Environment initialization
 │   ├── setup/             # Dynamic app installation
 │   ├── draw/              # ASCII art generation
-│   ├── pull/              # Asset synchronization
-│   ├── push/              # Asset synchronization
+│   ├── config/            # Configuration management
+│   │   ├── pull/          # Pull configuration files (config pull)
+│   │   └── push/          # Push configuration files (config push)
 │   └── root.go            # CLI framework setup
 ├── pkg/                   # Core packages
 │   ├── brew/              # Homebrew integration

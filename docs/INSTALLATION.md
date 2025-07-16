@@ -275,13 +275,16 @@ After installation, verify Anvil is working correctly:
 ### Basic Verification
 
 ```bash
-# Check version
-anvil --version
-
-# Verify help
+# Check version and help
 anvil --help
 
-# Test basic functionality
+# Verify main commands are available
+anvil init --help
+anvil setup --help
+anvil config --help
+anvil draw --help
+
+# Test initialization (this should work without errors)
 anvil init
 ```
 

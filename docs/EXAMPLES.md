@@ -357,6 +357,83 @@ anvil setup --git --vscode
 
 ## Advanced Configurations
 
+### Configuration Management
+
+**Scenario**: You want to sync your dotfiles and configuration across multiple machines.
+
+#### Setting Up Configuration Sync
+
+**Step 1**: Create a configuration repository
+
+```bash
+# Create a new repository for your configs
+mkdir ~/.config-repo
+cd ~/.config-repo
+git init
+git remote add origin https://github.com/yourusername/my-configs.git
+
+# Add your configuration files
+cp ~/.vimrc .
+cp ~/.zshrc .
+cp -r ~/.ssh/config ssh-config
+# Add other important config files
+
+git add .
+git commit -m "Initial configuration backup"
+git push -u origin main
+```
+
+**Step 2**: Configure Anvil for config management
+
+```bash
+# Initialize Anvil on your main machine
+anvil init
+
+# Configure the repository in settings.yaml
+# Edit ~/.anvil/settings.yaml to add:
+# config:
+#   repository: "https://github.com/yourusername/my-configs.git"
+#   sync_files:
+#     - "~/.vimrc"
+#     - "~/.zshrc"
+#     - "~/.ssh/config"
+```
+
+**Step 3**: Push configurations
+
+```bash
+# Push your current configurations
+anvil config push
+```
+
+#### Using Configuration Sync on New Machines
+
+```bash
+# On a new machine, initialize Anvil
+anvil init
+
+# Pull your configurations
+anvil config pull
+
+# Your dotfiles are now synchronized!
+```
+
+### Team Configuration Sharing
+
+**Scenario**: Share team configurations and standards across team members.
+
+```bash
+# Team lead sets up shared configurations
+anvil config push
+
+# Team members can pull shared configs
+anvil config pull
+
+# Individual customizations can be made locally
+# Push team-wide changes back when needed
+anvil config push
+```
+
 ### Example 10: Custom Tool Groups
 
 **Scenario**: Create specialized tool groups for different projects.
@@ -801,8 +878,7 @@ tar -czf "$BACKUP_FILE" -C "$HOME" .anvil/
 echo "✅ Backup created: $BACKUP_FILE"
 echo "📝 Backup includes:"
 echo "  - Configuration files"
-echo "  - Cache data"
-echo "  - Persistent data"
+echo "  - Configuration files"
 ```
 
 **File**: `restore-config.sh`
@@ -862,8 +938,7 @@ anvil setup --help
 ### Configuration Locations
 
 - **Main config**: `~/.anvil/settings.yaml`
-- **Cache**: `~/.anvil/cache/`
-- **Data**: `~/.anvil/data/`
+- **Configuration**: `~/.anvil/settings.yaml`
 
 ### Useful File Locations
 

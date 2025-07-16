@@ -17,8 +17,8 @@ limitations under the License.
 package config
 
 import (
-	"github.com/rocajuanma/anvil/cmd/pull"
-	"github.com/rocajuanma/anvil/cmd/push"
+	"github.com/rocajuanma/anvil/cmd/config/pull"
+	"github.com/rocajuanma/anvil/cmd/config/push"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/spf13/cobra"
 )

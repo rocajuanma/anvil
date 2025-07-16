@@ -44,16 +44,12 @@ Creates the necessary directory structure for Anvil:
 
 ```
 ~/.anvil/
-├── cache/          # Temporary files and caches
-├── data/           # Persistent data and logs
 └── settings.yaml   # Main configuration file
 ```
 
-**Directory Purposes:**
+**Directory Purpose:**
 
-- **`~/.anvil/`** - Main configuration directory
-- **`~/.anvil/cache/`** - Temporary files, download caches, and build artifacts
-- **`~/.anvil/data/`** - Persistent data, logs, and user-specific information
+- **`~/.anvil/`** - Main configuration directory containing settings and configuration files
 
 ### Stage 3: Configuration File Generation
 
@@ -71,8 +67,6 @@ Generates a default `settings.yaml` configuration file with:
 version: 1.0.0
 directories:
   config: /Users/username/.anvil
-  cache: /Users/username/.anvil/cache
-  data: /Users/username/.anvil/data
 tools:
   required_tools:
     - git
@@ -176,7 +170,7 @@ These steps are optional but recommended for the best experience.
 You can now use:
   • 'anvil --help' to see all available commands
   • 'anvil setup' to install development tools
-  • 'anvil config pull/push' to synchronize configuration files with GitHub
+  • 'anvil config pull' and 'anvil config push' to synchronize configuration files with GitHub
   • Edit ~/.anvil/settings.yaml to customize your configuration
 ```
 
@@ -230,7 +224,7 @@ The init command prepares your system for all other Anvil commands:
 
 - Depend on Git configuration validated during init
 - Use SSH keys whose presence is checked during initialization
-- Utilize the data directory for temporary storage and caching
+- Store configuration files in the main config directory
 
 ### Draw Command
 
@@ -269,8 +263,6 @@ While not recommended, you can modify directory paths:
 ```yaml
 directories:
   config: /custom/path/.anvil
-  cache: /tmp/anvil-cache
-  data: /var/lib/anvil
 ```
 
 ## Troubleshooting
@@ -333,16 +325,14 @@ anvil init --check-only
 If automatic initialization fails, you can manually create the configuration:
 
 ```bash
-# Create directories
-mkdir -p ~/.anvil/{cache,data}
+# Create directory
+mkdir -p ~/.anvil
 
 # Create basic settings file
 cat > ~/.anvil/settings.yaml << EOF
 version: 1.0.0
 directories:
   config: $HOME/.anvil
-  cache: $HOME/.anvil/cache
-  data: $HOME/.anvil/data
 tools:
   required_tools:
     - git
