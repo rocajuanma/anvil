@@ -22,28 +22,46 @@ Anvil provides a streamlined approach to managing development environments on ma
 
 ## 🔧 Configuration Management
 
-Anvil provides powerful configuration management through the `config` command, allowing you to sync configuration files and dotfiles across machines:
+Anvil provides powerful configuration management through the `config` command, allowing you to sync configuration files and dotfiles across machines using GitHub repositories:
 
-### Pull Configurations
+### Pull Configurations (✅ Available)
 
 ```bash
-# Pull configuration files from your remote repository
-anvil config pull
+# Pull specific configuration directories from your GitHub repository
+anvil config pull cursor      # Pull Cursor editor configurations
+anvil config pull vs-code     # Pull VS Code configurations
+anvil config pull zsh         # Pull shell configurations
+anvil config pull git         # Pull Git configurations
 ```
 
-### Push Configurations
+**Current Implementation**: Always fetches the latest changes from your repository and pulls configurations to `~/.anvil/temp/[directory]` for review before manual application.
+
+**Future Enhancement**: Will automatically apply configurations to their destination directories.
+
+### Push Configurations (🚧 In Development)
 
 ```bash
-# Push local configuration files to your remote repository
-anvil config push
+# Upload local configurations to your GitHub repository (coming soon)
+anvil config push cursor      # Push Cursor configurations
+anvil config push --all       # Push all configuration changes
 ```
 
 ### Key Benefits
 
 - **🔄 Cross-machine sync** - Keep configurations consistent across all your devices
-- **📁 Dotfile management** - Centralized management of shell configs, editor settings, etc.
-- **🛡️ Backup safety** - Your configurations are safely stored in version control
+- **📁 Directory-specific pulls** - Pull only the configurations you need
+- **🛡️ Version control** - Your configurations are safely stored in GitHub
 - **👥 Team sharing** - Share team configurations and best practices
+- **🔍 Branch validation** - Automatic branch checking with detailed error messages
+- **🔐 Multiple auth methods** - Support for SSH keys and GitHub tokens
+
+### Getting Started with Config Management
+
+1. **Set up your GitHub repository** with organized configuration directories
+2. **Configure Anvil** by editing `~/.anvil/settings.yaml`
+3. **Start pulling configurations** with `anvil config pull [directory]`
+
+📖 **[Complete Configuration Guide](docs/config-readme.md)** - Detailed setup instructions, examples, and troubleshooting
 
 ## 🚀 Quick Start
 
@@ -78,8 +96,9 @@ anvil setup new-laptop
 anvil setup docker --dry-run
 
 # Manage configurations (if you have a config repository)
-anvil config pull   # Pull latest configs
-anvil config push   # Push local changes
+anvil config pull cursor    # Pull Cursor editor configs
+anvil config pull vs-code   # Pull VS Code configs
+anvil config push cursor    # Push local changes (coming soon)
 ```
 
 ## 📋 Dynamic Setup Command
@@ -241,14 +260,14 @@ Anvil is optimized specifically for macOS and leverages:
 
 ### Core Commands
 
-| Command         | Description                          | Example               |
-| --------------- | ------------------------------------ | --------------------- |
-| `init`          | Initialize Anvil environment         | `anvil init`          |
-| `setup [app]`   | Install any application              | `anvil setup firefox` |
-| `setup [group]` | Install tool group                   | `anvil setup dev`     |
-| `config pull`   | Pull configuration files from remote | `anvil config pull`   |
-| `config push`   | Push configuration files to remote   | `anvil config push`   |
-| `draw [font]`   | Generate ASCII art text              | `anvil draw banner`   |
+| Command             | Description                                | Example                    |
+| ------------------- | ------------------------------------------ | -------------------------- |
+| `init`              | Initialize Anvil environment               | `anvil init`               |
+| `setup [app]`       | Install any application                    | `anvil setup firefox`      |
+| `setup [group]`     | Install tool group                         | `anvil setup dev`          |
+| `config pull [dir]` | Pull specific config directory from remote | `anvil config pull cursor` |
+| `config push [dir]` | Push config directory to remote (dev)      | `anvil config push cursor` |
+| `draw [font]`       | Generate ASCII art text                    | `anvil draw banner`        |
 
 ### Setup Flags
 
@@ -331,6 +350,7 @@ sudo chown -R $(whoami) $(brew --prefix)/*
 ## 📚 Documentation
 
 - **[Getting Started Guide](docs/GETTING_STARTED.md)** - Comprehensive setup guide
+- **[Configuration Management](docs/config-readme.md)** - Complete guide to config pull/push functionality
 - **[Examples & Tutorials](docs/EXAMPLES.md)** - Real-world usage scenarios
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - Development guidelines
 - **[Changelog](docs/CHANGELOG.md)** - Version history

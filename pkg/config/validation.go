@@ -25,6 +25,7 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
+	"github.com/rocajuanma/anvil/pkg/terminal"
 )
 
 // ConfigValidator implements the Validator interface for configuration validation
@@ -413,4 +414,92 @@ func ValidateConfigFile(configPath string) error {
 
 	validator := NewConfigValidator(config)
 	return validator.ValidateConfig(config)
+}
+
+// ValidateAndFixGitHubConfig validates and automatically fixes GitHub configuration
+func ValidateAndFixGitHubConfig(config *AnvilConfig) bool {
+	fixed := false
+
+	if config.GitHub.ConfigRepo != "" {
+		originalRepo := config.GitHub.ConfigRepo
+		normalizedRepo := normalizeGitHubRepo(config.GitHub.ConfigRepo)
+
+		if normalizedRepo != originalRepo {
+			config.GitHub.ConfigRepo = normalizedRepo
+			terminal.PrintInfo("🔧 Auto-corrected GitHub repository URL:")
+			terminal.PrintInfo("   From: %s", originalRepo)
+			terminal.PrintInfo("   To:   %s", normalizedRepo)
+			terminal.PrintInfo("   Expected format: 'username/repository' (without domain)")
+			fixed = true
+		}
+	}
+
+	return fixed
+}
+
+// normalizeGitHubRepo converts various GitHub URL formats to the standard "username/repository" format
+func normalizeGitHubRepo(repoURL string) string {
+	if repoURL == "" {
+		return repoURL
+	}
+
+	// Remove quotes if present
+	repoURL = strings.Trim(repoURL, `"'`)
+
+	// Handle different GitHub URL formats
+	patterns := []struct {
+		regex   *regexp.Regexp
+		example string
+	}{
+		// HTTPS URLs
+		{regexp.MustCompile(`^https://github\.com/([^/]+/[^/]+)(?:\.git)?/?$`), "https://github.com/username/repo"},
+		{regexp.MustCompile(`^https://github\.com/([^/]+/[^/]+)/.*$`), "https://github.com/username/repo/..."},
+
+		// SSH URLs
+		{regexp.MustCompile(`^git@github\.com:([^/]+/[^/]+)(?:\.git)?/?$`), "git@github.com:username/repo"},
+
+		// Domain without protocol
+		{regexp.MustCompile(`^github\.com/([^/]+/[^/]+)(?:\.git)?/?$`), "github.com/username/repo"},
+		{regexp.MustCompile(`^github\.com/([^/]+/[^/]+)/.*$`), "github.com/username/repo/..."},
+
+		// Already in correct format (username/repo)
+		{regexp.MustCompile(`^([^/]+/[^/]+)$`), "username/repo"},
+	}
+
+	for _, pattern := range patterns {
+		if matches := pattern.regex.FindStringSubmatch(repoURL); len(matches) > 1 {
+			// Extract username/repository part
+			userRepo := matches[1]
+			// Remove .git suffix if present
+			userRepo = strings.TrimSuffix(userRepo, ".git")
+			return userRepo
+		}
+	}
+
+	// If no pattern matches, return as-is (might be invalid, but let validation catch it)
+	return repoURL
+}
+
+// validateGitHubRepoFormat validates that the repository is in the correct format
+func validateGitHubRepoFormat(repo string) error {
+	if repo == "" {
+		return nil // Empty is handled elsewhere
+	}
+
+	// Expected format: username/repository
+	repoPattern := regexp.MustCompile(`^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$`)
+	if !repoPattern.MatchString(repo) {
+		return fmt.Errorf(`invalid repository format: '%s'
+Expected format: 'username/repository' (e.g., 'octocat/Hello-World')
+
+Supported input formats that will be auto-corrected:
+  • https://github.com/username/repository
+  • https://github.com/username/repository.git
+  • git@github.com:username/repository.git
+  • github.com/username/repository
+
+Your repository will be auto-corrected to the proper format when the config is loaded.`, repo)
+	}
+
+	return nil
 }

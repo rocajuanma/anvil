@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Configuration Pull System** - Complete implementation of `anvil config pull [directory]` command
+  - Directory-specific configuration pulling from GitHub repositories
+  - SSH key and GitHub token authentication support
+  - Automatic GitHub URL format validation and normalization
+  - Branch validation with detailed error messages listing available branches
+  - Temporary file storage at `~/.anvil/temp/[directory]` for review before manual application
+  - Enhanced error handling with step-by-step troubleshooting guidance
+- **GitHub Integration Package** - New `pkg/github` package for repository operations
+  - Repository cloning and pulling with branch support
+  - Multiple authentication methods (SSH keys, GitHub tokens, public access)
+  - Branch existence validation and available branch listing
+  - Git user configuration management
+- **Comprehensive Documentation** - Complete configuration management documentation
+  - New `docs/config-readme.md` with detailed setup instructions and examples
+  - Updated `README.md`, `GETTING_STARTED.md`, and `EXAMPLES.md` with current implementation
+  - Real-world examples for personal and team configuration sharing
 - Parallel tool installation support
 - Tool version management in groups
 - Dependency resolution for tools
@@ -20,16 +36,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **BREAKING CHANGE**: Reorganized `pull` and `push` commands as subcommands of `config`
-  - `anvil pull` → `anvil config pull`
-  - `anvil push` → `anvil config push`
+  - `anvil pull` → `anvil config pull [directory]`
+  - `anvil push` → `anvil config push [directory]` (in development)
   - This change improves command hierarchy and follows Cobra best practices
-  - All documentation updated to reflect new command structure
-- Improved error messages with more context
+  - All documentation updated to reflect new command structure with directory-specific operations
+- **Enhanced Configuration Structure** - Updated settings.yaml with GitHub and Git configuration sections
+  - Added `github.config_repo`, `github.branch`, `github.local_path`, `github.token_env_var`
+  - Added `git.ssh_key_path`, `git.ssh_dir` for SSH configuration
+  - Automatic GitHub URL format validation and correction
+- **Improved Error Messages** - Branch configuration errors now provide detailed guidance
+  - Lists available branches when specified branch doesn't exist
+  - Step-by-step troubleshooting instructions with settings file path
+  - Enhanced validation messages during repository access
 - Enhanced progress indicators
 - Better platform detection
 
 ### Fixed
 
+- **Codebase Cleanup** - Removed unused code and simplified directory structure
+  - Removed unused `.anvil/cache` and `.anvil/data` directories from entire codebase
+  - Simplified `AnvilDirectories` struct to only include `Config` field
+  - Removed concurrent installation features, unused error constructors, and extended package constants
+  - Cleaned up placeholder implementations and unused flags
 - Memory usage optimization for large tool sets
 - Updated import paths for reorganized command structure
 

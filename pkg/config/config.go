@@ -54,6 +54,23 @@ type AnvilToolConfigs struct {
 	Tools map[string]ToolInstallConfig `yaml:"tools"`
 }
 
+// GitConfig represents git configuration
+type GitConfig struct {
+	Username   string `yaml:"username"`
+	Email      string `yaml:"email"`
+	SSHKeyPath string `yaml:"ssh_key_path,omitempty"` // Reference to SSH private key
+	SSHDir     string `yaml:"ssh_dir,omitempty"`      // Reference to .ssh directory
+}
+
+// GitHubConfig represents GitHub repository configuration for config sync
+type GitHubConfig struct {
+	ConfigRepo  string `yaml:"config_repo"`             // GitHub repository URL for configs (e.g., "username/dotfiles")
+	Branch      string `yaml:"branch"`                  // Branch to use (default: "main")
+	LocalPath   string `yaml:"local_path"`              // Local path where configs are stored/synced
+	Token       string `yaml:"token,omitempty"`         // GitHub token (use env var reference)
+	TokenEnvVar string `yaml:"token_env_var,omitempty"` // Environment variable name for token
+}
+
 // AnvilConfig represents the main anvil configuration
 type AnvilConfig struct {
 	Version     string            `yaml:"version"`
@@ -61,6 +78,7 @@ type AnvilConfig struct {
 	Tools       AnvilTools        `yaml:"tools"`
 	Groups      AnvilGroups       `yaml:"groups"`
 	Git         GitConfig         `yaml:"git"`
+	GitHub      GitHubConfig      `yaml:"github"`
 	Environment map[string]string `yaml:"environment"`
 	ToolConfigs AnvilToolConfigs  `yaml:"tool_configs,omitempty"`
 }
@@ -75,12 +93,6 @@ type AnvilTools struct {
 	RequiredTools []string `yaml:"required_tools"`
 	OptionalTools []string `yaml:"optional_tools"`
 	InstalledApps []string `yaml:"installed_apps"` // Tracks individually installed applications
-}
-
-// GitConfig represents git configuration
-type GitConfig struct {
-	Username string `yaml:"username"`
-	Email    string `yaml:"email"`
 }
 
 // getCachedConfig returns the cached configuration or loads it if not cached
@@ -132,8 +144,16 @@ func GetDefaultConfig() *AnvilConfig {
 			Custom:    make(map[string][]string),
 		},
 		Git: GitConfig{
-			Username: "",
-			Email:    "",
+			Username:   "",
+			Email:      "",
+			SSHKeyPath: filepath.Join(homeDir, constants.SSHDir, "id_rsa"),
+			SSHDir:     filepath.Join(homeDir, constants.SSHDir),
+		},
+		GitHub: GitHubConfig{
+			ConfigRepo:  "", // User needs to populate this
+			Branch:      "main",
+			LocalPath:   filepath.Join(homeDir, constants.AnvilConfigDir, "dotfiles"),
+			TokenEnvVar: "GITHUB_TOKEN", // Recommend using env var for token
 		},
 		Environment: make(map[string]string),
 		ToolConfigs: AnvilToolConfigs{
@@ -216,6 +236,15 @@ func LoadConfig() (*AnvilConfig, error) {
 	var config AnvilConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal settings.yaml: %w", err)
+	}
+
+	// Validate and auto-correct GitHub configuration
+	if ValidateAndFixGitHubConfig(&config) {
+		// Save the corrected configuration back to file
+		if err := SaveConfig(&config); err != nil {
+			// Don't fail loading if we can't save the correction, just warn
+			fmt.Printf("Warning: Could not save corrected GitHub configuration: %v\n", err)
+		}
 	}
 
 	return &config, nil
