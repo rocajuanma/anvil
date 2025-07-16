@@ -440,7 +440,7 @@ anvil setup dev
 anvil setup --git --zsh
 
 # Sync with GitHub (if applicable)
-anvil config pull configs
+anvil config pull
 ```
 
 ### Custom Tool Installation

@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING CHANGE**: Reorganized `pull` and `push` commands as subcommands of `config`
+  - `anvil pull` → `anvil config pull`
+  - `anvil push` → `anvil config push`
+  - This change improves command hierarchy and follows Cobra best practices
+  - All documentation updated to reflect new command structure
 - Improved error messages with more context
 - Enhanced progress indicators
 - Better platform detection
@@ -26,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Memory usage optimization for large tool sets
+- Updated import paths for reorganized command structure
 
 ## [1.0.1] - 2024-01-XX
 
@@ -57,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Init Command** - Complete environment bootstrapping
 
   - Tool validation and installation (Git, cURL, Homebrew)
-  - Directory structure creation (`~/.anvil/`, cache, data)
+  - Directory structure creation (`~/.anvil/`)
   - Default configuration generation (`settings.yaml`)
   - Environment configuration checking
   - SSH key and Git configuration validation

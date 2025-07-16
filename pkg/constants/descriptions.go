@@ -33,7 +33,7 @@ initialization process. This is the first command you should run after installin
 
 What it does:
 • Validates and installs required system tools (Git, cURL, Homebrew)
-• Creates necessary configuration directories (~/.anvil, ~/.anvil/cache, ~/.anvil/data)
+• Creates necessary configuration directory (~/.anvil)
 • Generates a default settings.yaml configuration file with your system preferences
 • Checks your local environment for common development configurations
 • Provides actionable recommendations for completing your setup

@@ -157,25 +157,9 @@ func (cv *ConfigValidator) validateDirectories(dirs *AnvilDirectories) error {
 		return fmt.Errorf("config directory cannot be empty")
 	}
 
-	if dirs.Cache == "" {
-		return fmt.Errorf("cache directory cannot be empty")
-	}
-
-	if dirs.Data == "" {
-		return fmt.Errorf("data directory cannot be empty")
-	}
-
-	// Check if directories are absolute paths
+	// Check if directory is an absolute path
 	if !filepath.IsAbs(dirs.Config) {
 		return fmt.Errorf("config directory must be an absolute path: %s", dirs.Config)
-	}
-
-	if !filepath.IsAbs(dirs.Cache) {
-		return fmt.Errorf("cache directory must be an absolute path: %s", dirs.Cache)
-	}
-
-	if !filepath.IsAbs(dirs.Data) {
-		return fmt.Errorf("data directory must be an absolute path: %s", dirs.Data)
 	}
 
 	return nil

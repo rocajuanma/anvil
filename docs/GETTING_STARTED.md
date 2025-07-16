@@ -25,7 +25,7 @@ Anvil is a CLI automation tool that helps developers:
 
 ### Key Concepts
 
-- **Commands**: Actions you can perform (`init`, `setup`, `pull`, `push`, `draw`)
+- **Commands**: Actions you can perform (`init`, `setup`, `config pull`, `config push`, `draw`)
 - **Groups**: Collections of related tools (`dev`, `new-laptop`, custom groups)
 - **Configuration**: Settings stored in `~/.anvil/settings.yaml`
 - **Tools**: Individual applications or utilities that can be installed
@@ -59,7 +59,7 @@ anvil init
 This command will:
 
 - ✅ Validate and install required tools (Git, cURL, Homebrew on macOS)
-- ✅ Create necessary directories (`~/.anvil/`, `~/.anvil/cache/`, `~/.anvil/data/`)
+- ✅ Create necessary configuration directory (`~/.anvil/`)
 - ✅ Generate default `settings.yaml` configuration
 - ✅ Check your environment and provide recommendations
 
@@ -91,6 +91,9 @@ anvil --help
 # Get help for specific commands
 anvil init --help
 anvil setup --help
+anvil config --help
+anvil config pull --help
+anvil config push --help
 ```
 
 ### 3. Check Your Configuration
@@ -107,8 +110,6 @@ You'll see something like:
 version: 1.0.0
 directories:
   config: /Users/username/.anvil
-  cache: /Users/username/.anvil/cache
-  data: /Users/username/.anvil/data
 tools:
   required_tools: [git, curl]
   optional_tools: [brew, docker, kubectl]
@@ -290,7 +291,7 @@ anvil setup backend
 
 Anvil stores its configuration in `~/.anvil/settings.yaml`. This file contains:
 
-- **Directories**: Paths for config, cache, and data
+- **Directories**: Path for configuration storage
 - **Tools**: Lists of required and optional tools
 - **Groups**: Tool collections for batch installation
 - **Git**: Your Git configuration
@@ -327,9 +328,7 @@ Anvil creates and uses these directories:
 
 ```
 ~/.anvil/
-├── settings.yaml    # Main configuration
-├── cache/          # Temporary files and downloads
-└── data/           # Persistent data and logs
+└── settings.yaml    # Main configuration
 ```
 
 ## Tips and Best Practices
@@ -459,7 +458,7 @@ sudo chown -R $(whoami) $(brew --prefix)/*
 
 If you encounter issues not covered here:
 
-1. **Check the logs** in `~/.anvil/data/`
+1. **Check the configuration** in `~/.anvil/settings.yaml`
 2. **Search existing issues** on [GitHub](https://github.com/rocajuanma/anvil/issues)
 3. **Create a new issue** with:
    - Your platform and version
@@ -507,14 +506,14 @@ anvil setup --list          # List available groups and tools
 anvil setup dev              # Install development tools
 anvil setup --git --zsh     # Install specific tools
 anvil setup dev --dry-run   # Preview installations
+anvil config pull            # Pull configurations from remote
+anvil config push            # Push configurations to remote
 anvil --help                 # Get help
 ```
 
 ### Key Files
 
 - `~/.anvil/settings.yaml` - Main configuration
-- `~/.anvil/cache/` - Temporary files
-- `~/.anvil/data/` - Persistent data
 
 ### Important Locations
 
