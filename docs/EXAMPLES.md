@@ -70,7 +70,7 @@ Successfully installed 4 of 4 tools in group 'dev'
 
 ```bash
 # Preview what would be installed
-$ anvil setup --git --zsh --dry-run
+$ anvil setup dev --dry-run
 
 Dry run mode - no actual installations will be performed
 
@@ -82,7 +82,7 @@ Would install: git
 Would install: zsh
 
 # Install the tools
-$ anvil setup --git --zsh
+$ anvil setup dev
 
 === Individual Tool Setup ===
 Installing individual tools: git, zsh
@@ -133,7 +133,7 @@ $ anvil init
 $ anvil setup dev
 
 # Add frontend-specific tools
-$ anvil setup --chrome
+$ anvil setup chrome
 
 # Verify installation
 $ git --version
@@ -145,14 +145,13 @@ $ zsh --version
 
 ```yaml
 groups:
-  custom:
-    frontend:
-      - git
-      - node
-      - yarn
-      - vscode
-      - chrome
-      - figma
+  frontend:
+    - git
+    - node
+    - yarn
+    - vscode
+    - chrome
+    - figma
 ```
 
 Then use it:
@@ -182,14 +181,13 @@ $ anvil setup dev
 
 ```yaml
 groups:
-  custom:
-    backend:
-      - git
-      - docker
-      - vscode
-      - postgresql
-      - redis
-      - kubectl
+  backend:
+    - git
+    - docker
+    - vscode
+    - postgresql
+    - redis
+    - kubectl
 ```
 
 **Usage**:
@@ -210,10 +208,10 @@ $ anvil init
 $ anvil setup dev
 
 # Add communication tools
-$ anvil setup --slack
+$ anvil setup slack
 
 # Add browser for testing
-$ anvil setup --chrome
+$ anvil setup chrome
 
 # Optional: Add custom tools through group configuration
 # (See settings.yaml for custom group setup)
@@ -241,7 +239,7 @@ anvil setup dev
 
 # Install team communication tools
 echo "💬 Installing communication tools..."
-anvil setup --slack
+anvil setup slack
 
 # Install additional tools through custom groups
 echo "🔧 Installing additional tools..."
@@ -284,25 +282,24 @@ tools:
 groups:
   dev: [git, zsh, iterm2, vscode]
   new-laptop: [slack, chrome, 1password]
-  custom:
-    frontend:
-      - git
-      - node
-      - yarn
-      - vscode
-      - chrome
-      - figma
-    backend:
-      - git
-      - docker
-      - vscode
-      - postgresql
-      - redis
-    qa:
-      - git
-      - chrome
-      - postman
-      - cypress
+  frontend:
+    - git
+    - node
+    - yarn
+    - vscode
+    - chrome
+    - figma
+  backend:
+    - git
+    - docker
+    - vscode
+    - postgresql
+    - redis
+  qa:
+    - git
+    - chrome
+    - postman
+    - cypress
 git:
   username: ""
   email: ""
@@ -680,40 +677,39 @@ anvil config pull shared/zsh
 
 ```yaml
 groups:
-  custom:
-    # Mobile development
-    mobile:
-      - git
-      - vscode
-      - android-studio
-      - xcode
-      - flutter
+  # Mobile development
+  mobile:
+    - git
+    - vscode
+    - android-studio
+    - xcode
+    - flutter
 
-    # Data science
-    data-science:
-      - git
-      - python
-      - jupyter
-      - vscode
-      - r
-      - rstudio
+  # Data science
+  data-science:
+    - git
+    - python
+    - jupyter
+    - vscode
+    - r
+    - rstudio
 
-    # DevOps
-    devops:
-      - git
-      - docker
-      - kubectl
-      - terraform
-      - aws-cli
-      - vscode
+  # DevOps
+  devops:
+    - git
+    - docker
+    - kubectl
+    - terraform
+    - aws-cli
+    - vscode
 
-    # Design
-    design:
-      - git
-      - figma
-      - sketch
-      - adobe-creative-cloud
-      - chrome
+  # Design
+  design:
+    - git
+    - figma
+    - sketch
+    - adobe-creative-cloud
+    - chrome
 ```
 
 **Usage**:

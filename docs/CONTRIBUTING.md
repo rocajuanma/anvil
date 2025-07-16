@@ -379,7 +379,6 @@ tools:
   optional_tools: []
 groups:
   predefined_group: []
-  custom: {}
 environment: {}
 ```
 
