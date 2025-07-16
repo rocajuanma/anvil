@@ -64,8 +64,20 @@ for your development environment. It serves as a parent command for pull and pus
 to ensure all configuration-related actions are properly organized and guarded.
 
 Subcommands:
-• anvil config pull    - Pull configuration files from remote repository
-• anvil config push    - Push configuration files to remote repository
+• anvil config pull [directory]    - Pull configuration files from a specific directory in remote repository
+• anvil config push [directory]    - Push configuration files to remote repository
+
+GitHub Repository Configuration:
+The 'github.config_repo' field in settings.yaml should be in the format 'username/repository'.
+
+Supported input formats (automatically corrected):
+  • username/repository (preferred format)
+  • https://github.com/username/repository
+  • https://github.com/username/repository.git
+  • git@github.com:username/repository.git  
+  • github.com/username/repository
+
+Example: 'github.config_repo: octocat/Hello-World'
 
 This command structure ensures that all pull and push operations are scoped to configuration
 files only, providing clear separation between configuration management and other operations.
@@ -84,18 +96,34 @@ The command takes an argument to specify which type of configurations should be 
 allowing for granular control over what gets synchronized to your remote repository.
 This command is now scoped to configuration files only.`
 
-const PULL_COMMAND_LONG_DESCRIPTION = `The pull command allows you to download and synchronize configuration files,
-and dotfiles from your GitHub repository to your local machine.
+const PULL_COMMAND_LONG_DESCRIPTION = `The pull command allows you to download and synchronize configuration files
+from a specific directory in your GitHub repository to your local machine.
+
+Usage: anvil config pull [directory]
+
+The command automatically fetches the latest changes from your repository (git fetch/pull)
+and then copies all files from the specified directory to a temporary location 
+(~/.anvil/temp/[directory]) for review and application. You're guaranteed to get 
+the most up-to-date configurations every time.
 
 This is particularly useful for:
 • Setting up new development environments
-• Synchronizing configurations across multiple machines
+• Synchronizing specific configurations across multiple machines
 • Restoring configurations after system changes
 • Sharing configurations with team members
 
-The command takes an argument to specify which type of configurations should be retrieved,
-providing flexibility in what gets synchronized to your local environment.
-This command is now scoped to configuration files only.`
+GitHub Repository Setup:
+Before using this command, configure your repository in ~/.anvil/settings.yaml:
+
+  github:
+    config_repo: "username/repository"  # Format: username/repository
+    branch: "main"                      # Branch to pull from
+    token_env_var: "GITHUB_TOKEN"       # Environment variable for authentication
+
+The repository URL format is automatically validated and corrected if needed.
+Supported formats include full URLs, SSH URLs, and domain-prefixed formats.
+
+Example: anvil config pull cursor    # Pulls all files from the 'cursor' directory`
 
 const DRAW_COMMAND_LONG_DESCRIPTION = `The draw command generates beautiful ASCII art representations of text using the
 go-figure library. This command enhances terminal output with visually appealing

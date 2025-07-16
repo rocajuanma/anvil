@@ -328,8 +328,126 @@ Anvil creates and uses these directories:
 
 ```
 ~/.anvil/
-└── settings.yaml    # Main configuration
+├── settings.yaml    # Main configuration
+├── temp/            # Temporary storage for pulled configurations
+└── dotfiles/        # Local repository clone (when using config commands)
 ```
+
+## Configuration Management
+
+Anvil provides powerful configuration management to sync dotfiles and application settings across machines.
+
+### Setting Up Configuration Management
+
+1. **Create a GitHub repository** for your configurations:
+
+   ```bash
+   # Create a repository structure like:
+   your-config-repo/
+   ├── cursor/
+   │   ├── settings.json
+   │   └── keybindings.json
+   ├── vs-code/
+   │   ├── settings.json
+   │   └── extensions.json
+   └── zsh/
+       ├── .zshrc
+       └── .zsh_aliases
+   ```
+
+2. **Configure Anvil** by editing `~/.anvil/settings.yaml`:
+
+   ```yaml
+   github:
+     config_repo: "username/dotfiles" # Your GitHub repository
+     branch: "main" # Branch to use
+     local_path: "~/.anvil/dotfiles" # Local storage path
+     token_env_var: "GITHUB_TOKEN" # Environment variable for token
+
+   git:
+     username: "Your Name"
+     email: "your.email@example.com"
+     ssh_key_path: "~/.ssh/id_ed25519"
+   ```
+
+3. **Set up authentication** (choose one):
+
+   **SSH Keys (Recommended):**
+
+   ```bash
+   # Add your SSH key to GitHub
+   cat ~/.ssh/id_ed25519.pub | pbcopy
+   ```
+
+   **GitHub Token:**
+
+   ```bash
+   # Set environment variable
+   export GITHUB_TOKEN="your_token_here"
+   echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.zshrc
+   ```
+
+### Pulling Configurations
+
+Pull specific configuration directories from your repository:
+
+```bash
+# Pull Cursor editor configurations
+anvil config pull cursor
+
+# Pull VS Code configurations
+anvil config pull vs-code
+
+# Pull shell configurations
+anvil config pull zsh
+```
+
+**Current Behavior**: Always fetches the latest changes from your repository and pulls files to `~/.anvil/temp/[directory]` for review before manual application.
+
+**Example Output**:
+
+```bash
+$ anvil config pull cursor
+
+🔧 Using branch: main
+
+=== Pulling Configuration Directory: cursor ===
+
+Repository: username/dotfiles
+Branch: main
+Target directory: cursor
+✅ GitHub token found in environment variable: GITHUB_TOKEN
+🔧 Validating repository access and branch configuration...
+✅ Repository and branch configuration validated
+🔧 Setting up local repository...
+✅ Local repository ready
+🔧 Pulling latest changes...
+✅ Repository updated
+🔧 Copying configuration directory...
+✅ Configuration directory copied to temp location
+
+=== Pull Complete! ===
+
+Configuration directory 'cursor' has been pulled from: username/dotfiles
+Files are available at: /Users/username/.anvil/temp/cursor
+
+Copied files:
+  • settings.json
+  • keybindings.json
+
+Next steps:
+  • Review the pulled configuration files in: /Users/username/.anvil/temp/cursor
+  • Apply/copy configurations to their destination as needed
+  • Use 'anvil config push' to upload any local changes
+```
+
+### Configuration Push (Coming Soon)
+
+The `anvil config push` command is under development and will allow you to upload local configuration changes back to your repository.
+
+### For More Details
+
+📖 **[Complete Configuration Guide](config-readme.md)** - Detailed setup instructions, troubleshooting, and advanced usage examples.
 
 ## Tips and Best Practices
 
@@ -501,14 +619,15 @@ Now that you're familiar with the basics:
 ### Essential Commands
 
 ```bash
-anvil init                    # Initialize Anvil
-anvil setup --list          # List available groups and tools
-anvil setup dev              # Install development tools
-anvil setup --git --zsh     # Install specific tools
-anvil setup dev --dry-run   # Preview installations
-anvil config pull            # Pull configurations from remote
-anvil config push            # Push configurations to remote
-anvil --help                 # Get help
+anvil init                      # Initialize Anvil
+anvil setup --list            # List available groups and tools
+anvil setup dev                # Install development tools
+anvil setup --git --zsh       # Install specific tools
+anvil setup dev --dry-run     # Preview installations
+anvil config pull cursor      # Pull Cursor configurations from remote
+anvil config pull vs-code     # Pull VS Code configurations from remote
+anvil config push cursor      # Push configurations to remote (coming soon)
+anvil --help                   # Get help
 ```
 
 ### Key Files

@@ -359,24 +359,35 @@ anvil setup --git --vscode
 
 ### Configuration Management
 
-**Scenario**: You want to sync your dotfiles and configuration across multiple machines.
+**Scenario**: You want to sync your dotfiles and application configurations across multiple machines.
 
 #### Setting Up Configuration Sync
 
-**Step 1**: Create a configuration repository
+**Step 1**: Create a GitHub repository with organized directories
 
 ```bash
 # Create a new repository for your configs
-mkdir ~/.config-repo
-cd ~/.config-repo
+mkdir ~/my-dotfiles
+cd ~/my-dotfiles
 git init
-git remote add origin https://github.com/yourusername/my-configs.git
+git remote add origin https://github.com/yourusername/dotfiles.git
 
-# Add your configuration files
-cp ~/.vimrc .
-cp ~/.zshrc .
-cp -r ~/.ssh/config ssh-config
-# Add other important config files
+# Create organized directory structure
+mkdir -p cursor vs-code zsh git ssh
+echo "# My Configuration Repository" > README.md
+
+# Add your configuration files by application
+cp ~/Library/Application\ Support/Cursor/User/settings.json cursor/
+cp ~/Library/Application\ Support/Cursor/User/keybindings.json cursor/
+
+cp ~/.zshrc zsh/
+cp ~/.zsh_aliases zsh/
+cp ~/.zsh_functions zsh/
+
+cp ~/.gitconfig git/
+cp ~/.gitignore_global git/
+
+cp ~/.ssh/config ssh/
 
 git add .
 git commit -m "Initial configuration backup"
@@ -389,49 +400,276 @@ git push -u origin main
 # Initialize Anvil on your main machine
 anvil init
 
-# Configure the repository in settings.yaml
-# Edit ~/.anvil/settings.yaml to add:
-# config:
-#   repository: "https://github.com/yourusername/my-configs.git"
-#   sync_files:
-#     - "~/.vimrc"
-#     - "~/.zshrc"
-#     - "~/.ssh/config"
+# Edit ~/.anvil/settings.yaml to add GitHub configuration:
 ```
 
-**Step 3**: Push configurations
+```yaml
+github:
+  config_repo: "yourusername/dotfiles" # Your GitHub repository
+  branch: "main" # Branch to use
+  local_path: "~/.anvil/dotfiles" # Local storage path
+  token_env_var: "GITHUB_TOKEN" # Environment variable for token
+
+git:
+  username: "Your Name"
+  email: "your.email@example.com"
+  ssh_key_path: "~/.ssh/id_ed25519"
+```
+
+**Step 3**: Set up authentication
 
 ```bash
-# Push your current configurations
-anvil config push
+# Option A: SSH Key (Recommended)
+# Add your SSH key to GitHub if you haven't already
+cat ~/.ssh/id_ed25519.pub | pbcopy
+# Go to GitHub > Settings > SSH Keys and add the key
+
+# Option B: GitHub Token
+# Create token at github.com/settings/tokens
+export GITHUB_TOKEN="your_token_here"
+echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.zshrc
+```
+
+**Step 4**: Test configuration pulling
+
+```bash
+# Pull specific configuration directories
+anvil config pull cursor
+anvil config pull zsh
+anvil config pull git
 ```
 
 #### Using Configuration Sync on New Machines
 
+**Complete setup example on a new machine:**
+
 ```bash
-# On a new machine, initialize Anvil
+# 1. Install and initialize Anvil
+go install github.com/yourusername/anvil@latest
 anvil init
 
-# Pull your configurations
-anvil config pull
+# 2. Configure GitHub repository
+# Edit ~/.anvil/settings.yaml with your repository details
 
-# Your dotfiles are now synchronized!
+# 3. Pull specific configurations as needed
+anvil config pull cursor
+
+# Example output:
+# 🔧 Using branch: main
+#
+# === Pulling Configuration Directory: cursor ===
+#
+# Repository: yourusername/dotfiles
+# Branch: main
+# Target directory: cursor
+# ✅ GitHub token found in environment variable: GITHUB_TOKEN
+# 🔧 Validating repository access and branch configuration...
+# ✅ Repository and branch configuration validated
+# 🔧 Setting up local repository...
+# ✅ Local repository ready
+# 🔧 Pulling latest changes...
+# ✅ Repository updated
+# 🔧 Copying configuration directory...
+# ✅ Configuration directory copied to temp location
+#
+# === Pull Complete! ===
+#
+# Configuration directory 'cursor' has been pulled from: yourusername/dotfiles
+# Files are available at: /Users/username/.anvil/temp/cursor
+#
+# Copied files:
+#   • settings.json
+#   • keybindings.json
+
+# 4. Review and apply configurations manually
+ls ~/.anvil/temp/cursor/
+cp ~/.anvil/temp/cursor/settings.json ~/Library/Application\ Support/Cursor/User/
+cp ~/.anvil/temp/cursor/keybindings.json ~/Library/Application\ Support/Cursor/User/
+
+# 5. Pull other configurations as needed
+anvil config pull vs-code
+anvil config pull zsh
 ```
+
+#### Current vs. Future Implementation
+
+**Current Behavior**: Always fetches the latest changes from your repository and pulls configuration files to `~/.anvil/temp/[directory]` for manual review and application.
+
+**Future Enhancement**: Anvil will automatically detect application configuration paths and apply configurations directly with backup and rollback capabilities.
 
 ### Team Configuration Sharing
 
-**Scenario**: Share team configurations and standards across team members.
+**Scenario**: Share team configurations and development standards across team members.
+
+#### Team Setup Example
+
+**Team Lead Setup**:
 
 ```bash
-# Team lead sets up shared configurations
-anvil config push
+# 1. Create team configuration repository
+mkdir ~/team-configs
+cd ~/team-configs
 
-# Team members can pull shared configs
-anvil config pull
+# 2. Add team-specific configurations
+mkdir -p vs-code cursor git zsh homebrew
 
-# Individual customizations can be made locally
-# Push team-wide changes back when needed
-anvil config push
+# VS Code team settings
+cat > vs-code/settings.json << 'EOF'
+{
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "eslint.enable": true,
+  "prettier.requireConfig": true,
+  "workbench.colorTheme": "Dark+ (default dark)"
+}
+EOF
+
+# Git team settings
+cat > git/.gitconfig << 'EOF'
+[core]
+    editor = code --wait
+    autocrlf = input
+[pull]
+    rebase = true
+[init]
+    defaultBranch = main
+EOF
+
+git init
+git add .
+git commit -m "Initial team configuration"
+git remote add origin https://github.com/company/team-configs.git
+git push -u origin main
+```
+
+**Team Member Setup**:
+
+```bash
+# 1. Configure Anvil with team repository
+anvil init
+
+# Edit ~/.anvil/settings.yaml:
+```
+
+```yaml
+github:
+  config_repo: "company/team-configs"
+  branch: "main"
+  local_path: "~/.anvil/team-configs"
+  token_env_var: "GITHUB_TOKEN"
+```
+
+```bash
+# 2. Pull team configurations
+anvil config pull vs-code
+anvil config pull git
+anvil config pull zsh
+
+# 3. Review and apply team standards
+# Files are now in ~/.anvil/temp/ directories for review
+ls ~/.anvil/temp/vs-code/
+ls ~/.anvil/temp/git/
+```
+
+#### Advanced Team Workflow
+
+```bash
+# Team lead updates configurations
+# (edit files in team repository)
+git add .
+git commit -m "Update team ESLint settings"
+git push
+
+# Team members pull latest updates
+anvil config pull vs-code
+
+# Output shows what changed:
+# === Pull Complete! ===
+#
+# Configuration directory 'vs-code' has been pulled from: company/team-configs
+# Files are available at: /Users/username/.anvil/temp/vs-code
+#
+# Copied files:
+#   • settings.json (updated)
+#   • extensions.json
+#   • keybindings.json
+```
+
+### Configuration Repository Organization Examples
+
+#### Personal Developer Setup
+
+```
+dotfiles/
+├── editors/
+│   ├── cursor/
+│   │   ├── settings.json
+│   │   ├── keybindings.json
+│   │   └── snippets/
+│   │       ├── javascript.json
+│   │       └── typescript.json
+│   └── vs-code/
+│       ├── settings.json
+│       ├── extensions.json
+│       └── keybindings.json
+├── shell/
+│   ├── zsh/
+│   │   ├── .zshrc
+│   │   ├── .zsh_aliases
+│   │   └── .zsh_functions
+│   └── bash/
+│       └── .bashrc
+├── git/
+│   ├── .gitconfig
+│   └── .gitignore_global
+├── ssh/
+│   └── config
+└── README.md
+```
+
+Pull examples:
+
+```bash
+anvil config pull editors/cursor
+anvil config pull shell/zsh
+anvil config pull git
+```
+
+#### Team/Company Setup
+
+```
+team-configs/
+├── frontend/
+│   ├── vs-code/
+│   │   ├── settings.json        # Frontend team VS Code settings
+│   │   └── extensions.json
+│   └── cursor/
+│       └── settings.json        # Frontend team Cursor settings
+├── backend/
+│   ├── vs-code/
+│   │   └── settings.json        # Backend team VS Code settings
+│   └── git/
+│       └── .gitconfig           # Backend-specific Git settings
+├── shared/
+│   ├── git/
+│   │   ├── .gitconfig           # Company-wide Git settings
+│   │   └── .gitignore_global
+│   └── zsh/
+│       └── .zshrc               # Company shell configuration
+└── README.md
+```
+
+Pull examples:
+
+```bash
+# Frontend developer
+anvil config pull frontend/vs-code
+anvil config pull shared/git
+
+# Backend developer
+anvil config pull backend/vs-code
+anvil config pull shared/git
+anvil config pull shared/zsh
 ```
 
 ### Example 10: Custom Tool Groups

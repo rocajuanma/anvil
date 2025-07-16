@@ -106,6 +106,13 @@ func runInitCommand() error {
 	terminal.PrintInfo("  • 'anvil setup [app]' to install any individual application")
 	terminal.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
 
+	// GitHub configuration warning
+	terminal.PrintWarning("\n⚙️  Configuration Management Setup Required:")
+	terminal.PrintInfo("  • Edit the 'github.config_repo' field in settings.yaml to enable config pull/push")
+	terminal.PrintInfo("  • Example: 'github.config_repo: username/dotfiles'")
+	terminal.PrintInfo("  • Set GITHUB_TOKEN environment variable for authentication")
+	terminal.PrintInfo("  • Run 'anvil config pull' once configured to sync your dotfiles")
+
 	// Show available groups dynamically
 	if groups, err := config.GetAvailableGroups(); err == nil {
 		builtInGroups := config.GetBuiltInGroups()
