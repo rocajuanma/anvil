@@ -1,10 +1,17 @@
-# Anvil
+<div align="center">
+  <img src="assets/anvil-logo.png" alt="Anvil Logo" width="200" style="border-radius: 50%;">
+  <h1>Anvil</h1>
+</div>
+
+<div align="center">
 
 [![Go Version](https://img.shields.io/badge/go-1.17+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20only-blue.svg)](#macos-focus)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](docs/CHANGELOG.md)
+
+</div>
 
 > A powerful macOS automation CLI tool for dynamic development environment setup
 
