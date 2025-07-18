@@ -23,6 +23,7 @@ const (
 	OpConfig  = "config"
 	OpPull    = "pull"
 	OpPush    = "push"
+	OpShow    = "show"
 	OpDraw    = "draw"
 )
 

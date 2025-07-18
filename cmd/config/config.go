@@ -19,6 +19,7 @@ package config
 import (
 	"github.com/rocajuanma/anvil/cmd/config/pull"
 	"github.com/rocajuanma/anvil/cmd/config/push"
+	"github.com/rocajuanma/anvil/cmd/config/show"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,8 @@ var ConfigCmd = &cobra.Command{
 }
 
 func init() {
-	// Add pull and push as sub-commands of config
+	// Add pull, push, and show as sub-commands of config
 	ConfigCmd.AddCommand(pull.PullCmd)
 	ConfigCmd.AddCommand(push.PushCmd)
+	ConfigCmd.AddCommand(show.ShowCmd)
 }

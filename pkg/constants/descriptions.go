@@ -70,6 +70,7 @@ to ensure all configuration-related actions are properly organized.
 Subcommands:
 • anvil config pull [directory]    - Pull configuration files from remote repository
 • anvil config push [directory]    - Push configuration files to remote repository
+• anvil config show [directory]    - Show configuration files from anvil settings or pulled directories
 
 GitHub Repository Configuration:
 The 'github.config_repo' field in settings.yaml should be in the format 'username/repository'.
@@ -128,6 +129,20 @@ The repository URL format is automatically validated and corrected if needed.
 Supported formats include full URLs, SSH URLs, and domain-prefixed formats.
 
 Example: anvil config pull cursor    # Pulls all files from the 'cursor' directory`
+
+const SHOW_COMMAND_LONG_DESCRIPTION = `The show command displays configuration files and settings for easy viewing and inspection.
+
+Usage Modes:
+• anvil config show              - Display the main anvil settings.yaml file
+• anvil config show [directory]  - Show configuration files from a pulled directory
+
+Features:
+• 📄 Single file display: Shows file content directly in terminal
+• 📁 Multiple files: Shows tree structure with file listings
+• ✅ Smart file detection: Automatically determines best display method
+• 💡 Helpful error messages with suggestions for missing directories
+
+Perfect for reviewing pulled configurations before applying them or checking your current anvil settings.`
 
 const DRAW_COMMAND_LONG_DESCRIPTION = `The draw command generates beautiful ASCII art representations of text using the
 go-figure library for enhanced terminal output and visual appeal.

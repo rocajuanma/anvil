@@ -486,6 +486,10 @@ cp ~/.anvil/temp/cursor/keybindings.json ~/Library/Application\ Support/Cursor/U
 # 5. Pull other configurations as needed
 anvil config pull vs-code
 anvil config pull zsh
+
+# 6. Review configurations before applying
+anvil config show vs-code
+anvil config show zsh
 ```
 
 #### Current vs. Future Implementation
