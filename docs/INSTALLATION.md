@@ -282,6 +282,7 @@ anvil --help
 anvil init --help
 anvil install --help
 anvil config --help
+anvil config show --help
 
 # Test initialization (this should work without errors)
 anvil init

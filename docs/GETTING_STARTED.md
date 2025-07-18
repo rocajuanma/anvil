@@ -25,7 +25,7 @@ Anvil is a CLI automation tool that helps developers:
 
 ### Key Concepts
 
-- **Commands**: Actions you can perform (`init`, `setup`, `config pull`, `config push`)
+- **Commands**: Actions you can perform (`init`, `install`, `config pull`, `config show`, `config push`)
 - **Groups**: Collections of related tools (`dev`, `new-laptop`, custom groups)
 - **Configuration**: Settings stored in `~/.anvil/settings.yaml`
 - **Tools**: Individual applications or utilities that can be installed
@@ -93,6 +93,7 @@ anvil init --help
 anvil install --help
 anvil config --help
 anvil config pull --help
+anvil config show --help
 anvil config push --help
 ```
 
@@ -395,6 +396,10 @@ anvil config pull vs-code
 
 # Pull shell configurations
 anvil config pull zsh
+
+# View pulled configurations
+anvil config show cursor
+anvil config show vs-code
 ```
 
 **Current Behavior**: Always fetches the latest changes from your repository and pulls files to `~/.anvil/temp/[directory]` for review before manual application.
@@ -621,6 +626,8 @@ anvil install git && anvil install zsh  # Install specific tools individually
 anvil install dev --dry-run     # Preview installations
 anvil config pull cursor      # Pull Cursor configurations from remote
 anvil config pull vs-code     # Pull VS Code configurations from remote
+anvil config show cursor      # View pulled Cursor configurations
+anvil config show            # View anvil settings.yaml
 anvil config push cursor      # Push configurations to remote (coming soon)
 anvil --help                   # Get help
 ```

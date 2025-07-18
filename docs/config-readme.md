@@ -82,6 +82,10 @@ echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.zshrc
 anvil config pull cursor
 anvil config pull vs-code
 anvil config pull zsh
+
+# View pulled configurations
+anvil config show cursor
+anvil config show vs-code
 ```
 
 ## 🔧 Configuration Setup
@@ -149,6 +153,16 @@ github.com/username/repository
 ## 📥 Pull Command
 
 ### Basic Usage
+
+### Configuration Commands
+
+The config command provides three main operations:
+
+- **`anvil config pull [directory]`** - Downloads configuration files from your GitHub repository
+- **`anvil config show [directory]`** - Views configuration files (anvil settings or pulled configs)
+- **`anvil config push [directory]`** - Uploads configuration files to your GitHub repository (coming soon)
+
+#### Pull Command
 
 The `anvil config pull` command downloads configuration files from your GitHub repository:
 
@@ -220,6 +234,7 @@ Copied files:
 
 Next steps:
   • Review the pulled configuration files in: /Users/username/.anvil/temp/cursor
+  • Use 'anvil config show [directory]' to view configuration content
   • Apply/copy configurations to their destination as needed
   • Use 'anvil config push' to upload any local changes
 ```
@@ -277,6 +292,42 @@ Anvil supports multiple authentication methods:
 3. **Public Repository Access**
    - No authentication required
    - Automatically falls back to HTTPS
+
+## 📄 Show Command
+
+### View Configuration Files
+
+The `anvil config show` command displays configuration files for easy viewing and inspection:
+
+```bash
+# View main anvil settings
+anvil config show
+
+# View pulled configuration directory
+anvil config show [directory]
+```
+
+### Features
+
+- **Single File Display**: Shows file content directly in terminal
+- **Multiple Files**: Shows tree structure with file listings
+- **Smart Detection**: Automatically determines best display method
+- **Helpful Errors**: Clear messages for missing directories with suggestions
+
+### Examples
+
+```bash
+# View your anvil settings.yaml
+anvil config show
+
+# View pulled Cursor configurations
+anvil config show cursor
+
+# View pulled VS Code configurations
+anvil config show vs-code
+```
+
+Perfect for reviewing pulled configurations before applying them or checking your current anvil settings.
 
 ## 📤 Push Command
 

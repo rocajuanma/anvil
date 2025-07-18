@@ -98,6 +98,10 @@ Sync dotfiles and configurations across machines using GitHub repositories:
 anvil config pull cursor
 anvil config pull vs-code
 
+# View configurations
+anvil config show        # View anvil settings
+anvil config show cursor # View pulled configs
+
 # Push configurations (coming soon)
 anvil config push cursor
 ```
@@ -132,6 +136,7 @@ github:
 | `install [group]`   | Install tool group     | `anvil install dev`        |
 | `install --list`    | List available groups  | `anvil install --list`     |
 | `config pull [dir]` | Pull configurations    | `anvil config pull cursor` |
+| `config show [dir]` | Show configurations    | `anvil config show cursor` |
 | `config push [dir]` | Push configurations    | `anvil config push cursor` |
 
 ### Useful Flags
