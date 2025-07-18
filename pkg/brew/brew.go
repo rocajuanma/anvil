@@ -106,18 +106,25 @@ func InstallPackage(packageName string) error {
 	return nil
 }
 
-// IsPackageInstalled checks if a package is installed
+// IsPackageInstalled checks if a package is installed (both formulas and casks)
 func IsPackageInstalled(packageName string) bool {
 	if !IsBrewInstalled() {
 		return false
 	}
 
+	// First try to check if it's installed as a formula
 	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, "--formula", packageName)
-	if err != nil {
-		return false
+	if err == nil && result.Success {
+		return true
 	}
 
-	return result.Success
+	// If not found as formula, check if it's installed as a cask
+	result, err = system.RunCommand(constants.BrewCommand, constants.BrewList, "--cask", packageName)
+	if err == nil && result.Success {
+		return true
+	}
+
+	return false
 }
 
 // GetInstalledPackages returns a list of installed packages

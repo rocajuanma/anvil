@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dynamic Individual Installation** - Install any Homebrew package by name with automatic tracking
 - **Configuration Pull System** - Complete implementation of `anvil config pull [directory]` command
 - **Configuration Show System** - New `anvil config show [directory]` command to view pulled configs and settings
+- **Configuration Sync System** - New `anvil config sync [directory]` command to reconcile settings with system state
   - Directory-specific configuration pulling from GitHub repositories
   - SSH key and GitHub token authentication support
   - Automatic GitHub URL format validation and normalization

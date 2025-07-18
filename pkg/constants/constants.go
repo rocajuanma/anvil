@@ -24,6 +24,7 @@ const (
 	OpPull    = "pull"
 	OpPush    = "push"
 	OpShow    = "show"
+	OpSync    = "sync"
 	OpDraw    = "draw"
 )
 
