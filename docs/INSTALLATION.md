@@ -280,9 +280,8 @@ anvil --help
 
 # Verify main commands are available
 anvil init --help
-anvil setup --help
+anvil install --help
 anvil config --help
-anvil draw --help
 
 # Test initialization (this should work without errors)
 anvil init
@@ -295,10 +294,10 @@ anvil init
 anvil init
 
 # List available tools
-anvil setup --list
+anvil install --list
 
 # Test dry run
-anvil setup dev --dry-run
+anvil install dev --dry-run
 
 # Check configuration
 cat ~/.anvil/settings.yaml
@@ -309,8 +308,7 @@ cat ~/.anvil/settings.yaml
 ```bash
 # Verify all components
 anvil init
-anvil setup --list
-anvil draw "Test"
+anvil install --list
 
 # Check configuration directory
 ls -la ~/.anvil/

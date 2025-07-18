@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package setup
+package install
 
 import (
 	"context"
@@ -32,11 +32,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// SetupCmd represents the setup command
-var SetupCmd = &cobra.Command{
-	Use:   "setup [group-name|app-name]",
+// InstallCmd represents the install command
+var InstallCmd = &cobra.Command{
+	Use:   "install [group-name|app-name]",
 	Short: "Install development tools and applications dynamically via Homebrew",
-	Long:  constants.SETUP_COMMAND_LONG_DESCRIPTION,
+	Long:  constants.INSTALL_COMMAND_LONG_DESCRIPTION,
 	Args: func(cmd *cobra.Command, args []string) error {
 		// Allow no arguments if --list flag is used
 		listFlag, _ := cmd.Flags().GetBool("list")
@@ -56,19 +56,19 @@ var SetupCmd = &cobra.Command{
 			return
 		}
 
-		if err := runSetupCommand(cmd, args[0]); err != nil {
-			terminal.PrintError("Setup failed: %v", err)
+		if err := runInstallCommand(cmd, args[0]); err != nil {
+			terminal.PrintError("Install failed: %v", err)
 			return
 		}
 	},
 }
 
-// runSetupCommand executes the dynamic setup process
-func runSetupCommand(cmd *cobra.Command, target string) error {
+// runInstallCommand executes the dynamic install process
+func runInstallCommand(cmd *cobra.Command, target string) error {
 	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
-		return errors.NewPlatformError(constants.OpSetup, target,
-			fmt.Errorf("setup command is only supported on macOS"))
+		return errors.NewPlatformError(constants.OpInstall, target,
+			fmt.Errorf("install command is only supported on macOS"))
 	}
 
 	// Check for dry-run flag
@@ -86,7 +86,7 @@ func runSetupCommand(cmd *cobra.Command, target string) error {
 	if !brew.IsBrewInstalled() {
 		terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
 		if err := brew.InstallBrew(); err != nil {
-			return errors.NewInstallationError(constants.OpSetup, "homebrew", err)
+			return errors.NewInstallationError(constants.OpInstall, "homebrew", err)
 		}
 		terminal.PrintSuccess("Homebrew installed successfully")
 	}
@@ -112,7 +112,7 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 	terminal.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
-		return errors.NewInstallationError(constants.OpSetup, groupName,
+		return errors.NewInstallationError(constants.OpInstall, groupName,
 			fmt.Errorf("group '%s' has no tools defined", groupName))
 	}
 
@@ -190,7 +190,7 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 		for _, err := range installErrors {
 			terminal.PrintError("  • %s", err)
 		}
-		return errors.NewInstallationError(constants.OpSetup, groupName,
+		return errors.NewInstallationError(constants.OpInstall, groupName,
 			fmt.Errorf("failed to install %d tools", len(installErrors)))
 	}
 
@@ -203,7 +203,7 @@ func installIndividualApp(appName string, dryRun bool) error {
 
 	// Validate app name
 	if appName == "" {
-		return errors.NewInstallationError(constants.OpSetup, appName,
+		return errors.NewInstallationError(constants.OpInstall, appName,
 			fmt.Errorf("application name cannot be empty"))
 	}
 
@@ -220,7 +220,7 @@ func installIndividualApp(appName string, dryRun bool) error {
 
 		if err := installSingleTool(appName); err != nil {
 			// Provide helpful error message with suggestions
-			return errors.NewInstallationError(constants.OpSetup, appName,
+			return errors.NewInstallationError(constants.OpInstall, appName,
 				fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
 		}
 
@@ -277,7 +277,7 @@ func installSingleTool(toolName string) error {
 // runPostInstallScript runs a post-install script for a tool
 func runPostInstallScript(script string) error {
 	// For now, just provide instructions to the user
-	terminal.PrintInfo("To complete setup, run:")
+	terminal.PrintInfo("To complete installation, run:")
 	terminal.PrintInfo("  %s", script)
 	return nil
 }
@@ -310,7 +310,7 @@ func listAvailableGroups() error {
 
 	groups, err := config.GetAvailableGroups()
 	if err != nil {
-		return errors.NewConfigurationError(constants.OpSetup, "list",
+		return errors.NewConfigurationError(constants.OpInstall, "list",
 			fmt.Errorf("failed to load groups: %w", err))
 	}
 
@@ -350,27 +350,27 @@ func listAvailableGroups() error {
 		terminal.PrintInfo("  %s", strings.Join(installedApps, ", "))
 	} else {
 		terminal.PrintInfo("\nNo individually tracked apps.")
-		terminal.PrintInfo("Apps installed via 'anvil setup [app-name]' will be tracked automatically.")
+		terminal.PrintInfo("Apps installed via 'anvil install [app-name]' will be tracked automatically.")
 	}
 
 	terminal.PrintInfo("\nUsage:")
-	terminal.PrintInfo("  anvil setup [group-name] - Install all apps in a group")
-	terminal.PrintInfo("  anvil setup [app-name]   - Install individual app (auto-tracked)")
+	terminal.PrintInfo("  anvil install [group-name] - Install all apps in a group")
+	terminal.PrintInfo("  anvil install [app-name]   - Install individual app (auto-tracked)")
 	terminal.PrintInfo("Examples:")
-	terminal.PrintInfo("  anvil setup dev")
-	terminal.PrintInfo("  anvil setup 1password")
+	terminal.PrintInfo("  anvil install dev")
+	terminal.PrintInfo("  anvil install 1password")
 
 	return nil
 }
 
 func init() {
 	// Add flags for additional functionality
-	SetupCmd.Flags().Bool("dry-run", false, "Show what would be installed without installing")
-	SetupCmd.Flags().Bool("list", false, "List all available groups")
-	SetupCmd.Flags().Bool("update", false, "Update Homebrew before installation")
+	InstallCmd.Flags().Bool("dry-run", false, "Show what would be installed without installing")
+	InstallCmd.Flags().Bool("list", false, "List all available groups")
+	InstallCmd.Flags().Bool("update", false, "Update Homebrew before installation")
 
 	// Add concurrent installation flags
-	SetupCmd.Flags().Bool("concurrent", false, "Enable concurrent installation for improved performance")
-	SetupCmd.Flags().Int("workers", 0, "Number of concurrent workers (default: number of CPU cores)")
-	SetupCmd.Flags().Duration("timeout", 0, "Timeout for individual tool installations (default: 10 minutes)")
+	InstallCmd.Flags().Bool("concurrent", false, "Enable concurrent installation for improved performance")
+	InstallCmd.Flags().Int("workers", 0, "Number of concurrent workers (default: number of CPU cores)")
+	InstallCmd.Flags().Duration("timeout", 0, "Timeout for individual tool installations (default: 10 minutes)")
 }

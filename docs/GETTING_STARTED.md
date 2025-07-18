@@ -25,7 +25,7 @@ Anvil is a CLI automation tool that helps developers:
 
 ### Key Concepts
 
-- **Commands**: Actions you can perform (`init`, `setup`, `config pull`, `config push`, `draw`)
+- **Commands**: Actions you can perform (`init`, `setup`, `config pull`, `config push`)
 - **Groups**: Collections of related tools (`dev`, `new-laptop`, custom groups)
 - **Configuration**: Settings stored in `~/.anvil/settings.yaml`
 - **Tools**: Individual applications or utilities that can be installed
@@ -90,7 +90,7 @@ anvil --help
 
 # Get help for specific commands
 anvil init --help
-anvil setup --help
+anvil install --help
 anvil config --help
 anvil config pull --help
 anvil config push --help
@@ -133,7 +133,7 @@ Anvil organizes tools into logical groups for easy batch installation:
 Install essential development tools:
 
 ```bash
-anvil setup dev
+anvil install dev
 ```
 
 This installs:
@@ -148,7 +148,7 @@ This installs:
 Set up a new machine with essential applications:
 
 ```bash
-anvil setup new-laptop
+anvil install new-laptop
 ```
 
 This installs:
@@ -162,8 +162,8 @@ This installs:
 Use dry-run to see what would be installed:
 
 ```bash
-anvil setup dev --dry-run
-anvil setup new-laptop --dry-run
+anvil install dev --dry-run
+anvil install new-laptop --dry-run
 ```
 
 ### Installing Individual Applications
@@ -172,14 +172,14 @@ Install any application by name with automatic tracking:
 
 ```bash
 # Install any application available through Homebrew
-anvil setup git
-anvil setup firefox
-anvil setup slack
-anvil setup visual-studio-code
-anvil setup figma
+anvil install git
+anvil install firefox
+anvil install slack
+anvil install visual-studio-code
+anvil install figma
 
 # Preview installation
-anvil setup firefox --dry-run
+anvil install firefox --dry-run
 ```
 
 **🎯 Automatic Tracking**: Individual apps are automatically added to `tools.installed_apps` in your settings.yaml.
@@ -196,7 +196,7 @@ anvil setup firefox --dry-run
 See all available groups and tools:
 
 ```bash
-anvil setup --list
+anvil install --list
 ```
 
 ## Common Workflows
@@ -210,10 +210,10 @@ Complete setup for a new development machine:
 anvil init
 
 # Step 2: Install development tools
-anvil setup dev
+anvil install dev
 
 # Step 3: Add essential applications
-anvil setup new-laptop
+anvil install new-laptop
 
 # Step 4: Add any additional tools as needed
 # (Additional tools can be installed through custom groups)
@@ -228,10 +228,10 @@ Quickly onboard a new team member:
 anvil init
 
 # Install team-standard tools
-anvil setup dev
+anvil install dev
 
 # Add team communication tools
-anvil setup slack
+anvil install slack
 
 # Additional tools can be defined in custom groups
 # See configuration section for custom group setup
@@ -246,10 +246,10 @@ Install only specific tools you need:
 anvil init
 
 # Preview what you want
-anvil setup dev --dry-run
+anvil install dev --dry-run
 
 # Install selected tools
-anvil setup dev
+anvil install dev
 ```
 
 ### Workflow 4: Custom Group Creation
@@ -277,8 +277,8 @@ groups:
 Then use your custom groups:
 
 ```bash
-anvil setup frontend
-anvil setup backend
+anvil install frontend
+anvil install backend
 ```
 
 ## Understanding Configuration
@@ -457,19 +457,19 @@ The `anvil config push` command is under development and will allow you to uploa
 1. **Use dry-run first** to preview installations:
 
    ```bash
-   anvil setup dev --dry-run
+   anvil install dev --dry-run
    ```
 
 2. **Start with groups**, then add individual tools:
 
    ```bash
-   anvil setup dev
-   anvil setup docker && anvil setup kubectl
+   anvil install dev
+   anvil install docker && anvil install kubectl
    ```
 
 3. **Check available options** before installing:
    ```bash
-   anvil setup --list
+   anvil install --list
    ```
 
 ### 📋 Configuration Best Practices
@@ -525,8 +525,8 @@ brew update
 ping -c 3 github.com
 
 # Try individual installation to isolate issues
-anvil setup git --dry-run
-anvil setup git
+anvil install git --dry-run
+anvil install git
 ```
 
 #### Configuration Issues
@@ -615,10 +615,10 @@ Now that you're familiar with the basics:
 
 ```bash
 anvil init                      # Initialize Anvil
-anvil setup --list            # List available groups and tools
-anvil setup dev                # Install development tools
-anvil setup git && anvil setup zsh  # Install specific tools individually
-anvil setup dev --dry-run     # Preview installations
+anvil install --list            # List available groups and tools
+anvil install dev                # Install development tools
+anvil install git && anvil install zsh  # Install specific tools individually
+anvil install dev --dry-run     # Preview installations
 anvil config pull cursor      # Pull Cursor configurations from remote
 anvil config pull vs-code     # Pull VS Code configurations from remote
 anvil config push cursor      # Push configurations to remote (coming soon)

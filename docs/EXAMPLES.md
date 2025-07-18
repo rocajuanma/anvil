@@ -31,7 +31,7 @@ $ anvil init
 ✅ Default settings.yaml generated
 
 # Step 2: See what tools are available
-$ anvil setup --list
+$ anvil install --list
 
 === Available Setup Groups ===
 Group: dev
@@ -46,7 +46,7 @@ Group: new-laptop
   • 1password
 
 # Step 3: Install development tools
-$ anvil setup dev
+$ anvil install dev
 
 === Setting up 'dev' group ===
 Installing tools for group 'dev': git, zsh, iterm2, vscode
@@ -70,7 +70,7 @@ Successfully installed 4 of 4 tools in group 'dev'
 
 ```bash
 # Preview what would be installed
-$ anvil setup dev --dry-run
+$ anvil install dev --dry-run
 
 Dry run mode - no actual installations will be performed
 
@@ -82,7 +82,7 @@ Would install: git
 Would install: zsh
 
 # Install the tools
-$ anvil setup dev
+$ anvil install dev
 
 === Individual Tool Setup ===
 Installing individual tools: git, zsh
@@ -104,7 +104,7 @@ Installing oh-my-zsh...
 $ anvil init
 
 # Install essential applications
-$ anvil setup new-laptop
+$ anvil install new-laptop
 
 === Setting up 'new-laptop' group ===
 Installing tools for group 'new-laptop': slack, chrome, 1password
@@ -130,10 +130,10 @@ Successfully installed 3 of 3 tools in group 'new-laptop'
 $ anvil init
 
 # Install core development tools
-$ anvil setup dev
+$ anvil install dev
 
 # Add frontend-specific tools
-$ anvil setup chrome
+$ anvil install chrome
 
 # Verify installation
 $ git --version
@@ -157,7 +157,7 @@ groups:
 Then use it:
 
 ```bash
-$ anvil setup frontend
+$ anvil install frontend
 ```
 
 ### Example 5: Backend Developer Setup
@@ -169,7 +169,7 @@ $ anvil setup frontend
 $ anvil init
 
 # Install development tools
-$ anvil setup dev
+$ anvil install dev
 
 # Add Docker through custom group configuration
 # (See settings.yaml custom group setup)
@@ -193,7 +193,7 @@ groups:
 **Usage**:
 
 ```bash
-$ anvil setup backend
+$ anvil install backend
 ```
 
 ### Example 6: Full-Stack Developer Setup
@@ -205,13 +205,13 @@ $ anvil setup backend
 $ anvil init
 
 # Install all development tools
-$ anvil setup dev
+$ anvil install dev
 
 # Add communication tools
-$ anvil setup slack
+$ anvil install slack
 
 # Add browser for testing
-$ anvil setup chrome
+$ anvil install chrome
 
 # Optional: Add custom tools through group configuration
 # (See settings.yaml for custom group setup)
@@ -235,11 +235,11 @@ anvil init
 
 # Install core development tools
 echo "🔧 Installing development tools..."
-anvil setup dev
+anvil install dev
 
 # Install team communication tools
 echo "💬 Installing communication tools..."
-anvil setup slack
+anvil install slack
 
 # Install additional tools through custom groups
 echo "🔧 Installing additional tools..."
@@ -247,7 +247,7 @@ echo "🔧 Installing additional tools..."
 
 # Custom team tools
 echo "🛠️  Installing team-specific tools..."
-anvil setup --figma --postman
+anvil install --figma --postman
 
 echo "✅ Setup complete! Welcome to the team!"
 echo "📚 Next steps:"
@@ -319,7 +319,7 @@ cp anvil-config/team-settings.yaml ~/.anvil/settings.yaml
 curl -o ~/.anvil/settings.yaml https://company.com/anvil/team-settings.yaml
 
 # Then install team tools
-anvil setup frontend  # or backend, qa
+anvil install frontend  # or backend, qa
 ```
 
 ### Example 9: Multi-Platform Team Setup
@@ -330,8 +330,8 @@ anvil setup frontend  # or backend, qa
 
 ```bash
 anvil init
-anvil setup dev
-anvil setup --slack
+anvil install dev
+anvil install --slack
 ```
 
 **Linux team member**:
@@ -339,7 +339,7 @@ anvil setup --slack
 ```bash
 anvil init
 # May see platform warnings
-anvil setup --git --vscode
+anvil install --git --vscode
 # Install additional tools manually or via platform package manager
 ```
 
@@ -348,7 +348,7 @@ anvil setup --git --vscode
 ```bash
 # Use WSL or Git Bash
 anvil init
-anvil setup --git --vscode
+anvil install --git --vscode
 # Install Windows-specific alternatives manually
 ```
 
@@ -716,10 +716,10 @@ groups:
 
 ```bash
 # Install specific workflow tools
-anvil setup mobile
-anvil setup data-science
-anvil setup devops
-anvil setup design
+anvil install mobile
+anvil install data-science
+anvil install devops
+anvil install design
 ```
 
 ### Example 11: Environment-Specific Setup
@@ -730,7 +730,7 @@ anvil setup design
 
 ```bash
 anvil init
-anvil setup dev
+anvil install dev
 # Additional tools through custom groups
 ```
 
@@ -738,7 +738,7 @@ anvil setup dev
 
 ```bash
 anvil init
-anvil setup --git  # Minimal tools only
+anvil install --git  # Minimal tools only
 # Production-specific tools via other means
 ```
 
@@ -746,8 +746,8 @@ anvil setup --git  # Minimal tools only
 
 ```bash
 anvil init
-anvil setup --git --chrome
-anvil setup --cypress --postman
+anvil install --git --chrome
+anvil install --cypress --postman
 ```
 
 ### Example 12: Project-Specific Tool Installation
@@ -768,7 +768,7 @@ cat >> ~/.anvil/settings.yaml << EOF
       - react-devtools
 EOF
 
-anvil setup react-project
+anvil install react-project
 ```
 
 **Python Project**:
@@ -784,7 +784,7 @@ cat >> ~/.anvil/settings.yaml << EOF
       - jupyter
 EOF
 
-anvil setup python-project
+anvil install python-project
 ```
 
 ## Platform-Specific Examples
@@ -796,11 +796,11 @@ anvil setup python-project
 ```bash
 # Full macOS setup
 anvil init  # Installs Homebrew automatically
-anvil setup dev  # Includes iTerm2
-anvil setup new-laptop
+anvil install dev  # Includes iTerm2
+anvil install new-laptop
 
 # Add macOS-specific productivity tools
-anvil setup --alfred --spectacle --raycast
+anvil install --alfred --spectacle --raycast
 ```
 
 ### Example 14: Linux Development Setup
@@ -813,7 +813,7 @@ sudo apt update
 sudo apt install -y git curl build-essential
 
 anvil init
-anvil setup --git --vscode
+anvil install --git --vscode
 
 # Linux-specific additions
 sudo apt install -y zsh vim tmux
@@ -826,7 +826,7 @@ sudo apt install -y zsh vim tmux
 ```bash
 # In WSL
 anvil init
-anvil setup --git --vscode
+anvil install --git --vscode
 
 # Install Windows VS Code extension for WSL integration
 # Some tools need Windows-specific installation
@@ -840,13 +840,13 @@ anvil setup --git --vscode
 
 ```bash
 # Check what failed
-anvil setup dev
+anvil install dev
 
 # Output shows:
 # ❌ Failed to install vscode: package not found
 
 # Debug individual tool
-anvil setup --vscode --dry-run
+anvil install --vscode --dry-run
 
 # Check Homebrew
 brew update
@@ -888,7 +888,7 @@ sudo chown -R $(whoami) ~/.anvil
 chmod 755 ~/.anvil
 
 # Retry installation
-anvil setup dev
+anvil install dev
 ```
 
 ## Integration Examples
@@ -921,7 +921,7 @@ jobs:
         run: ./anvil init
 
       - name: Install Development Tools
-        run: ./anvil setup dev --dry-run # Dry run in CI
+        run: ./anvil install dev --dry-run # Dry run in CI
 ```
 
 ### Example 20: Docker Container with Anvil
@@ -963,7 +963,7 @@ docker build -t anvil-dev .
 docker run -it anvil-dev
 
 # Inside container
-anvil setup --git --vscode
+anvil install --git --vscode
 ```
 
 ### Example 21: Makefile Integration
@@ -978,14 +978,14 @@ anvil setup --git --vscode
 setup-dev:
 	@echo "Setting up development environment..."
 	anvil init
-	anvil setup dev
+	anvil install dev
 	@echo "Development setup complete!"
 
 setup-team:
 	@echo "Setting up team environment..."
 	anvil init
-	anvil setup dev
-	anvil setup --slack
+	anvil install dev
+	anvil install --slack
 	@echo "Team setup complete!"
 
 clean-anvil:
@@ -1048,36 +1048,36 @@ read -p "Enter your choice (1-6): " choice
 case $choice in
     1)
         echo "🎨 Setting up Frontend Development..."
-        anvil setup dev
-        anvil setup --chrome
+        anvil install dev
+        anvil install --chrome
         ;;
     2)
         echo "⚙️ Setting up Backend Development..."
-        anvil setup dev
+        anvil install dev
         # Additional tools through custom groups
         ;;
     3)
         echo "🔄 Setting up Full-Stack Development..."
-        anvil setup dev
-        anvil setup --chrome
+        anvil install dev
+        anvil install --chrome
         ;;
     4)
         echo "📱 Setting up Mobile Development..."
-        anvil setup --git --vscode
+        anvil install --git --vscode
         echo "Note: Install Xcode and Android Studio manually"
         ;;
     5)
         echo "📊 Setting up Data Science..."
-        anvil setup --git --vscode --python
+        anvil install --git --vscode --python
         ;;
     6)
         echo "🛠️ Custom tool selection..."
-        anvil setup --list
-        echo "Use 'anvil setup --tool1 --tool2' to install specific tools"
+        anvil install --list
+        echo "Use 'anvil install --tool1 --tool2' to install specific tools"
         ;;
     *)
         echo "Invalid choice. Running basic setup..."
-        anvil setup dev
+        anvil install dev
         ;;
 esac
 
@@ -1086,7 +1086,7 @@ echo "✅ Setup complete!"
 echo "📚 Next steps:"
 echo "  - Configure Git: git config --global user.name 'Your Name'"
 echo "  - Configure Git: git config --global user.email 'you@example.com'"
-echo "  - Check installed tools: anvil setup --list"
+echo "  - Check installed tools: anvil install --list"
 ```
 
 ### Example 23: Backup and Restore Configuration
@@ -1153,20 +1153,20 @@ fi
 
 ```bash
 # Basic setup
-anvil init && anvil setup dev
+anvil init && anvil install dev
 
 # Preview before install
-anvil setup dev --dry-run
+anvil install dev --dry-run
 
 # Individual tools
-anvil setup --git --zsh --vscode
+anvil install --git --zsh --vscode
 
 # List options
-anvil setup --list
+anvil install --list
 
 # Help
 anvil --help
-anvil setup --help
+anvil install --help
 ```
 
 ### Configuration Locations

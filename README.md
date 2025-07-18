@@ -19,7 +19,7 @@ Supercharge your macOS development setup with Anvil — the all-in-one CLI for e
 
 ## ✨ Features
 
-- **🎯 Dynamic Installation** - Install any macOS application with `anvil setup [app-name]`
+- **🎯 Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
 - **📝 Smart Tracking** - Individual apps automatically tracked in `tools.installed_apps`
 - **📦 Group Management** - Predefined and custom tool groups for common scenarios
 - **🚀 Zero Configuration** - Works out of the box with sensible defaults
@@ -48,15 +48,15 @@ sudo mv anvil /usr/local/bin/
 anvil init
 
 # Install applications dynamically
-anvil setup firefox
-anvil setup visual-studio-code
+anvil install firefox
+anvil install visual-studio-code
 
 # Install predefined tool groups
-anvil setup dev        # git, zsh, iterm2, visual-studio-code
-anvil setup new-laptop # slack, google-chrome, 1password
+anvil install dev        # git, zsh, iterm2, visual-studio-code
+anvil install new-laptop # slack, google-chrome, 1password
 
 # Preview before installing
-anvil setup docker --dry-run
+anvil install docker --dry-run
 ```
 
 ## 📋 Installation Methods
@@ -66,9 +66,9 @@ anvil setup docker --dry-run
 Install any Homebrew package by name with automatic tracking:
 
 ```bash
-anvil setup firefox
-anvil setup slack
-anvil setup figma
+anvil install firefox
+anvil install slack
+anvil install figma
 ```
 
 ### Predefined Groups
@@ -104,7 +104,7 @@ anvil config push cursor
 
 📖 **[Complete Setup Guide](docs/config-readme.md)** - Authentication, repository structure, and examples
 
-## ⚙️ Configuration
+## ⚙️ Settings
 
 Basic settings structure in `~/.anvil/settings.yaml`:
 
@@ -128,10 +128,11 @@ github:
 | Command             | Description            | Example                    |
 | ------------------- | ---------------------- | -------------------------- |
 | `init`              | Initialize environment | `anvil init`               |
-| `setup [app]`       | Install application    | `anvil setup firefox`      |
-| `setup [group]`     | Install tool group     | `anvil setup dev`          |
-| `setup --list`      | List available groups  | `anvil setup --list`       |
+| `install [app]`     | Install application    | `anvil install firefox`    |
+| `install [group]`   | Install tool group     | `anvil install dev`        |
+| `install --list`    | List available groups  | `anvil install --list`     |
 | `config pull [dir]` | Pull configurations    | `anvil config pull cursor` |
+| `config push [dir]` | Push configurations    | `anvil config push cursor` |
 
 ### Useful Flags
 
@@ -145,7 +146,7 @@ github:
 | **[Getting Started](docs/GETTING_STARTED.md)**        | Complete setup and usage guide |
 | **[Configuration Management](docs/config-readme.md)** | Dotfiles sync with GitHub      |
 | **[Examples & Tutorials](docs/EXAMPLES.md)**          | Real-world usage scenarios     |
-| **[Setup Command](docs/setup-readme.md)**             | Detailed installation options  |
+| **[Install Command](docs/install-readme.md)**         | Detailed installation options  |
 | **[Contributing](docs/CONTRIBUTING.md)**              | Development guidelines         |
 | **[Changelog](docs/CHANGELOG.md)**                    | Version history and updates    |
 

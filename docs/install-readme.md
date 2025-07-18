@@ -1,12 +1,12 @@
-# Anvil Setup Command Documentation
+# Anvil Install Command Documentation
 
 ## Overview
 
-The `anvil setup` command provides automated batch installation of development tools and applications using Homebrew (on macOS) or other package managers. This command is designed to streamline the process of setting up consistent development environments across different machines by organizing tools into logical groups.
+The `anvil install` command provides automated batch installation of development tools and applications using Homebrew (on macOS) or other package managers. This command is designed to streamline the process of setting up consistent development environments across different machines by organizing tools into logical groups.
 
 ## Purpose and Importance
 
-The setup command serves several critical functions:
+The install command serves several critical functions:
 
 - **Standardized Development Environments** - Ensures consistent tool configurations across team members and machines
 - **Automated Tool Installation** - Eliminates the tedious manual process of installing development tools one by one
@@ -21,7 +21,7 @@ The setup command serves several critical functions:
 Install all tools in a predefined group:
 
 ```bash
-anvil setup [group-name]
+anvil install [group-name]
 ```
 
 ### Individual Application Mode
@@ -29,9 +29,9 @@ anvil setup [group-name]
 Install any application by name with automatic tracking:
 
 ```bash
-anvil setup firefox
-anvil setup slack
-anvil setup figma
+anvil install firefox
+anvil install slack
+anvil install figma
 ```
 
 ### Utility Mode
@@ -39,15 +39,15 @@ anvil setup figma
 List available groups or perform dry runs:
 
 ```bash
-anvil setup --list
-anvil setup --dry-run
+anvil install --list
+anvil install --dry-run
 ```
 
 ## Available Groups
 
 ### Default Groups
 
-The setup command comes with two predefined groups:
+The install command comes with two predefined groups:
 
 #### 1. Development Group (`dev`)
 
@@ -62,7 +62,7 @@ The setup command comes with two predefined groups:
 **Usage**:
 
 ```bash
-anvil setup dev
+anvil install dev
 ```
 
 #### 2. New Laptop Group (`new-laptop`)
@@ -77,7 +77,7 @@ anvil setup dev
 **Usage**:
 
 ```bash
-anvil setup new-laptop
+anvil install new-laptop
 ```
 
 ### Custom Groups
@@ -102,11 +102,11 @@ groups:
 
 ### Dynamic Installation & Automatic Tracking
 
-The setup command supports installing **any macOS application** available through Homebrew by name. Individual apps are **automatically tracked** in your settings.yaml file.
+The install command supports installing **any macOS application** available through Homebrew by name. Individual apps are **automatically tracked** in your settings.yaml file.
 
 ### How It Works
 
-1. **Install any app by name**: `anvil setup [app-name]`
+1. **Install any app by name**: `anvil install [app-name]`
 2. **Automatic detection**: Checks if app is already installed
 3. **Smart tracking**: Adds to `tools.installed_apps` in settings.yaml
 4. **Duplicate prevention**: Won't track apps already in groups or required/optional tools
@@ -117,26 +117,26 @@ The setup command supports installing **any macOS application** available throug
 
 ```bash
 # Install any application by name (auto-tracked)
-anvil setup git
-anvil setup firefox
-anvil setup slack
-anvil setup visual-studio-code
-anvil setup figma
-anvil setup notion
-anvil setup spotify
+anvil install git
+anvil install firefox
+anvil install slack
+anvil install visual-studio-code
+anvil install figma
+anvil install notion
+anvil install spotify
 ```
 
 **Install with dry run to preview:**
 
 ```bash
-anvil setup firefox --dry-run
+anvil install firefox --dry-run
 ```
 
 **Register existing apps for tracking:**
 
 ```bash
 # Works on already-installed apps too
-anvil setup figma  # "figma is already installed" + adds to tracking
+anvil install figma  # "figma is already installed" + adds to tracking
 ```
 
 ### Automatic Tracking in settings.yaml
@@ -155,9 +155,9 @@ groups:
 
 **Smart Deduplication:**
 
-- ✅ `anvil setup figma` → tracked in `installed_apps`
-- ❌ `anvil setup git` → already in `required_tools`, not duplicated
-- ❌ `anvil setup dev` → group installation, individual apps not tracked separately
+- ✅ `anvil install figma` → tracked in `installed_apps`
+- ❌ `anvil install git` → already in `required_tools`, not duplicated
+- ❌ `anvil install dev` → group installation, individual apps not tracked separately
 
 ## Command Options and Flags
 
@@ -172,19 +172,19 @@ groups:
 **List all available groups:**
 
 ```bash
-anvil setup --list
+anvil install --list
 ```
 
 **Preview what would be installed:**
 
 ```bash
-anvil setup dev --dry-run
+anvil install dev --dry-run
 ```
 
 **Show help information:**
 
 ```bash
-anvil setup --help
+anvil install --help
 ```
 
 ## Tool Installation Details
@@ -295,7 +295,7 @@ Successfully installed 4 of 4 tools in group 'dev'
 
 ### settings.yaml Structure
 
-The setup command reads group configurations from `~/.anvil/settings.yaml`:
+The install command reads group configurations from `~/.anvil/settings.yaml`:
 
 ```yaml
 groups:
@@ -339,8 +339,8 @@ groups:
 After adding custom groups, they become available for installation:
 
 ```bash
-anvil setup data-science
-anvil setup mobile-dev
+anvil install data-science
+anvil install mobile-dev
 ```
 
 ## Platform Support
@@ -381,7 +381,7 @@ anvil setup mobile-dev
 
 ### Error Recovery
 
-The setup command continues installing other tools even if some fail:
+The install command continues installing other tools even if some fail:
 
 ```
 === Group Setup Complete! ===
@@ -394,7 +394,7 @@ Successfully installed 3 of 4 tools in group 'dev'
 
 ### Pre-Setup Checklist
 
-Before running setup commands:
+Before running install commands:
 
 - [ ] Ensure you have administrative privileges
 - [ ] Run `anvil init` to initialize your configuration
@@ -412,25 +412,25 @@ Before running setup commands:
 2. **Review available groups:**
 
    ```bash
-   anvil setup --list
+   anvil install --list
    ```
 
 3. **Test with dry run:**
 
    ```bash
-   anvil setup dev --dry-run
+   anvil install dev --dry-run
    ```
 
 4. **Install your desired group:**
 
    ```bash
-   anvil setup dev
+   anvil install dev
    ```
 
 5. **Add individual tools as needed:**
    ```bash
-   anvil setup slack
-   anvil setup chrome
+   anvil install slack
+   anvil install chrome
    ```
 
 ### Group Organization Strategy
@@ -458,10 +458,10 @@ Before running setup commands:
 anvil init
 
 # Install development tools
-anvil setup dev
+anvil install dev
 
 # Configure additional settings
-anvil setup git && anvil setup zsh
+anvil install git && anvil install zsh
 
 # Sync with GitHub (if applicable)
 anvil config pull
@@ -473,11 +473,11 @@ For tools not included in the predefined lists, you can:
 
 1. **Add to custom groups in settings.yaml**
 2. **Install directly via Homebrew integration**
-3. **Extend the setup command with custom installers**
+3. **Extend the install command with custom installers**
 
 ### Automation and Scripting
 
-The setup command is designed to be scriptable:
+The install command is designed to be scriptable:
 
 ```bash
 #!/bin/bash
@@ -485,8 +485,8 @@ The setup command is designed to be scriptable:
 
 echo "Setting up new development machine..."
 anvil init
-anvil setup new-laptop
-anvil setup dev
+anvil install new-laptop
+anvil install dev
 echo "Setup complete!"
 ```
 
@@ -590,7 +590,7 @@ brew install --cask visual-studio-code
 
 ### Extensibility
 
-The setup command is designed to be extensible:
+The install command is designed to be extensible:
 
 - New tools can be easily added to installation logic
 - Custom installers can be integrated
@@ -599,6 +599,6 @@ The setup command is designed to be extensible:
 
 ## Conclusion
 
-The `anvil setup` command provides a powerful and flexible way to install and manage development tools. Its group-based approach, combined with individual tool installation options, makes it suitable for both individual developers and teams. The command's integration with Anvil's configuration system ensures consistency across different environments while providing the flexibility needed for diverse development workflows.
+The `anvil install` command provides a powerful and flexible way to install and manage development tools. Its group-based approach, combined with individual tool installation options, makes it suitable for both individual developers and teams. The command's integration with Anvil's configuration system ensures consistency across different environments while providing the flexibility needed for diverse development workflows.
 
-Whether you're setting up a new development machine, onboarding team members, or maintaining consistent tool configurations, the setup command provides the automation and reliability needed for modern development environments.
+Whether you're setting up a new development machine, onboarding team members, or maintaining consistent tool configurations, the install command provides the automation and reliability needed for modern development environments.

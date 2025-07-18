@@ -102,8 +102,8 @@ func runInitCommand() error {
 
 	// Final usage guidance
 	terminal.PrintInfo("\nYou can now use:")
-	terminal.PrintInfo("  • 'anvil setup [group]' to install development tool groups")
-	terminal.PrintInfo("  • 'anvil setup [app]' to install any individual application")
+	terminal.PrintInfo("  • 'anvil install [group]' to install development tool groups")
+	terminal.PrintInfo("  • 'anvil install [app]' to install any individual application")
 	terminal.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
 
 	// GitHub configuration warning
@@ -123,7 +123,7 @@ func runInitCommand() error {
 	} else {
 		terminal.PrintInfo("\nAvailable groups: dev, new-laptop")
 	}
-	terminal.PrintInfo("Example: 'anvil setup dev' or 'anvil setup firefox'")
+	terminal.PrintInfo("Example: 'anvil install dev' or 'anvil install firefox'")
 
 	return nil
 }
