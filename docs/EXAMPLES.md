@@ -490,6 +490,10 @@ anvil config pull zsh
 # 6. Review configurations before applying
 anvil config show vs-code
 anvil config show zsh
+
+# 7. Sync missing apps from settings.yaml
+anvil config sync --dry-run
+anvil config sync
 ```
 
 #### Current vs. Future Implementation
@@ -1093,7 +1097,41 @@ echo "  - Configure Git: git config --global user.email 'you@example.com'"
 echo "  - Check installed tools: anvil install --list"
 ```
 
-### Example 23: Backup and Restore Configuration
+### Example 23: Bulk App Installation with Config Sync
+
+**Scenario**: Install multiple applications by editing settings.yaml and syncing.
+
+**File**: `bulk-install.sh`
+
+```bash
+#!/bin/bash
+
+echo "📝 Editing settings.yaml to add multiple apps..."
+
+# Add apps to installed_apps in settings.yaml
+cat >> ~/.anvil/settings.yaml << 'EOF'
+  installed_apps:
+  - figma
+  - notion
+  - slack
+  - discord
+  - zoom
+  - spotify
+EOF
+
+echo "🔍 Preview what will be installed..."
+anvil config sync --dry-run
+
+echo "🚀 Install missing applications..."
+anvil config sync
+
+echo "✅ Bulk installation complete!"
+anvil install --list | grep "Individually Tracked Apps"
+```
+
+**Use Case**: Perfect for setting up development environments or onboarding new team members.
+
+### Example 24: Backup and Restore Configuration
 
 **Scenario**: Backup and restore Anvil configurations.
 

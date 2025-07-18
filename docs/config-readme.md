@@ -86,6 +86,10 @@ anvil config pull zsh
 # View pulled configurations
 anvil config show cursor
 anvil config show vs-code
+
+# Sync configuration state
+anvil config sync
+anvil config sync --dry-run
 ```
 
 ## 🔧 Configuration Setup
@@ -156,10 +160,11 @@ github.com/username/repository
 
 ### Configuration Commands
 
-The config command provides three main operations:
+The config command provides four main operations:
 
 - **`anvil config pull [directory]`** - Downloads configuration files from your GitHub repository
 - **`anvil config show [directory]`** - Views configuration files (anvil settings or pulled configs)
+- **`anvil config sync [directory]`** - Syncs configuration state with system reality
 - **`anvil config push [directory]`** - Uploads configuration files to your GitHub repository (coming soon)
 
 #### Pull Command
@@ -235,6 +240,7 @@ Copied files:
 Next steps:
   • Review the pulled configuration files in: /Users/username/.anvil/temp/cursor
   • Use 'anvil config show [directory]' to view configuration content
+  • Use 'anvil config sync' to install missing apps from settings.yaml
   • Apply/copy configurations to their destination as needed
   • Use 'anvil config push' to upload any local changes
 ```
@@ -328,6 +334,52 @@ anvil config show vs-code
 ```
 
 Perfect for reviewing pulled configurations before applying them or checking your current anvil settings.
+
+## 🔄 Sync Command
+
+### Reconcile Configuration State
+
+The `anvil config sync` command reconciles configuration state between settings.yaml and system reality:
+
+```bash
+# Sync anvil settings (install missing apps)
+anvil config sync
+
+# Preview what would be synced
+anvil config sync --dry-run
+
+# View app-specific sync status (development)
+anvil config sync [directory]
+```
+
+### Features
+
+- **Smart Analysis**: Shows what's installed vs what's missing from settings.yaml
+- **Confirmation Prompts**: Ask before making changes to your system
+- **Dry-run Support**: Preview changes without applying them
+- **Progress Tracking**: Visual feedback during installations
+
+### Examples
+
+```bash
+# Install missing apps from settings.yaml
+anvil config sync
+
+# Preview sync without installing
+anvil config sync --dry-run
+
+# Check sync status for pulled app configs
+anvil config sync cursor
+```
+
+### Typical Workflow
+
+1. **Edit settings.yaml**: Manually add apps to `installed_apps` list
+2. **Preview changes**: `anvil config sync --dry-run`
+3. **Apply sync**: `anvil config sync`
+4. **Confirm**: Apps are installed and system matches settings
+
+Perfect for bulk installing applications and maintaining consistent development environments.
 
 ## 📤 Push Command
 

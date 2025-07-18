@@ -71,6 +71,7 @@ Subcommands:
 • anvil config pull [directory]    - Pull configuration files from remote repository
 • anvil config push [directory]    - Push configuration files to remote repository
 • anvil config show [directory]    - Show configuration files from anvil settings or pulled directories
+• anvil config sync [directory]    - Sync configuration state with system reality
 
 GitHub Repository Configuration:
 The 'github.config_repo' field in settings.yaml should be in the format 'username/repository'.
@@ -143,6 +144,20 @@ Features:
 • 💡 Helpful error messages with suggestions for missing directories
 
 Perfect for reviewing pulled configurations before applying them or checking your current anvil settings.`
+
+const SYNC_COMMAND_LONG_DESCRIPTION = `The sync command reconciles configuration state between settings.yaml and system reality.
+
+Usage Modes:
+• anvil config sync              - Sync anvil settings (install missing apps from installed_apps)
+• anvil config sync [directory]  - Show sync status for pulled app configurations (development)
+
+Features:
+• 📋 Smart difference analysis: Shows what's installed vs what's missing
+• ✅ Confirmation prompts: Ask before making changes to system
+• 🔍 Dry-run support: Preview changes without applying them
+• 📊 Detailed progress tracking: Visual feedback during installations
+
+Perfect for maintaining consistent development environments and bulk installing missing applications.`
 
 const DRAW_COMMAND_LONG_DESCRIPTION = `The draw command generates beautiful ASCII art representations of text using the
 go-figure library for enhanced terminal output and visual appeal.

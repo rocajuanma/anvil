@@ -170,7 +170,7 @@ These steps are optional but recommended for the best experience.
 You can now use:
   • 'anvil --help' to see all available commands
   • 'anvil install' to install development tools
-  • 'anvil config pull', 'anvil config show', and 'anvil config push' to manage configuration files with GitHub
+  • 'anvil config pull', 'anvil config show', 'anvil config sync', and 'anvil config push' to manage configuration files with GitHub
   • Edit ~/.anvil/settings.yaml to customize your configuration
 ```
 
