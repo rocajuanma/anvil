@@ -116,7 +116,6 @@ tools:
 groups:
   dev: [git, zsh, iterm2, vscode]
   new-laptop: [slack, chrome, 1password]
-  custom: {}
 git:
   username: "Your Name"
   email: "your.email@example.com"
@@ -167,32 +166,30 @@ anvil setup dev --dry-run
 anvil setup new-laptop --dry-run
 ```
 
-### Installing Individual Tools
+### Installing Individual Applications
 
-Install specific tools using flags:
+Install any application by name with automatic tracking:
 
 ```bash
-# Install just Git
-anvil setup --git
+# Install any application available through Homebrew
+anvil setup git
+anvil setup firefox
+anvil setup slack
+anvil setup visual-studio-code
+anvil setup figma
 
-# Install multiple specific tools
-anvil setup --git --zsh --vscode
-
-# Preview individual tool installation
-anvil setup --git --zsh --dry-run
+# Preview installation
+anvil setup firefox --dry-run
 ```
 
-### Available Individual Tools
+**🎯 Automatic Tracking**: Individual apps are automatically added to `tools.installed_apps` in your settings.yaml.
 
-| Flag          | Tool      | Description                   |
-| ------------- | --------- | ----------------------------- |
-| `--git`       | Git       | Version control system        |
-| `--zsh`       | Zsh       | Advanced shell with oh-my-zsh |
-| `--iterm2`    | iTerm2    | Enhanced terminal (macOS)     |
-| `--vscode`    | VS Code   | Code editor                   |
-| `--slack`     | Slack     | Team communication            |
-| `--chrome`    | Chrome    | Web browser                   |
-| `--1password` | 1Password | Password manager              |
+### How Individual App Installation Works
+
+1. **Dynamic Detection**: Works with any Homebrew package
+2. **Smart Tracking**: Automatically added to settings.yaml
+3. **Duplicate Prevention**: Won't track apps already in groups or required tools
+4. **Existing App Registration**: Works on already-installed apps too
 
 ### Listing Available Options
 
@@ -234,7 +231,7 @@ anvil init
 anvil setup dev
 
 # Add team communication tools
-anvil setup --slack
+anvil setup slack
 
 # Additional tools can be defined in custom groups
 # See configuration section for custom group setup
@@ -249,10 +246,10 @@ Install only specific tools you need:
 anvil init
 
 # Preview what you want
-anvil setup --git --zsh --vscode --dry-run
+anvil setup dev --dry-run
 
 # Install selected tools
-anvil setup --git --zsh --vscode
+anvil setup dev
 ```
 
 ### Workflow 4: Custom Group Creation
@@ -261,21 +258,20 @@ Create your own tool groups by editing `~/.anvil/settings.yaml`:
 
 ```yaml
 groups:
-  custom:
-    frontend:
-      - git
-      - node
-      - yarn
-      - chrome
-    backend:
-      - git
-      - docker
-      - postgresql
-      - redis
-    data-science:
-      - python
-      - jupyter
-      - pandas
+  frontend:
+    - git
+    - node
+    - yarn
+    - chrome
+  backend:
+    - git
+    - docker
+    - postgresql
+    - redis
+  data-science:
+    - python
+    - jupyter
+    - pandas
 ```
 
 Then use your custom groups:
@@ -303,12 +299,11 @@ Edit `~/.anvil/settings.yaml` to add custom groups:
 
 ```yaml
 groups:
-  custom:
-    my-workflow:
-      - git
-      - docker
-      - vscode
-      - slack
+  my-workflow:
+    - git
+    - docker
+    - vscode
+    - slack
 ```
 
 ### Environment Configuration
@@ -469,7 +464,7 @@ The `anvil config push` command is under development and will allow you to uploa
 
    ```bash
    anvil setup dev
-   anvil setup --docker --kubectl
+   anvil setup docker && anvil setup kubectl
    ```
 
 3. **Check available options** before installing:
@@ -530,8 +525,8 @@ brew update
 ping -c 3 github.com
 
 # Try individual installation to isolate issues
-anvil setup --git --dry-run
-anvil setup --git
+anvil setup git --dry-run
+anvil setup git
 ```
 
 #### Configuration Issues
@@ -622,7 +617,7 @@ Now that you're familiar with the basics:
 anvil init                      # Initialize Anvil
 anvil setup --list            # List available groups and tools
 anvil setup dev                # Install development tools
-anvil setup --git --zsh       # Install specific tools
+anvil setup git && anvil setup zsh  # Install specific tools individually
 anvil setup dev --dry-run     # Preview installations
 anvil config pull cursor      # Pull Cursor configurations from remote
 anvil config pull vs-code     # Pull VS Code configurations from remote

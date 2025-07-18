@@ -24,12 +24,14 @@ Install all tools in a predefined group:
 anvil setup [group-name]
 ```
 
-### Individual Tool Mode
+### Individual Application Mode
 
-Install specific tools using flags:
+Install any application by name with automatic tracking:
 
 ```bash
-anvil setup --git --zsh --vscode
+anvil setup firefox
+anvil setup slack
+anvil setup figma
 ```
 
 ### Utility Mode
@@ -84,54 +86,78 @@ You can define custom groups in your `settings.yaml` file:
 
 ```yaml
 groups:
-  custom:
-    frontend:
-      - git
-      - zsh
-      - vscode
-      - chrome
-    backend:
-      - git
-      - zsh
-      - vscode
-      - slack
+  frontend:
+    - git
+    - zsh
+    - vscode
+    - chrome
+  backend:
+    - git
+    - zsh
+    - vscode
+    - slack
 ```
 
-## Individual Tool Installation
+## Individual Application Installation
 
-### Available Tool Flags
+### Dynamic Installation & Automatic Tracking
 
-The setup command supports individual installation of the following tools:
+The setup command supports installing **any macOS application** available through Homebrew by name. Individual apps are **automatically tracked** in your settings.yaml file.
 
-| Flag          | Tool               | Description                                      |
-| ------------- | ------------------ | ------------------------------------------------ |
-| `--git`       | Git                | Version control system with global configuration |
-| `--zsh`       | Zsh                | Advanced shell with oh-my-zsh and plugins        |
-| `--iterm2`    | iTerm2             | Enhanced terminal emulator for macOS             |
-| `--vscode`    | Visual Studio Code | Popular code editor                              |
-| `--slack`     | Slack              | Team communication platform                      |
-| `--chrome`    | Google Chrome      | Web browser                                      |
-| `--1password` | 1Password          | Password manager                                 |
+### How It Works
+
+1. **Install any app by name**: `anvil setup [app-name]`
+2. **Automatic detection**: Checks if app is already installed
+3. **Smart tracking**: Adds to `tools.installed_apps` in settings.yaml
+4. **Duplicate prevention**: Won't track apps already in groups or required/optional tools
 
 ### Examples
 
-**Install only Git:**
+**Install individual applications:**
 
 ```bash
-anvil setup --git
-```
-
-**Install multiple individual tools:**
-
-```bash
-anvil setup --git --zsh --vscode
+# Install any application by name (auto-tracked)
+anvil setup git
+anvil setup firefox
+anvil setup slack
+anvil setup visual-studio-code
+anvil setup figma
+anvil setup notion
+anvil setup spotify
 ```
 
 **Install with dry run to preview:**
 
 ```bash
-anvil setup --git --zsh --dry-run
+anvil setup firefox --dry-run
 ```
+
+**Register existing apps for tracking:**
+
+```bash
+# Works on already-installed apps too
+anvil setup figma  # "figma is already installed" + adds to tracking
+```
+
+### Automatic Tracking in settings.yaml
+
+Individual apps are automatically added to your configuration:
+
+```yaml
+tools:
+  required_tools: [git, curl]
+  optional_tools: [brew, docker, kubectl]
+  installed_apps: [figma, notion, spotify] # ← Auto-tracked individual apps
+groups:
+  dev: [git, zsh, iterm2, visual-studio-code]
+  new-laptop: [slack, google-chrome, 1password]
+```
+
+**Smart Deduplication:**
+
+- ✅ `anvil setup figma` → tracked in `installed_apps`
+- ❌ `anvil setup git` → already in `required_tools`, not duplicated
+- ❌ `anvil setup dev` → group installation, individual apps not tracked separately
 
 ## Command Options and Flags
 
@@ -229,19 +255,18 @@ Installing oh-my-zsh...
 Successfully installed 4 of 4 tools in group 'dev'
 ```
 
-### Individual Tool Installation Output
+### Individual Application Installation Output
 
 ```
-=== Individual Tool Setup ===
+=== Installing 'firefox' ===
 
-Installing individual tools: git, zsh
-[1/2] 50% - Installing git
-✅ git installed successfully
-[2/2] 100% - Installing zsh
-Installing oh-my-zsh...
-✅ zsh installed successfully
+🔍 Checking if firefox is already installed...
+📦 Installing firefox via Homebrew...
+✅ firefox installed successfully
+📝 Updating settings to track firefox...
+✅ Settings updated - firefox is now tracked
 
-=== Individual Tool Setup Complete! ===
+Installation complete!
 ```
 
 ### Dry Run Output
@@ -283,16 +308,15 @@ groups:
     - slack
     - chrome
     - 1password
-  custom:
-    frontend:
-      - git
-      - node
-      - yarn
-      - chrome
-    backend:
-      - git
-      - docker
-      - postgresql
+  frontend:
+    - git
+    - node
+    - yarn
+    - chrome
+  backend:
+    - git
+    - docker
+    - postgresql
 ```
 
 ### Adding Custom Groups
@@ -301,16 +325,15 @@ You can add custom groups by editing the `settings.yaml` file:
 
 ```yaml
 groups:
-  custom:
-    data-science:
-      - python
-      - jupyter
-      - pandas
-      - matplotlib
-    mobile-dev:
-      - xcode
-      - android-studio
-      - flutter
+  data-science:
+    - python
+    - jupyter
+    - pandas
+    - matplotlib
+  mobile-dev:
+    - xcode
+    - android-studio
+    - flutter
 ```
 
 After adding custom groups, they become available for installation:
@@ -406,7 +429,8 @@ Before running setup commands:
 
 5. **Add individual tools as needed:**
    ```bash
-   anvil setup --slack --chrome
+   anvil setup slack
+   anvil setup chrome
    ```
 
 ### Group Organization Strategy
@@ -437,7 +461,7 @@ anvil init
 anvil setup dev
 
 # Configure additional settings
-anvil setup --git --zsh
+anvil setup git && anvil setup zsh
 
 # Sync with GitHub (if applicable)
 anvil config pull
@@ -552,7 +576,7 @@ brew install --cask visual-studio-code
 
 - Currently uses sequential installation for reliability
 - Future versions may support parallel installation
-- Use individual tool flags for faster targeted installation
+- Use individual app names for targeted installation with automatic tracking
 
 ## Future Enhancements
 

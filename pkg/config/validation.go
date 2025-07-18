@@ -234,42 +234,36 @@ func (cv *ConfigValidator) validateNoDuplicateTools(tools *AnvilTools) error {
 
 // validateGroups validates group configurations
 func (cv *ConfigValidator) validateGroups(groups *AnvilGroups) error {
-	// Validate built-in groups
-	if len(groups.Dev) == 0 {
-		return fmt.Errorf("dev group cannot be empty")
+	if groups == nil || *groups == nil {
+		return fmt.Errorf("groups configuration is nil")
 	}
 
-	if len(groups.NewLaptop) == 0 {
-		return fmt.Errorf("new-laptop group cannot be empty")
+	groupsMap := *groups
+
+	// Validate that required built-in groups exist
+	devGroup, devExists := groupsMap["dev"]
+	if !devExists || len(devGroup) == 0 {
+		return fmt.Errorf("dev group is required and cannot be empty")
 	}
 
-	// Validate dev group tools
-	for _, tool := range groups.Dev {
-		if err := cv.ValidateAppName(tool); err != nil {
-			return fmt.Errorf("invalid tool in dev group: %w", err)
-		}
+	newLaptopGroup, newLaptopExists := groupsMap["new-laptop"]
+	if !newLaptopExists || len(newLaptopGroup) == 0 {
+		return fmt.Errorf("new-laptop group is required and cannot be empty")
 	}
 
-	// Validate new-laptop group tools
-	for _, tool := range groups.NewLaptop {
-		if err := cv.ValidateAppName(tool); err != nil {
-			return fmt.Errorf("invalid tool in new-laptop group: %w", err)
-		}
-	}
-
-	// Validate custom groups
-	for groupName, tools := range groups.Custom {
+	// Validate all groups
+	for groupName, tools := range groupsMap {
 		if err := cv.ValidateGroupName(groupName); err != nil {
-			return fmt.Errorf("invalid custom group name: %w", err)
+			return fmt.Errorf("invalid group name: %w", err)
 		}
 
 		if len(tools) == 0 {
-			return fmt.Errorf("custom group '%s' cannot be empty", groupName)
+			return fmt.Errorf("group '%s' cannot be empty", groupName)
 		}
 
 		for _, tool := range tools {
 			if err := cv.ValidateAppName(tool); err != nil {
-				return fmt.Errorf("invalid tool in custom group '%s': %w", groupName, err)
+				return fmt.Errorf("invalid tool in group '%s': %w", groupName, err)
 			}
 		}
 	}

@@ -43,11 +43,7 @@ type ToolInstallConfig struct {
 }
 
 // AnvilGroups represents grouped tool configurations
-type AnvilGroups struct {
-	Dev       []string            `yaml:"dev"`
-	NewLaptop []string            `yaml:"new-laptop"`
-	Custom    map[string][]string `yaml:"custom"`
-}
+type AnvilGroups map[string][]string
 
 // AnvilToolConfigs represents tool-specific configurations
 type AnvilToolConfigs struct {
@@ -139,9 +135,8 @@ func GetDefaultConfig() *AnvilConfig {
 			InstalledApps: []string{}, // Initialize empty slice for tracking
 		},
 		Groups: AnvilGroups{
-			Dev:       []string{constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
-			NewLaptop: []string{constants.PkgSlack, constants.PkgChrome, constants.Pkg1Password},
-			Custom:    make(map[string][]string),
+			"dev":        {constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
+			"new-laptop": {constants.PkgSlack, constants.PkgChrome, constants.Pkg1Password},
 		},
 		Git: GitConfig{
 			Username:   "",
@@ -276,16 +271,8 @@ func GetGroupTools(groupName string) ([]string, error) {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// First check built-in groups
-	switch groupName {
-	case "dev":
-		return config.Groups.Dev, nil
-	case "new-laptop":
-		return config.Groups.NewLaptop, nil
-	}
-
-	// Then check custom groups
-	if tools, exists := config.Groups.Custom[groupName]; exists {
+	// Check if the group exists in the Groups map
+	if tools, exists := config.Groups[groupName]; exists {
 		return tools, nil
 	}
 
@@ -302,11 +289,7 @@ func GetAvailableGroups() (map[string][]string, error) {
 	groups := make(map[string][]string)
 
 	// Add built-in groups
-	groups["dev"] = config.Groups.Dev
-	groups["new-laptop"] = config.Groups.NewLaptop
-
-	// Add custom groups
-	for name, tools := range config.Groups.Custom {
+	for name, tools := range config.Groups {
 		groups[name] = tools
 	}
 
@@ -336,11 +319,11 @@ func AddCustomGroup(name string, tools []string) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	if config.Groups.Custom == nil {
-		config.Groups.Custom = make(map[string][]string)
+	if config.Groups == nil {
+		config.Groups = make(map[string][]string)
 	}
 
-	config.Groups.Custom[name] = tools
+	config.Groups[name] = tools
 
 	return SaveConfig(config)
 }
