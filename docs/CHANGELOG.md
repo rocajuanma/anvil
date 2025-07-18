@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Simplified Groups Structure** - Removed "custom:" header requirement, all groups now at the same level in settings.yaml
-- **Automatic App Tracking** - Individual apps installed via `anvil setup [app-name]` are automatically tracked in `tools.installed_apps`
+- **Automatic App Tracking** - Individual apps installed via `anvil install [app-name]` are automatically tracked in `tools.installed_apps`
 - **Smart Duplicate Prevention** - Prevents tracking apps already in groups, required_tools, or optional_tools
 - **Dynamic Individual Installation** - Install any Homebrew package by name with automatic tracking
 - **Configuration Pull System** - Complete implementation of `anvil config pull [directory]` command
@@ -39,7 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **BREAKING CHANGE**: Individual app installation approach - Replaced flag-based installation (`--git`, `--zsh`) with dynamic name-based installation (`anvil setup git`, `anvil setup zsh`)
+- **BREAKING CHANGE**: Command renamed from `setup` to `install` - All `anvil setup` commands are now `anvil install`
+- **BREAKING CHANGE**: Individual app installation approach - Replaced flag-based installation (`--git`, `--zsh`) with dynamic name-based installation (`anvil install git`, `anvil install zsh`)
 - **BREAKING CHANGE**: Groups configuration structure - Removed "custom:" header requirement, all groups now at the same level in settings.yaml
 - **BREAKING CHANGE**: Reorganized `pull` and `push` commands as subcommands of `config`
   - `anvil pull` → `anvil config pull [directory]`

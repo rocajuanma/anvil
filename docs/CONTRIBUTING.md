@@ -97,7 +97,6 @@ anvil/
 ├── cmd/                    # Command implementations
 │   ├── initcmd/           # Init command
 │   ├── setup/             # Setup command
-│   ├── draw/              # Draw command
 │   ├── config/            # Config command (parent for pull/push)
 │   │   ├── pull/          # Pull subcommand (config pull)
 │   │   └── push/          # Push subcommand (config push)

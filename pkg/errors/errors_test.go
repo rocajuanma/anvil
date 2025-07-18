@@ -41,22 +41,22 @@ func TestAnvilError_Error(t *testing.T) {
 		{
 			name: "platform error without command",
 			err: &AnvilError{
-				Op:   "setup",
+				Op:   "install",
 				Type: ErrorTypePlatform,
 				Err:  errors.New("unsupported platform"),
 			},
-			expected: "anvil setup [platform]: unsupported platform",
+			expected: "anvil install [platform]: unsupported platform",
 		},
 		{
 			name: "installation error with context",
 			err: &AnvilError{
-				Op:      "setup",
+				Op:      "install",
 				Command: "homebrew",
 				Type:    ErrorTypeInstallation,
 				Context: "brew install git",
 				Err:     errors.New("installation failed"),
 			},
-			expected: "anvil setup homebrew [installation] (brew install git): installation failed",
+			expected: "anvil install homebrew [installation] (brew install git): installation failed",
 		},
 		{
 			name: "configuration error with all fields",
@@ -101,13 +101,13 @@ func TestNewAnvilError(t *testing.T) {
 }
 
 func TestNewPlatformError(t *testing.T) {
-	err := NewPlatformError("setup", "install", fmt.Errorf("unsupported OS"))
+	err := NewPlatformError("install", "platform", fmt.Errorf("unsupported OS"))
 
 	if err.Type != ErrorTypePlatform {
 		t.Errorf("Expected Type to be ErrorTypePlatform, got %v", err.Type)
 	}
 
-	expected := "anvil setup install [platform]: unsupported OS"
+	expected := "anvil install platform [platform]: unsupported OS"
 	if err.Error() != expected {
 		t.Errorf("Expected error string to be '%s', got '%s'", expected, err.Error())
 	}
@@ -120,7 +120,7 @@ func TestErrorMatches(t *testing.T) {
 		t.Error("Expected ErrorMatches to return true for matching error")
 	}
 
-	if ErrorMatches(err, "setup", "validate", ErrorTypeValidation) {
+	if ErrorMatches(err, "install", "validate", ErrorTypeValidation) {
 		t.Error("Expected ErrorMatches to return false for different operation")
 	}
 
@@ -134,7 +134,7 @@ func TestErrorMatches(t *testing.T) {
 }
 
 func TestGetErrorType(t *testing.T) {
-	err := NewInstallationError("setup", "homebrew", fmt.Errorf("installation failed"))
+	err := NewInstallationError("install", "homebrew", fmt.Errorf("installation failed"))
 
 	if GetErrorType(err) != ErrorTypeInstallation {
 		t.Errorf("Expected GetErrorType to return ErrorTypeInstallation, got %v", GetErrorType(err))

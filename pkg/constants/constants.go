@@ -18,12 +18,12 @@ package constants
 
 // Command operation constants
 const (
-	OpInit   = "init"
-	OpSetup  = "setup"
-	OpConfig = "config"
-	OpPull   = "pull"
-	OpPush   = "push"
-	OpDraw   = "draw"
+	OpInit    = "init"
+	OpInstall = "install"
+	OpConfig  = "config"
+	OpPull    = "pull"
+	OpPush    = "push"
+	OpDraw    = "draw"
 )
 
 // System command constants

@@ -127,7 +127,7 @@ func (ci *ConcurrentInstaller) InstallTools(ctx context.Context, tools []string)
 
 	// Return error if any installations failed
 	if stats.FailedTools > 0 {
-		return stats, errors.NewInstallationError(constants.OpSetup, "concurrent",
+		return stats, errors.NewInstallationError(constants.OpInstall, "concurrent",
 			fmt.Errorf("failed to install %d of %d tools", stats.FailedTools, stats.TotalTools))
 	}
 
@@ -253,7 +253,7 @@ func (ci *ConcurrentInstaller) installSingleTool(ctx context.Context, tool strin
 
 	// Install the tool via brew
 	if err := brew.InstallPackage(tool); err != nil {
-		return fmt.Errorf("failed to install %s: %w", tool, err)
+		return errors.NewInstallationError(constants.OpInstall, tool, err)
 	}
 
 	// Handle post-install script if configured

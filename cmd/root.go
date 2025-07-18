@@ -19,9 +19,8 @@ import (
 	"os"
 
 	"github.com/rocajuanma/anvil/cmd/config"
-	"github.com/rocajuanma/anvil/cmd/draw"
 	"github.com/rocajuanma/anvil/cmd/initcmd"
-	"github.com/rocajuanma/anvil/cmd/setup"
+	"github.com/rocajuanma/anvil/cmd/install"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/figure"
 	"github.com/spf13/cobra"
@@ -50,16 +49,8 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(initcmd.InitCmd)
-	rootCmd.AddCommand(setup.SetupCmd)
+	rootCmd.AddCommand(install.InstallCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
-	rootCmd.AddCommand(draw.DrawCmd)
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anvil.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	//rootCmd.AddCommand(draw.DrawCmd)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
