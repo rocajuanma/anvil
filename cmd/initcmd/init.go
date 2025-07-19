@@ -45,6 +45,9 @@ var InitCmd = &cobra.Command{
 
 // runInitCommand executes the complete initialization process for Anvil CLI on macOS
 func runInitCommand() error {
+	// Display the Anvil logo
+	fmt.Println(constants.AnvilLogo)
+	fmt.Println()
 	terminal.PrintHeader("Anvil Initialization")
 
 	// Ensure we're running on macOS

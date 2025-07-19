@@ -171,7 +171,7 @@ func InstallPackages(packages []string) error {
 			continue
 		}
 
-		if err := InstallPackage(pkg); err != nil {
+		if err := InstallPackageWithCheck(pkg); err != nil {
 			return fmt.Errorf("failed to install %s: %w", pkg, err)
 		}
 	}
@@ -215,4 +215,92 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 	}
 
 	return pkg, nil
+}
+
+// IsApplicationAvailable checks if an application is available on the system
+// This includes both Homebrew-managed and manually installed applications
+func IsApplicationAvailable(packageName string) bool {
+	// First check if it's managed by Homebrew
+	if IsPackageInstalled(packageName) {
+		return true
+	}
+
+	// Check for common GUI applications in /Applications/
+	appMappings := map[string]string{
+		"iterm2":             "/Applications/iTerm.app",
+		"visual-studio-code": "/Applications/Visual Studio Code.app",
+		"google-chrome":      "/Applications/Google Chrome.app",
+		"firefox":            "/Applications/Firefox.app",
+		"slack":              "/Applications/Slack.app",
+		"figma":              "/Applications/Figma.app",
+		"notion":             "/Applications/Notion.app",
+		"1password":          "/Applications/1Password 7 - Password Manager.app",
+		"spotify":            "/Applications/Spotify.app",
+		"docker":             "/Applications/Docker.app",
+	}
+
+	if appPath, exists := appMappings[packageName]; exists {
+		// Check if the application exists in /Applications/
+		result, err := system.RunCommand("test", "-d", appPath)
+		return err == nil && result.Success
+	}
+
+	// For command-line tools, check if they're in PATH
+	result, err := system.RunCommand("which", packageName)
+	return err == nil && result.Success
+}
+
+// InstallPackageWithCheck installs a package only if it's not already available
+func InstallPackageWithCheck(packageName string) error {
+	if !IsBrewInstalled() {
+		return fmt.Errorf("Homebrew is not installed")
+	}
+
+	// Check if application is already available (via any method)
+	if IsApplicationAvailable(packageName) {
+		terminal.PrintAlreadyAvailable("%s is already available on the system", packageName)
+		return nil
+	}
+
+	// Determine if this is a cask (GUI app) or formula (CLI tool)
+	caskPackages := map[string]bool{
+		"iterm2":             true,
+		"visual-studio-code": true,
+		"google-chrome":      true,
+		"firefox":            true,
+		"slack":              true,
+		"figma":              true,
+		"notion":             true,
+		"1password":          true,
+		"spotify":            true,
+		"docker":             true,
+	}
+
+	terminal.PrintInfo("Installing %s...", packageName)
+
+	var result *system.CommandResult
+	var err error
+
+	if caskPackages[packageName] {
+		// Install as cask
+		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, "--cask", packageName)
+	} else {
+		// Install as formula
+		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, packageName)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to run brew install: %w", err)
+	}
+
+	if !result.Success {
+		// Check if the error is because the app already exists
+		if strings.Contains(result.Error, "already an App at") {
+			terminal.PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
+			return nil
+		}
+		return fmt.Errorf("failed to install %s: %s", packageName, result.Error)
+	}
+
+	return nil
 }

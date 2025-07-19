@@ -207,10 +207,13 @@ func installIndividualApp(appName string, dryRun bool) error {
 			fmt.Errorf("application name cannot be empty"))
 	}
 
-	// Check if already installed
-	alreadyInstalled := brew.IsPackageInstalled(appName)
-	if alreadyInstalled {
-		terminal.PrintSuccess(fmt.Sprintf("%s is already installed", appName))
+	// Check if already available (via any method - Homebrew or manual installation)
+	alreadyAvailable := brew.IsApplicationAvailable(appName)
+	var wasNewlyInstalled bool
+
+	if alreadyAvailable {
+		terminal.PrintAlreadyAvailable("%s is already available on the system", appName)
+		wasNewlyInstalled = false
 	} else {
 		// Try to install the application
 		if dryRun {
@@ -225,16 +228,24 @@ func installIndividualApp(appName string, dryRun bool) error {
 		}
 
 		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", appName))
+		wasNewlyInstalled = true
 	}
 
-	// Track the app in settings (both newly installed and already installed)
-	if !dryRun {
-		terminal.PrintInfo("Updating settings to track %s...", appName)
-		if err := config.AddInstalledApp(appName); err != nil {
-			terminal.PrintWarning("Failed to update settings file: %v", err)
-			// Don't return error here as the installation was successful
+	// Only track the app in settings if it was newly installed and not already tracked
+	if !dryRun && wasNewlyInstalled {
+		// Check if already tracked to avoid duplicates
+		if isTracked, err := config.IsAppTracked(appName); err != nil {
+			terminal.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
+		} else if isTracked {
+			terminal.PrintInfo("%s is already tracked in settings", appName)
 		} else {
-			terminal.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
+			terminal.PrintInfo("Updating settings to track %s...", appName)
+			if err := config.AddInstalledApp(appName); err != nil {
+				terminal.PrintWarning("Failed to update settings file: %v", err)
+				// Don't return error here as the installation was successful
+			} else {
+				terminal.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
+			}
 		}
 	}
 
@@ -251,7 +262,7 @@ func installSingleTool(toolName string) error {
 	}
 
 	// Install the tool via brew
-	if err := brew.InstallPackage(toolName); err != nil {
+	if err := brew.InstallPackageWithCheck(toolName); err != nil {
 		return fmt.Errorf("failed to install %s: %w", toolName, err)
 	}
 

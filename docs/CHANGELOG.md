@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Branch existence validation and available branch listing
   - Git user configuration management
 - **Comprehensive Documentation** - Complete configuration management documentation
-  - New `docs/config-readme.md` with detailed setup instructions and examples
+  - New `docs/config.md` with detailed setup instructions and examples
   - Updated `README.md`, `GETTING_STARTED.md`, and `EXAMPLES.md` with current implementation
   - Real-world examples for personal and team configuration sharing
 - Parallel tool installation support

@@ -453,8 +453,8 @@ go clean -cache
 After successful installation:
 
 1. **[Get Started](GETTING_STARTED.md)** - Learn basic Anvil usage
-2. **[Initialize Anvil](init-readme.md)** - Set up your environment
-3. **[Install Tools](setup-readme.md)** - Start installing development tools
+2. **[Initialize Anvil](init.md)** - Set up your environment
+3. **[Install Tools](install.md)** - Start installing development tools
 4. **[View Examples](EXAMPLES.md)** - See real-world usage examples
 
 ---

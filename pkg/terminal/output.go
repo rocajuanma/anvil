@@ -198,6 +198,22 @@ func (oh *DefaultOutputHandler) PrintInfo(format string, args ...interface{}) {
 	oh.PrintWithLevel(LevelInfo, format, args...)
 }
 
+func (oh *DefaultOutputHandler) PrintAlreadyAvailable(format string, args ...interface{}) {
+	if oh.config.DisableOutput {
+		return
+	}
+
+	message := fmt.Sprintf(format, args...)
+
+	if oh.config.UseColors && oh.config.UseEmojis && oh.config.UseFormatting {
+		fmt.Printf("%s%s💙 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+	} else if oh.config.UseColors {
+		fmt.Printf("%s%s[AVAILABLE] %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+	} else {
+		fmt.Printf("[AVAILABLE] %s\n", message)
+	}
+}
+
 func (oh *DefaultOutputHandler) PrintProgress(current, total int, message string) {
 	if oh.config.DisableOutput {
 		return

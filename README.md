@@ -110,7 +110,7 @@ anvil config sync --dry-run # Preview what would be synced
 anvil config push cursor
 ```
 
-📖 **[Complete Setup Guide](docs/config-readme.md)** - Authentication, repository structure, and examples
+📖 **[Complete Setup Guide](docs/config.md)** - Authentication, repository structure, and examples
 
 ## ⚙️ Settings
 
@@ -151,14 +151,14 @@ github:
 
 ## 📚 Documentation
 
-| Guide                                                 | Description                    |
-| ----------------------------------------------------- | ------------------------------ |
-| **[Getting Started](docs/GETTING_STARTED.md)**        | Complete setup and usage guide |
-| **[Configuration Management](docs/config-readme.md)** | Dotfiles sync with GitHub      |
-| **[Examples & Tutorials](docs/EXAMPLES.md)**          | Real-world usage scenarios     |
-| **[Install Command](docs/install-readme.md)**         | Detailed installation options  |
-| **[Contributing](docs/CONTRIBUTING.md)**              | Development guidelines         |
-| **[Changelog](docs/CHANGELOG.md)**                    | Version history and updates    |
+| Guide                                          | Description                    |
+| ---------------------------------------------- | ------------------------------ |
+| **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and usage guide |
+| **[Configuration Management](docs/config.md)** | Dotfiles sync with GitHub      |
+| **[Examples & Tutorials](docs/EXAMPLES.md)**   | Real-world usage scenarios     |
+| **[Install Command](docs/install.md)**         | Detailed installation options  |
+| **[Contributing](docs/CONTRIBUTING.md)**       | Development guidelines         |
+| **[Changelog](docs/CHANGELOG.md)**             | Version history and updates    |
 
 ## 🍺 macOS Focus
 
@@ -171,7 +171,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 🙏 Acknowledgments
 
 - [Cobra](https://github.com/spf13/cobra) - CLI framework
-- [go-figure](https://github.com/common-nighthawk/go-figure) - ASCII art generation
 - [Homebrew](https://brew.sh/) - macOS package management
 
 ---

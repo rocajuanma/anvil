@@ -452,7 +452,7 @@ The `anvil config push` command is under development and will allow you to uploa
 
 ### For More Details
 
-📖 **[Complete Configuration Guide](config-readme.md)** - Detailed setup instructions, troubleshooting, and advanced usage examples.
+📖 **[Complete Configuration Guide](config.md)** - Detailed setup instructions, troubleshooting, and advanced usage examples.
 
 ## Tips and Best Practices
 
@@ -595,8 +595,8 @@ Now that you're familiar with the basics:
 
 ### Explore Advanced Features
 
-- **[Setup Command Documentation](setup-readme.md)** - Deep dive into tool installation
-- **[Init Command Documentation](init-readme.md)** - Understand initialization process
+- **[Install Command Documentation](install.md)** - Deep dive into tool installation
+- **[Init Command Documentation](init.md)** - Understand initialization process
 - **[Examples and Tutorials](EXAMPLES.md)** - Real-world usage scenarios
 
 ### Customize Your Setup

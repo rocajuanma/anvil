@@ -53,6 +53,10 @@ func (m *MockOutputHandler) PrintInfo(format string, args ...interface{}) {
 	m.messages = append(m.messages, fmt.Sprintf("INFO: %s", fmt.Sprintf(format, args...)))
 }
 
+func (m *MockOutputHandler) PrintAlreadyAvailable(format string, args ...interface{}) {
+	m.messages = append(m.messages, fmt.Sprintf("AVAILABLE: %s", fmt.Sprintf(format, args...)))
+}
+
 func (m *MockOutputHandler) PrintProgress(current, total int, message string) {
 	m.messages = append(m.messages, fmt.Sprintf("PROGRESS: %d/%d %s", current, total, message))
 }

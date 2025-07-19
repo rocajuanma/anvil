@@ -66,13 +66,15 @@ func PrintInfo(format string, args ...interface{}) {
 	fmt.Printf("%s%s\n", fmt.Sprintf(format, args...), ColorReset)
 }
 
+// PrintAlreadyAvailable prints a message indicating something is already available (blue color)
+func PrintAlreadyAvailable(format string, args ...interface{}) {
+	fmt.Printf("%s%s💙 %s%s\n", ColorBold, ColorBlue, fmt.Sprintf(format, args...), ColorReset)
+}
+
 // PrintProgress prints a progress indicator
 func PrintProgress(current, total int, message string) {
 	percentage := float64(current) / float64(total) * 100
-	fmt.Printf("\r%s%s[%d/%d] %.0f%% - %s%s", ColorBold, ColorCyan, current, total, percentage, message, ColorReset)
-	if current == total {
-		fmt.Println()
-	}
+	fmt.Printf("%s%s[%d/%d] %.0f%% - %s%s\n", ColorBold, ColorCyan, current, total, percentage, message, ColorReset)
 }
 
 // Confirm prompts the user for confirmation
