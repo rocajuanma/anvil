@@ -19,7 +19,7 @@ The `config` command provides centralized management of configuration files and 
 - ✅ **Pull**: Fully implemented with directory-specific pulling
 - ✅ **Show**: View configurations and settings
 - ✅ **Sync**: Reconcile configuration state with system reality
-- 🚧 **Push**: In development (coming soon)
+- ✅ **Push**: Upload configurations to GitHub repository
 
 ## Commands
 
@@ -77,9 +77,98 @@ anvil config sync --dry-run
 - ✅ Confirmation prompts: Ask before making changes to system
 - 🔍 Dry-run support: Preview changes without applying them
 
-### anvil config push [directory]
+### anvil config push [app-name]
 
-_Coming soon_ - Push local configuration files to your GitHub repository.
+Push configuration files to your GitHub repository with automated branch creation and change tracking.
+
+```bash
+# Push anvil settings to repository
+anvil config push
+
+# Push application-specific configs (in development)
+anvil config push cursor
+anvil config push vscode
+```
+
+**How it works:**
+
+#### Option 1: Anvil Settings Push (`anvil config push`)
+
+- 🔍 **Smart Detection**: Compares local and remote configurations before proceeding
+- 📁 **Organized Storage**: Always commits to `/anvil` directory in repository
+- 🌿 **Timestamped Branches**: Creates branches with format `config-push-DDMMYYYY-HHMM`
+- 💬 **Standardized Commits**: Uses commit message `anvil[push]: anvil`
+- 🔗 **PR Ready**: Provides direct link to create pull request
+
+**Example workflow:**
+
+```bash
+$ anvil config push
+
+=== Push Anvil Configuration ===
+
+🔧 Preparing to push anvil configuration...
+Repository: username/dotfiles
+Branch: main
+Settings file: /Users/username/.anvil/settings.yaml
+? Do you want to push your anvil settings to the repository? (y/N): y
+
+# If no changes:
+✅ Configuration is up-to-date!
+Local anvil settings match the remote repository.
+No changes to push.
+
+# If changes detected:
+Differences detected between local and remote configuration
+Created and switched to branch: config-push-18072025-2147
+Changes detected, proceeding with commit...
+✅ Committed changes: anvil[push]: anvil
+✅ Pushed branch 'config-push-18072025-2147' to origin
+
+✅ Configuration push completed successfully!
+
+📋 Push Summary:
+  • Branch created: config-push-18072025-2147
+  • Commit message: anvil[push]: anvil
+  • Files committed: [anvil/settings.yaml]
+
+🔗 Repository: https://github.com/username/dotfiles
+🌿 Branch: config-push-18072025-2147
+
+✅ You can now create a Pull Request on GitHub to merge these changes!
+Direct link: https://github.com/username/dotfiles/compare/main...config-push-18072025-2147
+```
+
+#### Option 2: Application Config Push (`anvil config push <app-name>`)
+
+🚧 **Status**: In Development
+
+```bash
+$ anvil config push cursor
+
+=== Push 'cursor' Configuration ===
+
+⚠️  Application-specific configuration push is currently in development
+This feature will allow you to push cursor configuration files to your GitHub repository
+Expected functionality:
+  • Create timestamped branch: config-push-<DDMMYYYY>-<HHMM>
+  • Commit message: anvil[push]: cursor
+  • Push cursor configs to /cursor directory in repository
+  • Create pull request for review
+
+🚧 Status: In Development
+📅 Expected: Future release
+
+For now, use 'anvil config push' to push anvil settings only.
+```
+
+**Key Features:**
+
+- 🎯 **Pre-Push Validation**: Detects differences before creating branches or commits
+- 🚫 **No Unnecessary Operations**: Skips Git operations when configurations are up-to-date
+- 📦 **Repository Organization**: Maintains clean directory structure
+- 🔄 **Workflow Integration**: Seamless integration with GitHub pull request workflow
+- 🛡️ **Safe Operations**: Always creates new branches, never pushes directly to main
 
 ## Setup
 
@@ -150,6 +239,9 @@ anvil config show cursor
 
 # Install missing apps from your settings
 anvil config sync
+
+# Push any local changes back to repository
+anvil config push
 ```
 
 ### Team Configuration Sharing
@@ -164,6 +256,39 @@ anvil config show team-dev
 # Install team's recommended tools
 anvil config sync team-dev --dry-run
 anvil config sync team-dev
+```
+
+### Configuration Backup and Sync Workflow
+
+```bash
+# 1. Make changes to your anvil settings locally
+# 2. Push changes to repository for backup
+anvil config push
+
+# 3. On another machine, pull latest settings
+anvil config pull anvil
+
+# 4. Install any missing applications
+anvil config sync
+```
+
+### Repository Organization Example
+
+After using `anvil config push`, your repository structure will look like:
+
+```
+your-dotfiles-repo/
+├── anvil/
+│   └── settings.yaml          # Anvil configuration (pushed via anvil config push)
+├── cursor/
+│   ├── settings.json          # Cursor settings (manual or future push)
+│   └── keybindings.json
+├── vscode/
+│   ├── settings.json          # VS Code settings (manual or future push)
+│   └── extensions.json
+└── zsh/
+    ├── .zshrc                 # Zsh configuration (manual)
+    └── .zsh_aliases
 ```
 
 ## Repository URL Formats

@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration Sync System** - New `anvil config sync [directory]` command to reconcile settings with system state
   - Directory-specific configuration pulling from GitHub repositories
   - SSH key and GitHub token authentication support
+- **Configuration Push System** - New `anvil config push` command to upload anvil settings to GitHub repository
+  - Smart difference detection between local and remote configurations
+  - Timestamped branch creation with format `config-push-DDMMYYYY-HHMM`
+  - Automated commit with standardized message `anvil[push]: anvil`
+  - Direct pull request link generation for workflow integration
+  - Pre-push validation to avoid unnecessary Git operations when configurations are up-to-date
   - Automatic GitHub URL format validation and normalization
   - Branch validation with detailed error messages listing available branches
   - Temporary file storage at `~/.anvil/temp/[directory]` for review before manual application
@@ -46,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGE**: Groups configuration structure - Removed "custom:" header requirement, all groups now at the same level in settings.yaml
 - **BREAKING CHANGE**: Reorganized `pull` and `push` commands as subcommands of `config`
   - `anvil pull` → `anvil config pull [directory]`
-  - `anvil push` → `anvil config push [directory]` (in development)
+  - `anvil push` → `anvil config push [directory]` (now implemented for anvil settings)
   - This change improves command hierarchy and follows Cobra best practices
   - All documentation updated to reflect new command structure with directory-specific operations
 - **Enhanced Configuration Structure** - Updated settings.yaml with GitHub and Git configuration sections

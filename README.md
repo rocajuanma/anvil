@@ -106,8 +106,9 @@ anvil config show cursor # View pulled configs
 anvil config sync        # Install missing apps from settings
 anvil config sync --dry-run # Preview what would be synced
 
-# Push configurations (coming soon)
-anvil config push cursor
+# Push configurations to repository
+anvil config push        # Push anvil settings
+anvil config push cursor # Push app configs (in development)
 ```
 
 📖 **[Complete Setup Guide](docs/config.md)** - Authentication, repository structure, and examples
@@ -139,10 +140,10 @@ github:
 | `install [app]`     | Install application    | `anvil install firefox`    |
 | `install [group]`   | Install tool group     | `anvil install dev`        |
 | `install --list`    | List available groups  | `anvil install --list`     |
-| `config pull [dir]` | Pull configurations    | `anvil config pull cursor` |
-| `config show [dir]` | Show configurations    | `anvil config show cursor` |
-| `config sync [dir]` | Sync configurations    | `anvil config sync`        |
-| `config push [dir]` | Push configurations    | `anvil config push cursor` |
+| `config pull [app]` | Pull configurations    | `anvil config pull cursor` |
+| `config show [app]` | Show configurations    | `anvil config show cursor` |
+| `config sync [app]` | Sync configurations    | `anvil config sync`        |
+| `config push [app]` | Push configurations    | `anvil config push`        |
 
 ### Useful Flags
 
