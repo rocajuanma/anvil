@@ -176,9 +176,9 @@ func (ci *ConcurrentInstaller) installWithTimeout(ctx context.Context, tool stri
 			time.Sleep(time.Second * time.Duration(attempt)) // Exponential backoff
 		}
 
-		// Check if already installed
-		if brew.IsPackageInstalled(tool) {
-			ci.output.PrintInfo("Worker %d: %s is already installed", workerID, tool)
+		// Check if already available (via any method)
+		if brew.IsApplicationAvailable(tool) {
+			ci.output.PrintAlreadyAvailable("Worker %d: %s is already available", workerID, tool)
 			return InstallationResult{
 				ToolName:  tool,
 				Success:   true,
@@ -252,7 +252,7 @@ func (ci *ConcurrentInstaller) installSingleTool(ctx context.Context, tool strin
 	}
 
 	// Install the tool via brew
-	if err := brew.InstallPackage(tool); err != nil {
+	if err := brew.InstallPackageWithCheck(tool); err != nil {
 		return errors.NewInstallationError(constants.OpInstall, tool, err)
 	}
 

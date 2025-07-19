@@ -101,6 +101,16 @@ const (
 	OhMyZshInstallCmd = `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
 )
 
+// ASCII Art Logo
+const (
+	AnvilLogo = ` █████╗ ███╗   ██╗██╗   ██╗██╗██╗     
+██╔══██╗████╗  ██║██║   ██║██║██║     
+███████║██╔██╗ ██║██║   ██║██║██║     
+██╔══██║██║╚██╗██║╚██╗ ██╔╝██║██║     
+██║  ██║██║ ╚████║ ╚████╔╝ ██║███████╗
+╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚══════╝`
+)
+
 // Common directory permissions
 const (
 	DirPerm  = 0755

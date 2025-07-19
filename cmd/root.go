@@ -16,25 +16,27 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/rocajuanma/anvil/cmd/config"
 	"github.com/rocajuanma/anvil/cmd/initcmd"
 	"github.com/rocajuanma/anvil/cmd/install"
 	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/figure"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "anvil",
-	Short: "Anvil is a simple automation tool to safe time",
-	Long:  constants.ANVIL_LONG_DESCRIPTION,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+	Short: "🔥 One CLI to rule them all.",
+	Long:  fmt.Sprintf("%s\n\n%s", constants.AnvilLogo, constants.ANVIL_LONG_DESCRIPTION),
 	Run: func(cmd *cobra.Command, args []string) {
-		figure.Draw("anvil", "doh")
+		fmt.Println(constants.AnvilLogo)
+		fmt.Println()
+		fmt.Println("🔥 One CLI to rule them all.")
+		fmt.Println()
+		fmt.Println("Use 'anvil --help' for usage information.")
 	},
 }
 
