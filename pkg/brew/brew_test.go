@@ -274,6 +274,101 @@ func BenchmarkIsBrewInstalled(b *testing.B) {
 	}
 }
 
+func TestIsApplicationAvailable(t *testing.T) {
+	tests := []struct {
+		name        string
+		packageName string
+		setupFunc   func()
+		cleanupFunc func()
+		expected    bool
+	}{
+		{
+			name:        "nonexistent package",
+			packageName: "nonexistent-package-12345",
+			expected:    false,
+		},
+		{
+			name:        "common command line tool",
+			packageName: "echo",
+			expected:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFunc != nil {
+				tt.setupFunc()
+			}
+			if tt.cleanupFunc != nil {
+				defer tt.cleanupFunc()
+			}
+
+			result := IsApplicationAvailable(tt.packageName)
+			if result != tt.expected {
+				t.Errorf("Expected IsApplicationAvailable(%s) to return %v, got %v", tt.packageName, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestInstallPackageWithCheck(t *testing.T) {
+	if !IsBrewInstalled() {
+		t.Skip("Skipping test - Homebrew is not installed")
+	}
+
+	tests := []struct {
+		name        string
+		packageName string
+		expectError bool
+	}{
+		{
+			name:        "install nonexistent package",
+			packageName: "nonexistent-package-12345",
+			expectError: true,
+		},
+		{
+			name:        "install already available package",
+			packageName: "git", // git is usually available
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := InstallPackageWithCheck(tt.packageName)
+
+			if tt.expectError && err == nil {
+				t.Error("Expected error but got none")
+			}
+
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+		})
+	}
+}
+
+func TestInstallPackageWithCheckWhenBrewNotInstalled(t *testing.T) {
+	// This test assumes brew is not installed - skip if it is
+	if IsBrewInstalled() {
+		t.Skip("Skipping test - Homebrew is installed")
+	}
+
+	err := InstallPackageWithCheck("git")
+	if err == nil {
+		t.Error("Expected error when brew is not installed")
+	}
+	if err.Error() != "Homebrew is not installed" {
+		t.Errorf("Expected 'Homebrew is not installed', got: %s", err.Error())
+	}
+}
+
+func BenchmarkIsApplicationAvailable(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		IsApplicationAvailable("git")
+	}
+}
+
 func BenchmarkIsPackageInstalled(b *testing.B) {
 	if !IsBrewInstalled() {
 		b.Skip("Homebrew not installed")

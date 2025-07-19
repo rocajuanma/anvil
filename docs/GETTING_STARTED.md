@@ -446,9 +446,22 @@ Next steps:
   • Use 'anvil config push' to upload any local changes
 ```
 
-### Configuration Push (Coming Soon)
+### Configuration Push
 
-The `anvil config push` command is under development and will allow you to upload local configuration changes back to your repository.
+The `anvil config push` command allows you to upload your anvil configuration changes back to your repository:
+
+```bash
+# Push anvil settings to repository
+anvil config push
+
+# The command will:
+# 1. Compare local and remote configurations
+# 2. Create timestamped branch if changes exist
+# 3. Commit changes with standardized message
+# 4. Push branch and provide PR link
+```
+
+**Note**: Application-specific configuration push (e.g., `anvil config push cursor`) is still in development.
 
 ### For More Details
 
@@ -635,7 +648,8 @@ anvil config show cursor      # View pulled Cursor configurations
 anvil config show            # View anvil settings.yaml
 anvil config sync            # Install missing apps from settings.yaml
 anvil config sync --dry-run  # Preview sync changes
-anvil config push cursor      # Push configurations to remote (coming soon)
+anvil config push            # Push anvil settings to remote
+anvil config push cursor      # Push app configurations (in development)
 anvil --help                   # Get help
 ```
 

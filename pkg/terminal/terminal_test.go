@@ -339,6 +339,59 @@ func TestPrintInfo(t *testing.T) {
 	}
 }
 
+func TestPrintAlreadyAvailable(t *testing.T) {
+	tests := []struct {
+		name     string
+		format   string
+		args     []interface{}
+		expected []string
+	}{
+		{
+			name:     "simple already available message",
+			format:   "Package is already available",
+			args:     []interface{}{},
+			expected: []string{"💙 Package is already available"},
+		},
+		{
+			name:     "already available with formatting",
+			format:   "%s is already installed",
+			args:     []interface{}{"git"},
+			expected: []string{"💙 git is already installed"},
+		},
+		{
+			name:     "already available with multiple args",
+			format:   "%s version %s is already available",
+			args:     []interface{}{"docker", "20.10.8"},
+			expected: []string{"💙 docker version 20.10.8 is already available"},
+		},
+		{
+			name:     "empty already available message",
+			format:   "",
+			args:     []interface{}{},
+			expected: []string{"💙 "},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := captureOutput(func() {
+				PrintAlreadyAvailable(tt.format, tt.args...)
+			})
+
+			for _, expected := range tt.expected {
+				if !strings.Contains(output, expected) {
+					t.Errorf("Expected output to contain '%s', got: %s", expected, output)
+				}
+			}
+
+			// Check for color codes
+			if !strings.Contains(output, ColorBold) || !strings.Contains(output, ColorBlue) || !strings.Contains(output, ColorReset) {
+				t.Error("Expected output to contain color codes")
+			}
+		})
+	}
+}
+
 func TestPrintProgress(t *testing.T) {
 	tests := []struct {
 		name     string
