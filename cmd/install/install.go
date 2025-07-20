@@ -158,7 +158,7 @@ func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWo
 	return err
 }
 
-// installGroupSerial installs tools serially (existing logic)
+// installGroupSerial installs tools serially using unified installation logic
 func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	successCount := 0
 	var installErrors []string
@@ -166,38 +166,22 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	for i, tool := range tools {
 		terminal.PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
 
-		if dryRun {
-			terminal.PrintInfo("Would install: %s", tool)
-			successCount++
+		// Use unified installation logic - this ensures consistent behavior with availability checking
+		_, err := installSingleToolUnified(tool, dryRun)
+		if err != nil {
+			errorMsg := fmt.Sprintf("%s: %v", tool, err)
+			installErrors = append(installErrors, errorMsg)
+			terminal.PrintError("Failed to install %s: %v", tool, err)
 		} else {
-			if err := installSingleTool(tool); err != nil {
-				errorMsg := fmt.Sprintf("%s: %v", tool, err)
-				installErrors = append(installErrors, errorMsg)
-				terminal.PrintError("Failed to install %s: %v", tool, err)
-			} else {
-				successCount++
-				terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool))
-			}
+			successCount++
 		}
 	}
 
-	// Print summary
-	terminal.PrintHeader("Group Installation Complete")
-	terminal.PrintInfo("Successfully installed %d of %d tools", successCount, len(tools))
-
-	if len(installErrors) > 0 {
-		terminal.PrintWarning("Some installations failed:")
-		for _, err := range installErrors {
-			terminal.PrintError("  • %s", err)
-		}
-		return errors.NewInstallationError(constants.OpInstall, groupName,
-			fmt.Errorf("failed to install %d tools", len(installErrors)))
-	}
-
-	return nil
+	// Use unified error reporting
+	return reportGroupInstallationResults(groupName, successCount, len(tools), installErrors)
 }
 
-// installIndividualApp installs a single application
+// installIndividualApp installs a single application using unified installation logic
 func installIndividualApp(appName string, dryRun bool) error {
 	terminal.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
 
@@ -207,46 +191,17 @@ func installIndividualApp(appName string, dryRun bool) error {
 			fmt.Errorf("application name cannot be empty"))
 	}
 
-	// Check if already available (via any method - Homebrew or manual installation)
-	alreadyAvailable := brew.IsApplicationAvailable(appName)
-	var wasNewlyInstalled bool
-
-	if alreadyAvailable {
-		terminal.PrintAlreadyAvailable("%s is already available on the system", appName)
-		wasNewlyInstalled = false
-	} else {
-		// Try to install the application
-		if dryRun {
-			terminal.PrintInfo("Would install: %s", appName)
-			return nil
-		}
-
-		if err := installSingleTool(appName); err != nil {
-			// Provide helpful error message with suggestions
-			return errors.NewInstallationError(constants.OpInstall, appName,
-				fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
-		}
-
-		terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", appName))
-		wasNewlyInstalled = true
+	// Use unified installation logic
+	wasNewlyInstalled, err := installSingleToolUnified(appName, dryRun)
+	if err != nil {
+		// Provide helpful error message with suggestions
+		return errors.NewInstallationError(constants.OpInstall, appName,
+			fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
 	}
 
-	// Only track the app in settings if it was newly installed and not already tracked
+	// Only track the app in settings if it was newly installed and not dry-run
 	if !dryRun && wasNewlyInstalled {
-		// Check if already tracked to avoid duplicates
-		if isTracked, err := config.IsAppTracked(appName); err != nil {
-			terminal.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
-		} else if isTracked {
-			terminal.PrintInfo("%s is already tracked in settings", appName)
-		} else {
-			terminal.PrintInfo("Updating settings to track %s...", appName)
-			if err := config.AddInstalledApp(appName); err != nil {
-				terminal.PrintWarning("Failed to update settings file: %v", err)
-				// Don't return error here as the installation was successful
-			} else {
-				terminal.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
-			}
-		}
+		return trackAppInSettings(appName)
 	}
 
 	return nil
@@ -280,6 +235,69 @@ func installSingleTool(toolName string) error {
 		if err := checkToolConfiguration(toolName); err != nil {
 			terminal.PrintWarning("Configuration check failed for %s: %v", toolName, err)
 		}
+	}
+
+	return nil
+}
+
+// installSingleToolUnified provides unified installation logic for all installation modes
+// This is the core function that ensures consistent behavior across individual, serial, and concurrent installations
+func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled bool, err error) {
+	// ALWAYS check availability first using the latest IsApplicationAvailable logic
+	if brew.IsApplicationAvailable(toolName) {
+		terminal.PrintAlreadyAvailable("%s is already available on the system", toolName)
+		return false, nil
+	}
+
+	// Handle installation based on mode
+	if dryRun {
+		terminal.PrintInfo("Would install: %s", toolName)
+		return true, nil // Would be newly installed
+	}
+
+	// Perform real installation using existing logic
+	if err := installSingleTool(toolName); err != nil {
+		return false, fmt.Errorf("failed to install %s: %w", toolName, err)
+	}
+
+	terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", toolName))
+	return true, nil
+}
+
+// trackAppInSettings handles adding newly installed apps to settings
+func trackAppInSettings(appName string) error {
+	// Check if already tracked to avoid duplicates
+	if isTracked, err := config.IsAppTracked(appName); err != nil {
+		terminal.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
+		return nil // Don't fail installation for tracking issues
+	} else if isTracked {
+		terminal.PrintInfo("%s is already tracked in settings", appName)
+		return nil
+	}
+
+	terminal.PrintInfo("Updating settings to track %s...", appName)
+	if err := config.AddInstalledApp(appName); err != nil {
+		terminal.PrintWarning("Failed to update settings file: %v", err)
+		return nil // Don't fail installation for tracking issues
+	}
+
+	terminal.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
+	return nil
+}
+
+// reportGroupInstallationResults provides unified error reporting for group installations
+func reportGroupInstallationResults(groupName string, successCount, totalCount int, installErrors []string) error {
+	// Print summary
+	terminal.PrintHeader("Group Installation Complete")
+	terminal.PrintInfo("Successfully installed %d of %d tools", successCount, totalCount)
+
+	if len(installErrors) > 0 {
+		terminal.PrintWarning("Some installations failed:")
+		for _, err := range installErrors {
+			terminal.PrintError("  • %s", err)
+		}
+		return errors.NewInstallationError(constants.OpInstall, groupName,
+			fmt.Errorf("failed to install %d tools", len(installErrors)))
 	}
 
 	return nil

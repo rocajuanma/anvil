@@ -176,7 +176,7 @@ func (ci *ConcurrentInstaller) installWithTimeout(ctx context.Context, tool stri
 			time.Sleep(time.Second * time.Duration(attempt)) // Exponential backoff
 		}
 
-		// Check if already available (via any method)
+		// Use unified availability checking logic (ensures consistency with other installation methods)
 		if brew.IsApplicationAvailable(tool) {
 			ci.output.PrintAlreadyAvailable("Worker %d: %s is already available", workerID, tool)
 			return InstallationResult{
@@ -188,7 +188,7 @@ func (ci *ConcurrentInstaller) installWithTimeout(ctx context.Context, tool stri
 			}
 		}
 
-		// Perform installation
+		// Handle dry-run consistently with other installation methods
 		if ci.dryRun {
 			ci.output.PrintInfo("Worker %d: Would install %s", workerID, tool)
 			return InstallationResult{

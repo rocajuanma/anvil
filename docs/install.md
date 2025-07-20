@@ -204,6 +204,28 @@ groups:
   design: [figma, sketch, adobe-creative-cloud]
 ```
 
+## Under-the-Hood: Intelligent App Detection
+
+Anvil uses a unified installation architecture that ensures consistent behavior across all installation modes (individual, group serial, and group concurrent). The system employs a hybrid approach for maximum reliability:
+
+### Detection Process
+
+1. **Homebrew Package Check** - Quick check if app is managed by Homebrew
+2. **Installed Cask Detection** - Verify if cask is already installed via `brew list --cask`
+3. **Dynamic Cask Search** - Use `brew search --cask` to find actual cask names and install locations
+4. **Intelligent /Applications Search** - Smart name transformations (e.g., "visual-studio-code" → "Visual Studio Code.app")
+5. **System-wide Spotlight Search** - macOS `mdfind` fallback for comprehensive detection
+6. **PATH-based Detection** - Command-line tools via `which` command
+
+### Key Benefits
+
+- **No Hardcoded Mappings** - Dynamically detects any macOS application without manual configuration
+- **Consistent Dry-run** - Preview mode performs identical availability checks as real installation
+- **Manual Install Detection** - Recognizes apps installed outside of Homebrew
+- **Future-proof** - Works with new applications without code updates
+
+This architecture ensures that whether you run `anvil install postman`, `anvil install coding`, or `anvil install coding --dry-run`, you get consistent and accurate detection of already-installed applications.
+
 ## Troubleshooting
 
 ### Common Issues
