@@ -207,6 +207,7 @@ anvil config show team-backend
 - **📁 Organized Storage** - Directory-based config organization in repositories
 - **🔐 Multiple Auth Methods** - SSH keys, GitHub tokens, or public access
 - **⚡ Efficient Operations** - Local caching and smart diff algorithms
+- **🎯 Smart Filtering** - Selectively sync universal settings while excluding machine-specific configurations (git credentials, paths)
 
 📖 **[Complete Configuration Guide](docs/config.md)** - Setup, authentication, repository structure, and team workflows
 

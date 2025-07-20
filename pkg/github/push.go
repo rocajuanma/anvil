@@ -25,10 +25,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+	"gopkg.in/yaml.v2"
 )
 
 // PushConfigResult represents the result of a config push operation
@@ -76,8 +78,10 @@ func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string
 	}
 
 	targetFile := filepath.Join(targetDir, "settings.yaml")
-	if err := copyFile(settingsPath, targetFile); err != nil {
-		return nil, errors.NewFileSystemError(constants.OpPush, "copy-settings", err)
+
+	// Apply smart filtering before copying
+	if err := gc.copyFilteredSettings(settingsPath, targetFile); err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "copy-filtered-settings", err)
 	}
 
 	// Commit changes
@@ -300,4 +304,50 @@ func (gc *GitHubClient) getRepositoryURL() string {
 		return gc.RepoURL
 	}
 	return fmt.Sprintf("https://github.com/%s", gc.RepoURL)
+}
+
+// copyFilteredSettings loads, filters, and saves configuration with smart filtering
+func (gc *GitHubClient) copyFilteredSettings(sourcePath, targetPath string) error {
+	// Load the original configuration
+	anvilConfig, err := config.LoadConfigFromPath(sourcePath)
+	if err != nil {
+		// If loading with filtering fails, fall back to direct copy for backward compatibility
+		terminal.PrintWarning("Unable to load config for filtering, using direct copy")
+		return copyFile(sourcePath, targetPath)
+	}
+
+	// Apply filtering if sync config is present
+	var filteredConfig *config.AnvilConfig
+	if len(anvilConfig.SyncConfig.ExcludeSections) > 0 || len(anvilConfig.SyncConfig.TemplateSections) > 0 {
+		terminal.PrintInfo("Applying smart filtering based on sync configuration...")
+
+		filteredConfig, err = config.FilterForSync(anvilConfig)
+		if err != nil {
+			terminal.PrintWarning("Filtering failed, using original config: %v", err)
+			filteredConfig = anvilConfig
+		} else {
+			// Log what was filtered
+			if len(anvilConfig.SyncConfig.ExcludeSections) > 0 {
+				terminal.PrintInfo("Excluded sections: %s", strings.Join(anvilConfig.SyncConfig.ExcludeSections, ", "))
+			}
+			if len(anvilConfig.SyncConfig.TemplateSections) > 0 {
+				terminal.PrintInfo("Templated sections: %s", strings.Join(anvilConfig.SyncConfig.TemplateSections, ", "))
+			}
+		}
+	} else {
+		// No filtering configured, use original config
+		filteredConfig = anvilConfig
+	}
+
+	// Write filtered configuration to target file
+	filteredData, err := yaml.Marshal(filteredConfig)
+	if err != nil {
+		return fmt.Errorf("failed to marshal filtered config: %w", err)
+	}
+
+	if err := os.WriteFile(targetPath, filteredData, constants.FilePerm); err != nil {
+		return fmt.Errorf("failed to write filtered config: %w", err)
+	}
+
+	return nil
 }

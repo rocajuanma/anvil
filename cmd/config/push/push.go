@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
@@ -27,6 +28,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/github"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var PushCmd = &cobra.Command{
@@ -51,7 +53,7 @@ func runPushCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Option 1: Anvil config push
-	return pushAnvilConfig()
+	return pushAnvilConfig(cmd)
 }
 
 // showAppPushInDevelopment displays development message for app config push
@@ -73,13 +75,33 @@ func showAppPushInDevelopment(appName string) error {
 }
 
 // pushAnvilConfig pushes the anvil settings.yaml to the repository
-func pushAnvilConfig() error {
+func pushAnvilConfig(cmd *cobra.Command) error {
 	terminal.PrintHeader("Push Anvil Configuration")
+
+	// Get command flags
+	showFiltered, _ := cmd.Flags().GetBool("show-filtered")
+	includeOverride, _ := cmd.Flags().GetStringSlice("include")
+	excludeOverride, _ := cmd.Flags().GetStringSlice("exclude")
 
 	// Load anvil configuration
 	anvilConfig, err := config.LoadConfig()
 	if err != nil {
 		return errors.NewConfigurationError(constants.OpPush, "load-config", err)
+	}
+
+	// Apply flag overrides to sync configuration
+	if len(includeOverride) > 0 {
+		anvilConfig.SyncConfig.IncludeOverride = append(anvilConfig.SyncConfig.IncludeOverride, includeOverride...)
+		terminal.PrintInfo("Override: Including sections: %s", strings.Join(includeOverride, ", "))
+	}
+	if len(excludeOverride) > 0 {
+		anvilConfig.SyncConfig.ExcludeSections = append(anvilConfig.SyncConfig.ExcludeSections, excludeOverride...)
+		terminal.PrintInfo("Override: Excluding sections: %s", strings.Join(excludeOverride, ", "))
+	}
+
+	// If show-filtered flag is set, display filtered configuration and exit
+	if showFiltered {
+		return showFilteredConfiguration(anvilConfig)
 	}
 
 	// Validate GitHub configuration
@@ -153,5 +175,47 @@ func pushAnvilConfig() error {
 	return nil
 }
 
+// showFilteredConfiguration displays what would be pushed with filtering applied
+func showFilteredConfiguration(anvilConfig *config.AnvilConfig) error {
+	terminal.PrintStage("Showing filtered configuration preview...")
+
+	// Apply filtering
+	filteredConfig, err := config.FilterForSync(anvilConfig)
+	if err != nil {
+		return fmt.Errorf("failed to apply filtering: %w", err)
+	}
+
+	// Convert to YAML for display
+	yamlData, err := yaml.Marshal(filteredConfig)
+	if err != nil {
+		return fmt.Errorf("failed to marshal filtered config: %w", err)
+	}
+
+	terminal.PrintHeader("Filtered Configuration (what would be pushed)")
+
+	if len(anvilConfig.SyncConfig.ExcludeSections) > 0 {
+		terminal.PrintInfo("🚫 Excluded sections: %s", strings.Join(anvilConfig.SyncConfig.ExcludeSections, ", "))
+	}
+	if len(anvilConfig.SyncConfig.TemplateSections) > 0 {
+		terminal.PrintInfo("📝 Templated sections: %s", strings.Join(anvilConfig.SyncConfig.TemplateSections, ", "))
+	}
+	if len(anvilConfig.SyncConfig.IncludeOverride) > 0 {
+		terminal.PrintInfo("✅ Force included: %s", strings.Join(anvilConfig.SyncConfig.IncludeOverride, ", "))
+	}
+
+	terminal.PrintInfo("")
+	terminal.PrintInfo("Filtered settings.yaml content:")
+	terminal.PrintInfo("=" + strings.Repeat("=", 50))
+	fmt.Println(string(yamlData))
+	terminal.PrintInfo("=" + strings.Repeat("=", 50))
+
+	terminal.PrintSuccess("Preview complete. Use 'anvil config push' without --show-filtered to actually push.")
+	return nil
+}
+
 func init() {
+	// Add flags for enhanced filtering functionality
+	PushCmd.Flags().Bool("show-filtered", false, "Show what would be pushed (filtered configuration) without pushing")
+	PushCmd.Flags().StringSlice("include", []string{}, "Force include sections (overrides exclude configuration)")
+	PushCmd.Flags().StringSlice("exclude", []string{}, "Force exclude sections (adds to exclude configuration)")
 }

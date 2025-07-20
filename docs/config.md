@@ -148,19 +148,130 @@ $ anvil config push cursor
 
 === Push 'cursor' Configuration ===
 
-⚠️  Application-specific configuration push is currently in development
-This feature will allow you to push cursor configuration files to your GitHub repository
-Expected functionality:
-  • Create timestamped branch: config-push-<DDMMYYYY>-<HHMM>
-  • Commit message: anvil[push]: cursor
-  • Push cursor configs to /cursor directory in repository
-  • Create pull request for review
-
-🚧 Status: In Development
+🚧 Application-specific configuration push is currently in development
 📅 Expected: Future release
 
 For now, use 'anvil config push' to push anvil settings only.
 ```
+
+### Smart Filtering Configuration
+
+Anvil's smart filtering allows you to control what gets synchronized between machines, solving the challenge of machine-specific vs. universal settings.
+
+#### Problem Solved
+
+When syncing configurations across machines, some settings should be universal (tool groups, GitHub repos) while others are machine-specific (git credentials, project paths). Smart filtering enables selective synchronization.
+
+#### Configuration Structure
+
+Add a `_sync_config` section to your `~/.anvil/settings.yaml`:
+
+```yaml
+version: 1.0.0
+_sync_config:
+  exclude_sections:
+    - git # Don't sync git credentials
+    - environment.machine_specific # Don't sync machine-specific environment vars
+  template_sections:
+    - git # Convert git section to template placeholders
+  include_override: [] # Force include sections (overrides exclude)
+  template_values: {} # Local template replacement values
+
+# Universal settings (will be synced)
+tools:
+  required_tools: [git, curl, brew]
+  installed_apps: [terraform, postman]
+groups:
+  dev: [git, zsh, iterm2, visual-studio-code]
+github:
+  config_repo: "username/dotfiles"
+  branch: "main"
+
+# Machine-specific settings (will be excluded/templated)
+git:
+  username: "Your Work Name" # Will become {{ REPLACE_USERNAME }}
+  email: "you@company.com" # Will become {{ REPLACE_EMAIL }}
+environment:
+  EDITOR: "code" # Will be synced (universal)
+  machine_specific: "/work/path" # Will be excluded
+```
+
+#### Smart Filtering Options
+
+**Exclude Sections** - Remove sections entirely from sync:
+
+- `git` - Exclude entire git configuration
+- `environment` - Exclude all environment variables
+- `environment.KEY` - Exclude specific environment variable
+- `tool_configs` - Exclude tool-specific configurations
+
+**Template Sections** - Convert values to templates:
+
+- `git` - Replace username/email with `{{ REPLACE_USERNAME }}` / `{{ REPLACE_EMAIL }}`
+- `environment` - Replace paths with template placeholders
+
+**Include Override** - Force include normally excluded sections:
+
+- Useful for temporary inclusion of specific sections
+
+#### Enhanced Push Commands
+
+```bash
+# Preview what would be synced
+anvil config push --show-filtered
+
+# Override filtering with flags
+anvil config push --include git --exclude tool_configs
+
+# Normal push with filtering applied
+anvil config push
+```
+
+#### Example Workflow
+
+**Work Machine Setup:**
+
+```yaml
+_sync_config:
+  exclude_sections: [git, environment.machine_specific]
+  template_sections: [git]
+git:
+  username: "John Work"
+  email: "john@company.com"
+environment:
+  machine_specific: "/company/projects"
+```
+
+**Personal Machine Setup:**
+
+```yaml
+_sync_config:
+  exclude_sections: [git, environment.machine_specific]
+  template_sections: [git]
+git:
+  username: "John Personal"
+  email: "john@personal.com"
+environment:
+  machine_specific: "/home/john/projects"
+```
+
+**Synced Configuration** (what gets pushed to GitHub):
+
+```yaml
+# Universal settings synced
+tools: [...]
+groups: [...]
+github: [...]
+
+# Templated sections for setup guidance
+git:
+  username: "{{ REPLACE_USERNAME }}"
+  email: "{{ REPLACE_EMAIL }}"
+# Machine-specific sections excluded
+# (environment.machine_specific not present)
+```
+
+This approach ensures your tool groups, GitHub configurations, and universal settings sync across machines while keeping machine-specific credentials and paths local.
 
 **Key Features:**
 

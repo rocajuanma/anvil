@@ -67,9 +67,18 @@ type GitHubConfig struct {
 	TokenEnvVar string `yaml:"token_env_var,omitempty"` // Environment variable name for token
 }
 
+// SyncConfig represents configuration for selective synchronization
+type SyncConfig struct {
+	ExcludeSections  []string          `yaml:"exclude_sections,omitempty"`  // Sections to exclude from sync
+	TemplateSections []string          `yaml:"template_sections,omitempty"` // Sections to process as templates
+	IncludeOverride  []string          `yaml:"include_override,omitempty"`  // Force include sections (overrides exclude)
+	TemplateValues   map[string]string `yaml:"template_values,omitempty"`   // Template replacement values
+}
+
 // AnvilConfig represents the main anvil configuration
 type AnvilConfig struct {
 	Version     string            `yaml:"version"`
+	SyncConfig  SyncConfig        `yaml:"_sync_config,omitempty"`
 	Directories AnvilDirectories  `yaml:"directories"`
 	Tools       AnvilTools        `yaml:"tools"`
 	Groups      AnvilGroups       `yaml:"groups"`
@@ -240,6 +249,21 @@ func LoadConfig() (*AnvilConfig, error) {
 			// Don't fail loading if we can't save the correction, just warn
 			fmt.Printf("Warning: Could not save corrected GitHub configuration: %v\n", err)
 		}
+	}
+
+	return &config, nil
+}
+
+// LoadConfigFromPath loads the anvil configuration from a specific path
+func LoadConfigFromPath(configPath string) (*AnvilConfig, error) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config from %s: %w", configPath, err)
+	}
+
+	var config AnvilConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config from %s: %w", configPath, err)
 	}
 
 	return &config, nil
@@ -529,4 +553,242 @@ func RemoveInstalledApp(appName string) error {
 	}
 
 	return nil // App not found, nothing to remove
+}
+
+// checkToolConfiguration checks if a tool is properly configured
+func checkToolConfiguration(toolName string) error {
+	switch toolName {
+	case constants.PkgGit:
+		return checkGitConfiguration()
+	default:
+		return nil
+	}
+}
+
+// checkGitConfiguration checks if git is properly configured
+func checkGitConfiguration() error {
+	config, err := LoadConfig()
+	if err == nil && (config.Git.Username == "" || config.Git.Email == "") {
+		return fmt.Errorf("git is not fully configured - consider setting username and email")
+	}
+	return nil
+}
+
+// FilterForSync creates a filtered version of the configuration for synchronization
+// Excludes specified sections and processes templates according to sync configuration
+func FilterForSync(config *AnvilConfig) (*AnvilConfig, error) {
+	if config == nil {
+		return nil, fmt.Errorf("config cannot be nil")
+	}
+
+	// Create a deep copy of the configuration
+	filteredConfig := &AnvilConfig{
+		Version:     config.Version,
+		SyncConfig:  config.SyncConfig,
+		Directories: config.Directories,
+		Tools:       config.Tools,
+		Groups:      config.Groups,
+		Git:         config.Git,
+		GitHub:      config.GitHub,
+		Environment: make(map[string]string),
+		ToolConfigs: config.ToolConfigs,
+	}
+
+	// Copy environment map
+	for k, v := range config.Environment {
+		filteredConfig.Environment[k] = v
+	}
+
+	// Apply filtering based on sync configuration
+	excludeSections := config.SyncConfig.ExcludeSections
+	templateSections := config.SyncConfig.TemplateSections
+	includeOverride := config.SyncConfig.IncludeOverride
+
+	// Process each section according to filtering rules
+	for _, section := range excludeSections {
+		if !contains(includeOverride, section) {
+			if err := excludeSection(filteredConfig, section); err != nil {
+				return nil, fmt.Errorf("failed to exclude section %s: %w", section, err)
+			}
+		}
+	}
+
+	// Apply templates to specified sections
+	for _, section := range templateSections {
+		if err := applyTemplateToSection(filteredConfig, section); err != nil {
+			return nil, fmt.Errorf("failed to apply template to section %s: %w", section, err)
+		}
+	}
+
+	// Remove sync config from filtered version (shouldn't be synced)
+	filteredConfig.SyncConfig = SyncConfig{}
+
+	return filteredConfig, nil
+}
+
+// ApplyTemplates applies template values to a configuration
+// Used when pulling configurations to replace template placeholders with actual values
+func ApplyTemplates(config *AnvilConfig, templateValues map[string]string) error {
+	if config == nil {
+		return fmt.Errorf("config cannot be nil")
+	}
+
+	// Apply templates to Git section
+	if err := applyTemplateValues(&config.Git.Username, templateValues); err != nil {
+		return fmt.Errorf("failed to apply template to git username: %w", err)
+	}
+	if err := applyTemplateValues(&config.Git.Email, templateValues); err != nil {
+		return fmt.Errorf("failed to apply template to git email: %w", err)
+	}
+
+	// Apply templates to Environment section
+	for key, value := range config.Environment {
+		if err := applyTemplateValues(&value, templateValues); err != nil {
+			return fmt.Errorf("failed to apply template to environment %s: %w", key, err)
+		}
+		config.Environment[key] = value
+	}
+
+	return nil
+}
+
+// excludeSection removes a section from the configuration based on section path
+func excludeSection(config *AnvilConfig, sectionPath string) error {
+	switch sectionPath {
+	case "git":
+		config.Git = GitConfig{}
+	case "environment":
+		config.Environment = make(map[string]string)
+	case "environment.machine_specific":
+		// Remove machine_specific keys from environment
+		delete(config.Environment, "machine_specific")
+	case "tool_configs":
+		config.ToolConfigs = AnvilToolConfigs{}
+	case "directories":
+		config.Directories = AnvilDirectories{}
+	default:
+		// For nested paths like "environment.KEY", remove specific environment variable
+		if strings.HasPrefix(sectionPath, "environment.") {
+			envKey := strings.TrimPrefix(sectionPath, "environment.")
+			delete(config.Environment, envKey)
+		} else {
+			return fmt.Errorf("unsupported section path: %s", sectionPath)
+		}
+	}
+	return nil
+}
+
+// applyTemplateToSection applies template placeholders to a specific section
+func applyTemplateToSection(config *AnvilConfig, section string) error {
+	switch section {
+	case "git":
+		config.Git.Username = "{{ REPLACE_USERNAME }}"
+		config.Git.Email = "{{ REPLACE_EMAIL }}"
+		if config.Git.SSHKeyPath != "" {
+			config.Git.SSHKeyPath = "{{ REPLACE_SSH_KEY_PATH }}"
+		}
+	case "environment":
+		// Apply templates to all environment variables
+		for key, value := range config.Environment {
+			if strings.Contains(value, "/") { // Likely a path
+				config.Environment[key] = "{{ REPLACE_" + strings.ToUpper(key) + " }}"
+			}
+		}
+	default:
+		return fmt.Errorf("template not supported for section: %s", section)
+	}
+	return nil
+}
+
+// applyTemplateValues replaces template placeholders with actual values
+func applyTemplateValues(target *string, templateValues map[string]string) error {
+	if target == nil {
+		return nil
+	}
+
+	original := *target
+	result := original
+
+	// Replace common template placeholders
+	replacements := map[string]string{
+		"{{ REPLACE_USERNAME }}":     templateValues["username"],
+		"{{ REPLACE_EMAIL }}":        templateValues["email"],
+		"{{ REPLACE_SSH_KEY_PATH }}": templateValues["ssh_key_path"],
+	}
+
+	// Apply custom template values
+	for placeholder, value := range templateValues {
+		templateKey := fmt.Sprintf("{{ REPLACE_%s }}", strings.ToUpper(placeholder))
+		if value != "" {
+			replacements[templateKey] = value
+		}
+	}
+
+	// Perform replacements
+	for placeholder, value := range replacements {
+		if value != "" {
+			result = strings.ReplaceAll(result, placeholder, value)
+		}
+	}
+
+	*target = result
+	return nil
+}
+
+// contains checks if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
+
+// PromptForTemplateValues prompts the user for template values needed for configuration
+func PromptForTemplateValues(config *AnvilConfig) (map[string]string, error) {
+	templateValues := make(map[string]string)
+
+	// Check what templates are needed based on configuration content
+	if needsGitTemplate(config) {
+		username := promptForInput("Enter your git username", "")
+		if username != "" {
+			templateValues["username"] = username
+		}
+
+		email := promptForInput("Enter your git email", "")
+		if email != "" {
+			templateValues["email"] = email
+		}
+	}
+
+	// Check for environment template needs
+	for key, value := range config.Environment {
+		if strings.Contains(value, "{{ REPLACE_") {
+			promptKey := strings.ToLower(key)
+			promptValue := promptForInput(fmt.Sprintf("Enter value for %s", key), "")
+			if promptValue != "" {
+				templateValues[promptKey] = promptValue
+			}
+		}
+	}
+
+	return templateValues, nil
+}
+
+// needsGitTemplate checks if git section needs template values
+func needsGitTemplate(config *AnvilConfig) bool {
+	return strings.Contains(config.Git.Username, "{{ REPLACE_") ||
+		strings.Contains(config.Git.Email, "{{ REPLACE_")
+}
+
+// promptForInput prompts user for input with a default value
+func promptForInput(prompt, defaultValue string) string {
+	if defaultValue != "" {
+		prompt = fmt.Sprintf("%s [%s]", prompt, defaultValue)
+	}
+
+	// For now, return empty string - in real implementation this would use terminal.Prompt
+	// This allows the system to work without breaking existing functionality
+	return ""
 }
