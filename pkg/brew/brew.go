@@ -218,36 +218,204 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 }
 
 // IsApplicationAvailable checks if an application is available on the system
-// This includes both Homebrew-managed and manually installed applications
+// Uses a hybrid approach: Homebrew detection -> intelligent search -> system-wide fallback
 func IsApplicationAvailable(packageName string) bool {
-	// First check if it's managed by Homebrew
+	// Step 1: Quick Homebrew check (fastest)
 	if IsPackageInstalled(packageName) {
 		return true
 	}
 
-	// Check for common GUI applications in /Applications/
-	appMappings := map[string]string{
-		"iterm2":             "/Applications/iTerm.app",
-		"visual-studio-code": "/Applications/Visual Studio Code.app",
-		"google-chrome":      "/Applications/Google Chrome.app",
-		"firefox":            "/Applications/Firefox.app",
-		"slack":              "/Applications/Slack.app",
-		"figma":              "/Applications/Figma.app",
-		"notion":             "/Applications/Notion.app",
-		"1password":          "/Applications/1Password 7 - Password Manager.app",
-		"spotify":            "/Applications/Spotify.app",
-		"docker":             "/Applications/Docker.app",
+	// Step 2: Check if it's an installed Homebrew cask
+	if isBrewCaskInstalled(packageName) {
+		return true
 	}
 
-	if appPath, exists := appMappings[packageName]; exists {
-		// Check if the application exists in /Applications/
-		result, err := system.RunCommand("test", "-d", appPath)
-		return err == nil && result.Success
+	// Step 3: Search for the cask and get actual install location
+	if checkBrewCaskAvailable(packageName) {
+		return true
 	}
 
-	// For command-line tools, check if they're in PATH
+	// Step 4: Intelligent /Applications directory search
+	if searchApplicationsDirectory(packageName) {
+		return true
+	}
+
+	// Step 5: System-wide Spotlight search fallback
+	if spotlightSearch(packageName) {
+		return true
+	}
+
+	// Step 6: Final check - command-line tools in PATH
 	result, err := system.RunCommand("which", packageName)
 	return err == nil && result.Success
+}
+
+// isBrewCaskInstalled checks if package is in brew's installed cask list
+func isBrewCaskInstalled(packageName string) bool {
+	result, err := system.RunCommand("brew", "list", "--cask")
+	if err != nil {
+		return false
+	}
+
+	// Check if packageName is in the output
+	return strings.Contains(result.Output, packageName)
+}
+
+// checkBrewCaskAvailable searches for cask and checks if it's installed at the location brew expects
+func checkBrewCaskAvailable(packageName string) bool {
+	// Search for the cask to get its actual name
+	result, err := system.RunCommand("brew", "search", "--cask", packageName)
+	if err != nil {
+		return false
+	}
+
+	lines := strings.Split(strings.TrimSpace(result.Output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Skip headers and empty lines
+		if line == "" || strings.Contains(line, "==>") {
+			continue
+		}
+
+		// Found exact match or close match
+		if line == packageName || strings.Contains(line, packageName) {
+			// Get cask info to find install location
+			infoResult, infoErr := system.RunCommand("brew", "info", "--cask", line)
+			if infoErr == nil && strings.Contains(infoResult.Output, "/Applications/") {
+				// Extract app path from brew info output
+				if appPath := extractAppPath(infoResult.Output); appPath != "" {
+					result, err := system.RunCommand("test", "-d", appPath)
+					return err == nil && result.Success
+				}
+			}
+		}
+	}
+	return false
+}
+
+// searchApplicationsDirectory performs intelligent search in /Applications
+func searchApplicationsDirectory(packageName string) bool {
+	// Transform package name to likely app names
+	possibleNames := generateAppNames(packageName)
+
+	for _, appName := range possibleNames {
+		appPath := "/Applications/" + appName
+		result, err := system.RunCommand("test", "-d", appPath)
+		if err == nil && result.Success {
+			return true
+		}
+	}
+	return false
+}
+
+// spotlightSearch uses macOS Spotlight to find applications system-wide
+func spotlightSearch(packageName string) bool {
+	// Use mdfind to search for applications containing the package name
+	query := fmt.Sprintf("kMDItemKind == 'Application' && kMDItemFSName == '*%s*'", packageName)
+	result, err := system.RunCommand("mdfind", query)
+
+	if err != nil {
+		return false
+	}
+
+	// If mdfind returns any results, the app exists somewhere
+	return strings.TrimSpace(result.Output) != ""
+}
+
+// generateAppNames creates possible application names from package name
+func generateAppNames(packageName string) []string {
+	var names []string
+
+	// Direct name with .app
+	names = append(names, packageName+".app")
+	names = append(names, strings.Title(packageName)+".app")
+
+	// Handle hyphenated names
+	if strings.Contains(packageName, "-") {
+		// Convert hyphens to spaces and title case
+		spacedName := strings.ReplaceAll(packageName, "-", " ")
+		names = append(names, strings.Title(spacedName)+".app")
+
+		// Remove hyphens entirely
+		noDashName := strings.ReplaceAll(packageName, "-", "")
+		names = append(names, strings.Title(noDashName)+".app")
+	}
+
+	// Handle common specific cases
+	specialCases := map[string][]string{
+		"visual-studio-code": {"Visual Studio Code.app"},
+		"google-chrome":      {"Google Chrome.app"},
+		"1password":          {"1Password 7 - Password Manager.app", "1Password.app"},
+		"iterm2":             {"iTerm.app"},
+	}
+
+	if special, exists := specialCases[packageName]; exists {
+		names = append(names, special...)
+	}
+
+	return names
+}
+
+// extractAppPath extracts the application path from brew info output
+func extractAppPath(brewOutput string) string {
+	lines := strings.Split(brewOutput, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "/Applications/") && strings.Contains(line, ".app") {
+			// Extract path - look for pattern like "/Applications/AppName.app"
+			start := strings.Index(line, "/Applications/")
+			if start == -1 {
+				continue
+			}
+
+			end := strings.Index(line[start:], ".app")
+			if end == -1 {
+				continue
+			}
+
+			return line[start : start+end+4] // +4 for ".app"
+		}
+	}
+	return ""
+}
+
+// isCaskPackage dynamically determines if a package is a Homebrew cask
+func isCaskPackage(packageName string) bool {
+	// First check if it exists as a cask
+	result, err := system.RunCommand("brew", "search", "--cask", packageName)
+	if err == nil {
+		lines := strings.Split(strings.TrimSpace(result.Output), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			// Skip headers and empty lines
+			if line == "" || strings.Contains(line, "==>") {
+				continue
+			}
+			// If we find an exact match or the package name is contained, it's likely a cask
+			if line == packageName || strings.Contains(line, packageName) {
+				return true
+			}
+		}
+	}
+
+	// Check if it exists as a formula to confirm it's not a cask
+	result, err = system.RunCommand("brew", "search", "--formula", packageName)
+	if err == nil {
+		lines := strings.Split(strings.TrimSpace(result.Output), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			// Skip headers and empty lines
+			if line == "" || strings.Contains(line, "==>") {
+				continue
+			}
+			// If we find an exact match as a formula, it's not a cask
+			if line == packageName {
+				return false
+			}
+		}
+	}
+
+	// Default to false (formula) if we can't determine
+	return false
 }
 
 // InstallPackageWithCheck installs a package only if it's not already available
@@ -262,26 +430,15 @@ func InstallPackageWithCheck(packageName string) error {
 		return nil
 	}
 
-	// Determine if this is a cask (GUI app) or formula (CLI tool)
-	caskPackages := map[string]bool{
-		"iterm2":             true,
-		"visual-studio-code": true,
-		"google-chrome":      true,
-		"firefox":            true,
-		"slack":              true,
-		"figma":              true,
-		"notion":             true,
-		"1password":          true,
-		"spotify":            true,
-		"docker":             true,
-	}
+	// Dynamically determine if this is a cask (GUI app) or formula (CLI tool)
+	isCask := isCaskPackage(packageName)
 
 	terminal.PrintInfo("Installing %s...", packageName)
 
 	var result *system.CommandResult
 	var err error
 
-	if caskPackages[packageName] {
+	if isCask {
 		// Install as cask
 		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, "--cask", packageName)
 	} else {

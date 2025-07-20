@@ -12,6 +12,7 @@
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](docs/CHANGELOG.md)
 
 </div>
+
 > Cast aside the burden of manual setup—let Anvil be your Samwise, carrying your configs to the very end.
 
 **Anvil** is the complete macOS development environment automation tool. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
@@ -39,7 +40,7 @@
 - **🎯 Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
 - **📝 Intelligent Tracking** - Apps automatically tracked in `tools.installed_apps`
 - **📦 Group Management** - Predefined and custom tool groups for common scenarios
-- **🍺 Homebrew Integration** - Automatic installation with manual app detection
+- **🍺 Homebrew Integration** - Automatic installation with intelligent app verification (detects Homebrew, manual, and system installations)
 
 ### 🔄 **Configuration Sync**
 
