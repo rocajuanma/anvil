@@ -12,20 +12,48 @@
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](docs/CHANGELOG.md)
 
 </div>
+> Cast aside the burden of manual setup—let Anvil be your Samwise, carrying your configs to the very end.
 
-> One CLI to rule them all, forged in the fires of productivity: wield Anvil to command your macOS realm and master your development destiny.
+**Anvil** is the complete macOS development environment automation tool. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
 
-Supercharge your macOS development setup with Anvil — the all-in-one CLI for effortless app installation, smart tracking, group management, and seamless Homebrew integration. Instantly set up tools, preview changes, and enjoy beautiful, actionable feedback with zero configuration required.
+## ✨ What Anvil Solves
 
-## ✨ Features
+### 🚀 **Installation & Tool Management**
+
+- **Environment Inconsistency** → Smart tool installation with automatic tracking
+- **Manual Setup Pain** → Group-based installation for common scenarios
+- **Tool Discovery** → Install any macOS app with `anvil install [app-name]`
+- **Setup Documentation** → Self-documenting configuration in `settings.yaml`
+
+### ⚙️ **Configuration Management & Sync**
+
+- **Config Drift** → Version-controlled dotfiles and settings via GitHub
+- **Team Onboarding** → Shared configuration repositories for instant setup
+- **Machine Migrations** → Cross-machine sync with `anvil config pull/push`
+- **Configuration Loss** → Automated backup and recovery of development environments
+
+## 🎯 Key Features
+
+### 📦 **Smart Installation**
 
 - **🎯 Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
-- **📝 Smart Tracking** - Individual apps automatically tracked in `tools.installed_apps`
+- **📝 Intelligent Tracking** - Apps automatically tracked in `tools.installed_apps`
 - **📦 Group Management** - Predefined and custom tool groups for common scenarios
+- **🍺 Homebrew Integration** - Automatic installation with manual app detection
+
+### 🔄 **Configuration Sync**
+
+- **🌐 Cross-Machine Sync** - Keep configs consistent across all your development environments
+- **👥 Team Collaboration** - Share configurations via GitHub repositories
+- **🔍 Smart Change Detection** - Pre-push diff analysis prevents unnecessary commits
+- **📁 Directory Organization** - App-specific config management (cursor, vscode, zsh)
+
+### 🛠 **Developer Experience**
+
 - **🚀 Zero Configuration** - Works out of the box with sensible defaults
-- **🍺 Homebrew Integration** - Automatic installation and management
-- **🔍 Dry-run Support** - Preview installations before execution
+- **🔍 Dry-run Support** - Preview installations and changes before execution
 - **🎨 Beautiful Output** - Colored, structured progress indicators
+- **⚡ Fast Operations** - Concurrent installation and smart caching
 
 ## 🚀 Quick Start
 
@@ -41,7 +69,9 @@ go build -o anvil main.go
 sudo mv anvil /usr/local/bin/
 ```
 
-### Basic Usage
+### Basic Workflows
+
+#### **🔧 Tool Installation Workflow**
 
 ```bash
 # Initialize Anvil (run this first!)
@@ -59,22 +89,51 @@ anvil install new-laptop # slack, google-chrome, 1password
 anvil install docker --dry-run
 ```
 
-## 📋 Installation Methods
+#### **⚙️ Configuration Management Workflow**
+
+```bash
+# Set up GitHub repository (one-time setup)
+# Edit ~/.anvil/settings.yaml with your repo details
+
+# Pull configurations from your repository
+anvil config pull cursor
+anvil config pull vscode
+
+# View pulled configurations
+anvil config show cursor
+
+# Sync configuration state with system
+anvil config sync        # Install missing apps from settings
+
+# Push local changes back to repository
+anvil config push       # Push anvil settings to GitHub
+```
+
+## 📦 Installation Methods
+
+Install individual applications or predefined groups with automatic Homebrew integration.
 
 ### Individual Applications
 
 Install any Homebrew package by name with automatic tracking:
 
 ```bash
-anvil install firefox
-anvil install slack
-anvil install figma
+anvil install terraform
+anvil install kubernetes-cli
+anvil install postman
+anvil install obsidian
 ```
+
+**🎯 Smart Features:**
+
+- Apps automatically tracked in `tools.installed_apps`
+- Duplicate prevention (won't track apps already in groups)
+- Manual installation detection (works with pre-installed apps)
 
 ### Predefined Groups
 
-- **`dev`** - Essential development tools
-- **`new-laptop`** - Essential applications for new machines
+- **`dev`** - Essential development tools (git, zsh, iterm2, visual-studio-code)
+- **`new-laptop`** - Essential applications for new machines (slack, google-chrome, 1password)
 
 ### Custom Groups
 
@@ -82,54 +141,93 @@ Define your own in `~/.anvil/settings.yaml`:
 
 ```yaml
 groups:
+  backend:
+    - git
+    - docker
+    - postgresql
+    - redis
   frontend:
     - git
     - node
     - visual-studio-code
     - figma
+  devops:
+    - docker
+    - kubernetes-cli
+    - terraform
+    - vault
 ```
+
+📖 **[Complete Installation Guide](docs/install.md)** - Detailed installation options, troubleshooting, and examples
 
 ## 🔧 Configuration Management
 
-Sync dotfiles and configurations across machines using GitHub repositories:
+Sync dotfiles and configurations across machines using GitHub repositories with full version control.
+
+### Cross-Machine Synchronization
 
 ```bash
 # Pull configurations from your repository
-anvil config pull cursor
-anvil config pull vs-code
+anvil config pull neovim
+anvil config pull tmux
+anvil config pull zsh
 
-# View configurations
-anvil config show        # View anvil settings
-anvil config show cursor # View pulled configs
+# View configurations before applying
+anvil config show neovim
 
-# Sync configuration state with system
-anvil config sync        # Install missing apps from settings
-anvil config sync --dry-run # Preview what would be synced
+# Sync missing apps from your settings
+anvil config sync --dry-run # Preview changes
+anvil config sync           # Apply changes
 
-# Push configurations to repository
-anvil config push        # Push anvil settings
-anvil config push cursor # Push app configs (in development)
+# Push local changes to repository
+anvil config push           # Creates timestamped branch with PR link
 ```
 
-📖 **[Complete Setup Guide](docs/config.md)** - Authentication, repository structure, and examples
+### Team Configuration Sharing
+
+```bash
+# Pull team's development setup by specialty
+anvil config pull team-backend
+anvil config pull team-frontend
+anvil config pull team-devops
+
+# Install team's recommended tools
+anvil config sync team-backend
+
+# View team configurations
+anvil config show team-backend
+```
+
+### Key Configuration Features
+
+- **🔍 Smart Change Detection** - Only pushes when configurations actually differ
+- **🌿 Timestamped Branches** - Creates branches like `config-push-18072025-1234`
+- **🔗 PR-Ready Workflow** - Provides direct GitHub PR links
+- **📁 Organized Storage** - Directory-based config organization in repositories
+- **🔐 Multiple Auth Methods** - SSH keys, GitHub tokens, or public access
+- **⚡ Efficient Operations** - Local caching and smart diff algorithms
+
+📖 **[Complete Configuration Guide](docs/config.md)** - Setup, authentication, repository structure, and team workflows
 
 ## ⚙️ Settings
 
-Basic settings structure in `~/.anvil/settings.yaml`:
+Your development environment configuration in `~/.anvil/settings.yaml`:
 
 ```yaml
 tools:
   required_tools: [git, curl, brew]
   optional_tools: [docker, kubectl]
-  installed_apps: [figma, notion, spotify] # Auto-tracked
+  installed_apps: [terraform, postman, kubernetes-cli, obsidian] # Auto-tracked individual installs
 groups:
   dev: [git, zsh, iterm2, visual-studio-code]
-  frontend: [git, node, visual-studio-code, figma] # Custom groups
+  backend: [git, docker, postgresql, redis] # Custom groups
 git:
   username: "Your Name"
   email: "your.email@example.com"
 github:
   config_repo: "username/dotfiles" # For config sync
+  branch: "main"
+  token_env_var: "GITHUB_TOKEN"
 ```
 
 ## 🎯 Command Reference
@@ -137,33 +235,42 @@ github:
 | Command             | Description            | Example                    |
 | ------------------- | ---------------------- | -------------------------- |
 | `init`              | Initialize environment | `anvil init`               |
-| `install [app]`     | Install application    | `anvil install firefox`    |
+| `install [app]`     | Install application    | `anvil install terraform`  |
 | `install [group]`   | Install tool group     | `anvil install dev`        |
 | `install --list`    | List available groups  | `anvil install --list`     |
-| `config pull [app]` | Pull configurations    | `anvil config pull cursor` |
-| `config show [app]` | Show configurations    | `anvil config show cursor` |
+| `config pull [app]` | Pull configurations    | `anvil config pull neovim` |
+| `config show [app]` | Show configurations    | `anvil config show neovim` |
 | `config sync [app]` | Sync configurations    | `anvil config sync`        |
 | `config push [app]` | Push configurations    | `anvil config push`        |
 
 ### Useful Flags
 
-- `--dry-run` - Preview installations
+- `--dry-run` - Preview installations and changes
 - `--list` - Show available groups and tracked apps
+- `--concurrent` - Enable parallel installation (faster)
 
 ## 📚 Documentation
 
-| Guide                                          | Description                    |
-| ---------------------------------------------- | ------------------------------ |
-| **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and usage guide |
-| **[Configuration Management](docs/config.md)** | Dotfiles sync with GitHub      |
-| **[Examples & Tutorials](docs/EXAMPLES.md)**   | Real-world usage scenarios     |
-| **[Install Command](docs/install.md)**         | Detailed installation options  |
-| **[Contributing](docs/CONTRIBUTING.md)**       | Development guidelines         |
-| **[Changelog](docs/CHANGELOG.md)**             | Version history and updates    |
+### **Documentation & Guides**
+
+| Guide                                          | Description                              |
+| ---------------------------------------------- | ---------------------------------------- |
+| **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and first workflows       |
+| **[Installation Guide](docs/INSTALLATION.md)** | Platform-specific installation           |
+| **[Install Command](docs/install.md)**         | Deep-dive on tool installation           |
+| **[Configuration Management](docs/config.md)** | Complete config sync setup and workflows |
+| **[Examples & Tutorials](docs/EXAMPLES.md)**   | Real-world usage scenarios               |
+| **[Contributing](docs/CONTRIBUTING.md)**       | Development guidelines                   |
+| **[Changelog](docs/CHANGELOG.md)**             | Version history and updates              |
 
 ## 🍺 macOS Focus
 
-Optimized specifically for macOS with Homebrew integration, native terminal colors, and automatic GUI application support.
+Optimized specifically for macOS with:
+
+- **Homebrew Integration** - Automatic installation and cask support
+- **Native Terminal Colors** - Beautiful output in Terminal.app and iTerm2
+- **GUI Application Support** - Seamless installation of Mac applications
+- **Application Detection** - Smart detection of manually installed apps
 
 ## 📄 License
 
@@ -180,6 +287,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 **[⬆ Back to Top](#anvil)**
 
-Made with ❤️ for macOS engineers
+Made with ❤️ for macOS engineers who value consistency and automation
 
 </div>
