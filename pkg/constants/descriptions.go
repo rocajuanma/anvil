@@ -179,3 +179,32 @@ Features:
 
 Perfect for creating distinctive headers, banners, or decorative elements in scripts, terminal applications,
 and command-line interfaces that need visual impact and professional presentation.`
+
+// Doctor command descriptions
+const DOCTOR_COMMAND_LONG_DESCRIPTION = `Run comprehensive health checks to validate your anvil environment.
+
+The doctor command performs validation across four key areas, and you can run checks
+at different levels of granularity:
+
+CATEGORIES (groups of related checks):
+• environment    - Verify anvil initialization and directory structure  
+• dependencies   - Check required tools and Homebrew installation
+• configuration  - Validate git and GitHub settings
+• connectivity   - Test GitHub access and repository connections
+
+SPECIFIC CHECKS (individual validators):
+Run 'anvil doctor --list' to see all 12 available individual checks.
+
+Examples:
+  anvil doctor                    # Run all health checks
+  anvil doctor --list             # Show available categories and checks
+  anvil doctor environment        # Run all environment checks (3 checks)
+  anvil doctor dependencies       # Run all dependency checks (3 checks)
+  anvil doctor git-config         # Run only the git configuration check
+  anvil doctor homebrew           # Run only the Homebrew check
+  anvil doctor --fix              # Auto-fix detected issues
+  anvil doctor dependencies --fix # Auto-fix dependency issues
+  anvil doctor --verbose          # Show detailed output
+
+The doctor will provide actionable recommendations for any issues found
+and can automatically fix many common problems.`

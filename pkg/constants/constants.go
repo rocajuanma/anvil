@@ -26,6 +26,7 @@ const (
 	OpShow    = "show"
 	OpSync    = "sync"
 	OpDraw    = "draw"
+	OpDoctor  = "doctor"
 )
 
 // System command constants

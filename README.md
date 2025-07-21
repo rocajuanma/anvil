@@ -55,6 +55,7 @@
 - **🔍 Dry-run Support** - Preview installations and changes before execution
 - **🎨 Beautiful Output** - Colored, structured progress indicators
 - **⚡ Fast Operations** - Concurrent installation and smart caching
+- **🩺 Health Checks** - Comprehensive environment validation with `anvil doctor`
 
 ## 🚀 Quick Start
 
@@ -78,6 +79,9 @@ sudo mv anvil /usr/local/bin/
 # Initialize Anvil (run this first!)
 anvil init
 
+# Verify setup is working correctly
+anvil doctor
+
 # Install applications dynamically
 anvil install firefox
 anvil install visual-studio-code
@@ -95,6 +99,9 @@ anvil install docker --dry-run
 ```bash
 # Set up GitHub repository (one-time setup)
 # Edit ~/.anvil/settings.yaml with your repo details
+
+# Verify connectivity before config operations
+anvil doctor connectivity
 
 # Pull configurations from your repository
 anvil config pull cursor
@@ -233,22 +240,28 @@ github:
 
 ## 🎯 Command Reference
 
-| Command             | Description            | Example                    |
-| ------------------- | ---------------------- | -------------------------- |
-| `init`              | Initialize environment | `anvil init`               |
-| `install [app]`     | Install application    | `anvil install terraform`  |
-| `install [group]`   | Install tool group     | `anvil install dev`        |
-| `install --list`    | List available groups  | `anvil install --list`     |
-| `config pull [app]` | Pull configurations    | `anvil config pull neovim` |
-| `config show [app]` | Show configurations    | `anvil config show neovim` |
-| `config sync [app]` | Sync configurations    | `anvil config sync`        |
-| `config push [app]` | Push configurations    | `anvil config push`        |
+| Command             | Description            | Example                     |
+| ------------------- | ---------------------- | --------------------------- |
+| `init`              | Initialize environment | `anvil init`                |
+| `install [app]`     | Install application    | `anvil install terraform`   |
+| `install [group]`   | Install tool group     | `anvil install dev`         |
+| `install --list`    | List available groups  | `anvil install --list`      |
+| `config pull [app]` | Pull configurations    | `anvil config pull neovim`  |
+| `config show [app]` | Show configurations    | `anvil config show neovim`  |
+| `config sync [app]` | Sync configurations    | `anvil config sync`         |
+| `config push [app]` | Push configurations    | `anvil config push`         |
+| `doctor`            | Run health checks      | `anvil doctor`              |
+| `doctor [category]` | Check specific area    | `anvil doctor dependencies` |
+| `doctor [check]`    | Run individual check   | `anvil doctor git-config`   |
+| `doctor --fix`      | Auto-fix issues        | `anvil doctor --fix`        |
 
 ### Useful Flags
 
 - `--dry-run` - Preview installations and changes
 - `--list` - Show available groups and tracked apps
 - `--concurrent` - Enable parallel installation (faster)
+- `--verbose` - Show detailed output (doctor command)
+- `--fix` - Automatically fix detected issues (doctor command)
 
 ## 📚 Documentation
 
@@ -260,6 +273,7 @@ github:
 | **[Installation Guide](docs/INSTALLATION.md)** | Platform-specific installation           |
 | **[Install Command](docs/install.md)**         | Deep-dive on tool installation           |
 | **[Configuration Management](docs/config.md)** | Complete config sync setup and workflows |
+| **[Doctor Command](docs/doctor.md)**           | Health checks and environment validation |
 | **[Examples & Tutorials](docs/EXAMPLES.md)**   | Real-world usage scenarios               |
 | **[Contributing](docs/CONTRIBUTING.md)**       | Development guidelines                   |
 | **[Changelog](docs/CHANGELOG.md)**             | Version history and updates              |

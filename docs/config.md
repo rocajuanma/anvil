@@ -261,15 +261,21 @@ anvil config sync team-dev
 ### Configuration Backup and Sync Workflow
 
 ```bash
-# 1. Make changes to your anvil settings locally
-# 2. Push changes to repository for backup
+# 1. Verify connectivity before config operations
+anvil doctor connectivity
+
+# 2. Make changes to your anvil settings locally
+# 3. Push changes to repository for backup
 anvil config push
 
-# 3. On another machine, pull latest settings
+# 4. On another machine, pull latest settings
 anvil config pull anvil
 
-# 4. Install any missing applications
+# 5. Install any missing applications
 anvil config sync
+
+# 6. Verify setup is complete
+anvil doctor
 ```
 
 ### Repository Organization Example
