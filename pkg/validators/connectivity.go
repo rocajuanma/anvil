@@ -26,6 +26,41 @@ import (
 	"github.com/rocajuanma/anvil/pkg/system"
 )
 
+// buildAuthenticatedURL creates an authenticated Git URL using the same logic as GitHubClient
+func buildAuthenticatedURL(repoURL, token, sshKeyPath string) string {
+	if token != "" {
+		// Use HTTPS with token
+		if strings.HasPrefix(repoURL, "https://") {
+			return strings.Replace(repoURL, "https://", fmt.Sprintf("https://%s@", token), 1)
+		}
+		// Convert repo format like "username/repo" to HTTPS with token
+		if !strings.Contains(repoURL, "://") {
+			return fmt.Sprintf("https://%s@github.com/%s.git", token, repoURL)
+		}
+	}
+
+	// Use SSH if available
+	if sshKeyPath != "" {
+		if _, err := os.Stat(sshKeyPath); err == nil {
+			// Convert to SSH format
+			if strings.HasPrefix(repoURL, "https://github.com/") {
+				repoPath := strings.TrimPrefix(repoURL, "https://github.com/")
+				repoPath = strings.TrimSuffix(repoPath, ".git")
+				return fmt.Sprintf("git@github.com:%s.git", repoPath)
+			}
+			if !strings.Contains(repoURL, "://") {
+				return fmt.Sprintf("git@github.com:%s.git", repoURL)
+			}
+		}
+	}
+
+	// Default to HTTPS
+	if !strings.Contains(repoURL, "://") {
+		return fmt.Sprintf("https://github.com/%s.git", repoURL)
+	}
+	return repoURL
+}
+
 // GitHubAccessValidator checks if GitHub API is accessible
 type GitHubAccessValidator struct{}
 
@@ -131,83 +166,89 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *config.AnvilCon
 		}
 	}
 
-	// First, test git access with authentication (preferred for private repos)
-	gitURL := fmt.Sprintf("https://github.com/%s.git", cfg.GitHub.ConfigRepo)
-	result, err := system.RunCommand("git", "ls-remote", gitURL, "HEAD")
+	// Create GitHub client to use proper authentication from settings
+	var token string
+	if cfg.GitHub.TokenEnvVar != "" {
+		token = os.Getenv(cfg.GitHub.TokenEnvVar)
+	}
 
-	if err == nil && result.Success {
-		// Git access successful - now verify it's a private repo
+	// Create authenticated URL using the same logic as GitHubClient
+	authenticatedURL := buildAuthenticatedURL(cfg.GitHub.ConfigRepo, token, cfg.Git.SSHKeyPath)
+	result, err := system.RunCommand("git", "ls-remote", authenticatedURL, "HEAD")
+
+	if err != nil || !result.Success {
+		// Check if it might be a public repo we can access via HTTP
 		repoURL := fmt.Sprintf("https://github.com/%s", cfg.GitHub.ConfigRepo)
 		httpResult, httpErr := system.RunCommand("curl", "-s", "-f", "-I", repoURL)
 
 		if httpErr == nil && httpResult.Success {
-			// 🚨 SECURITY WARNING: Repository is publicly accessible
+			// 🚨 DOUBLE SECURITY RISK: Public repo + failed auth
 			return &ValidationResult{
 				Name:     v.Name(),
 				Category: v.Category(),
 				Status:   FAIL,
-				Message:  "🚨 SECURITY RISK: Configuration repository is PUBLIC",
+				Message:  "🚨 CRITICAL: PUBLIC repository detected + authentication failed",
 				Details: []string{
 					fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo),
-					"⚠️  PUBLIC repositories expose configuration data",
-					"⚠️  This could leak API keys, paths, and personal data",
-					"⚠️  Anvil REQUIRES private repositories for security",
+					"❌ Repository is PUBLIC (major security risk)",
+					"❌ Git authentication failed",
+					"⚠️  Anvil will NOT push to public repositories",
 				},
-				FixHint: "Make repository private at https://github.com/" + cfg.GitHub.ConfigRepo + "/settings",
+				FixHint: "Make repository private AND configure authentication (GITHUB_TOKEN or SSH keys)",
 				AutoFix: false,
 			}
 		}
 
-		// Private repository with proper git access - perfect!
-		return &ValidationResult{
-			Name:     v.Name(),
-			Category: v.Category(),
-			Status:   PASS,
-			Message:  "✅ Private repository accessible with proper authentication",
-			Details: []string{
-				fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo),
-				"🔒 Repository is private (secure)",
-				"🔑 Git authentication working",
-				"🛡️  Configuration data is protected",
-			},
-			AutoFix: false,
-		}
-	}
-
-	// Git authentication failed - check why
-	repoURL := fmt.Sprintf("https://github.com/%s", cfg.GitHub.ConfigRepo)
-	httpResult, httpErr := system.RunCommand("curl", "-s", "-f", "-I", repoURL)
-
-	if httpErr == nil && httpResult.Success {
-		// 🚨 DOUBLE SECURITY RISK: Public repo + failed auth
+		// Private repo or doesn't exist - git auth failed
 		return &ValidationResult{
 			Name:     v.Name(),
 			Category: v.Category(),
 			Status:   FAIL,
-			Message:  "🚨 CRITICAL: PUBLIC repository detected + authentication failed",
+			Message:  "Repository not accessible",
 			Details: []string{
 				fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo),
-				"❌ Repository is PUBLIC (major security risk)",
-				"❌ Git authentication failed",
-				"⚠️  Anvil will NOT push to public repositories",
+				"Authentication required or repository doesn't exist",
+				"💡 Ensure repository is PRIVATE for security",
 			},
-			FixHint: "Make repository private AND configure authentication (GITHUB_TOKEN or SSH keys)",
+			FixHint: "Check repository name and configure GitHub authentication (GITHUB_TOKEN or SSH keys)",
 			AutoFix: false,
 		}
 	}
 
-	// Repository not accessible at all
+	// Git access successful - now verify it's a private repo
+	repoURL := fmt.Sprintf("https://github.com/%s", cfg.GitHub.ConfigRepo)
+	httpResult, httpErr := system.RunCommand("curl", "-s", "-f", "-I", repoURL)
+
+	if httpErr == nil && httpResult.Success {
+		// 🚨 SECURITY WARNING: Repository is publicly accessible
+		return &ValidationResult{
+			Name:     v.Name(),
+			Category: v.Category(),
+			Status:   FAIL,
+			Message:  "🚨 SECURITY RISK: Configuration repository is PUBLIC",
+			Details: []string{
+				fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo),
+				"⚠️  PUBLIC repositories expose configuration data",
+				"⚠️  This could leak API keys, paths, and personal data",
+				"⚠️  Anvil REQUIRES private repositories for security",
+			},
+			FixHint: "Make repository private at https://github.com/" + cfg.GitHub.ConfigRepo + "/settings",
+			AutoFix: false,
+		}
+	}
+
+	// Private repository with proper git access - perfect!
 	return &ValidationResult{
 		Name:     v.Name(),
 		Category: v.Category(),
-		Status:   FAIL,
-		Message:  "Repository not accessible",
+		Status:   PASS,
+		Message:  "✅ Private repository accessible with proper authentication",
 		Details: []string{
 			fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo),
-			"Authentication required or repository doesn't exist",
-			"💡 Ensure repository is PRIVATE for security",
+			"🔒 Repository is private (secure)",
+			"🔑 Git authentication working",
+			"🛡️  Configuration data is protected",
 		},
-		FixHint: "Check repository name and configure GitHub authentication (GITHUB_TOKEN or SSH keys)",
 		AutoFix: false,
 	}
 }

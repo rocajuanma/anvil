@@ -41,9 +41,9 @@ type PushConfigResult struct {
 
 // verifyRepositoryPrivacy ensures the repository is private before allowing push operations
 func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
-	// First test git access (this should work for private repos with proper auth)
-	gitURL := fmt.Sprintf("https://github.com/%s.git", gc.RepoURL)
-	result, err := system.RunCommandWithTimeout(ctx, "git", "ls-remote", gitURL, "HEAD")
+	// First test git access using the client's authentication method
+	authenticatedURL := gc.getCloneURL()
+	result, err := system.RunCommandWithTimeout(ctx, "git", "ls-remote", authenticatedURL, "HEAD")
 
 	if err != nil || !result.Success {
 		return fmt.Errorf("🚨 SECURITY BLOCK: Cannot verify repository privacy - authentication failed\n"+
