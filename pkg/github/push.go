@@ -39,8 +39,53 @@ type PushConfigResult struct {
 	FilesCommitted []string
 }
 
+// verifyRepositoryPrivacy ensures the repository is private before allowing push operations
+func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
+	// First test git access (this should work for private repos with proper auth)
+	gitURL := fmt.Sprintf("https://github.com/%s.git", gc.RepoURL)
+	result, err := system.RunCommandWithTimeout(ctx, "git", "ls-remote", gitURL, "HEAD")
+
+	if err != nil || !result.Success {
+		return fmt.Errorf("🚨 SECURITY BLOCK: Cannot verify repository privacy - authentication failed\n"+
+			"Repository: %s\n"+
+			"Anvil REQUIRES private repositories for configuration data.\n"+
+			"Configure proper authentication (GITHUB_TOKEN or SSH keys) before pushing", gc.RepoURL)
+	}
+
+	// Test if repository is publicly accessible (this should FAIL for private repos)
+	repoURL := fmt.Sprintf("https://github.com/%s", gc.RepoURL)
+	httpResult, httpErr := system.RunCommandWithTimeout(ctx, "curl", "-s", "-f", "-I", repoURL)
+
+	if httpErr == nil && httpResult.Success {
+		// 🚨 CRITICAL: Repository is public - BLOCK the push
+		terminal.PrintError("🚨 SECURITY VIOLATION: Configuration push BLOCKED")
+		terminal.PrintError("")
+		terminal.PrintError("Repository '%s' is PUBLIC", gc.RepoURL)
+		terminal.PrintError("❌ Configuration files contain sensitive data")
+		terminal.PrintError("❌ PUBLIC repositories expose API keys, paths, and personal information")
+		terminal.PrintError("❌ This could lead to security breaches and data leaks")
+		terminal.PrintError("")
+		terminal.PrintError("🔒 REQUIRED ACTION: Make repository PRIVATE")
+		terminal.PrintError("   Visit: https://github.com/%s/settings", gc.RepoURL)
+		terminal.PrintError("   Go to: Danger Zone → Change repository visibility → Private")
+		terminal.PrintError("")
+		terminal.PrintError("🛡️  Anvil will NEVER push configuration data to public repositories")
+
+		return fmt.Errorf("SECURITY BLOCK: Repository is public. Configuration push denied for security")
+	}
+
+	// Repository appears to be private and git access works - safe to proceed
+	terminal.PrintSuccess("🔒 Repository privacy verified - safe to push configuration data")
+	return nil
+}
+
 // PushAnvilConfig pushes the anvil settings.yaml to the repository
 func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
+	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
+	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
+		return nil, err
+	}
+
 	// Ensure repository is ready
 	if err := gc.ensureRepositoryReady(ctx); err != nil {
 		return nil, err
@@ -103,6 +148,11 @@ func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string
 
 // PushAppConfig pushes application configuration files to the repository
 func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
+	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
+	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
+		return nil, err
+	}
+
 	return nil, fmt.Errorf("application config push is still in development")
 }
 

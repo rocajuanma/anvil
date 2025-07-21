@@ -88,6 +88,18 @@ func pushAnvilConfig() error {
 			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your settings.yaml"))
 	}
 
+	// 🚨 SECURITY WARNING: Remind users about private repository requirement
+	terminal.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
+	terminal.PrintInfo("   • API keys, tokens, and credentials")
+	terminal.PrintInfo("   • Personal file paths and system information")
+	terminal.PrintInfo("   • Private development environment details")
+	terminal.PrintInfo("")
+	terminal.PrintInfo("🛡️  Anvil REQUIRES private repositories for security")
+	terminal.PrintInfo("   • Repository '%s' must be PRIVATE", anvilConfig.GitHub.ConfigRepo)
+	terminal.PrintInfo("   • Public repositories will be BLOCKED")
+	terminal.PrintInfo("   • Verify at: https://github.com/%s/settings", anvilConfig.GitHub.ConfigRepo)
+	terminal.PrintInfo("")
+
 	// Get GitHub token
 	var token string
 	if anvilConfig.GitHub.TokenEnvVar != "" {
