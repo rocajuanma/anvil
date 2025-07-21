@@ -22,12 +22,14 @@ Anvil is a CLI automation tool that helps developers:
 - **📦 Install tools in logical groups** (development, new laptop, custom)
 - **⚙️ Manage configurations** across different machines
 - **🔧 Automate repetitive setup tasks** for individuals and teams
+- **🩺 Validate environment health** with comprehensive diagnostic checks
 
 ### Key Concepts
 
-- **Commands**: Actions you can perform (`init`, `install`, `config pull`, `config show`, `config sync`, `config push`)
+- **Commands**: Actions you can perform (`init`, `install`, `config pull`, `config show`, `config sync`, `config push`, `doctor`)
 - **Groups**: Collections of related tools (`dev`, `new-laptop`, custom groups)
 - **Configuration**: Settings stored in `~/.anvil/settings.yaml`
+- **Health Checks**: Validation and troubleshooting via `anvil doctor`
 - **Tools**: Individual applications or utilities that can be installed
 
 ## Installation
@@ -80,7 +82,41 @@ This command will:
 === Initialization Complete! ===
 ```
 
-### 2. Explore Available Commands
+### 2. Verify Your Setup
+
+After initialization, it's recommended to run a health check to ensure everything is working correctly:
+
+```bash
+anvil doctor
+```
+
+This command will:
+
+- ✅ Verify anvil initialization is complete
+- ✅ Check that all required dependencies are installed and functional
+- ✅ Validate your configuration settings
+- ✅ Test connectivity to external services (if configured)
+
+**What to expect:**
+
+```
+=== Running Anvil Health Check ===
+
+✅ Environment
+  ✅ Anvil initialization complete
+  ✅ Settings file is valid
+  ✅ Directory structure is correct
+
+✅ Dependencies
+  ✅ Homebrew is installed and functional
+  ✅ All required tools installed (2/2)
+
+✅ Overall status: Healthy
+```
+
+If you see any issues, the doctor will provide specific fix recommendations.
+
+### 3. Explore Available Commands
 
 Get familiar with Anvil's capabilities:
 
@@ -96,6 +132,7 @@ anvil config pull --help
 anvil config show --help
 anvil config sync --help
 anvil config push --help
+anvil doctor --help
 ```
 
 ### 3. Check Your Configuration
@@ -211,13 +248,19 @@ Complete setup for a new development machine:
 # Step 1: Initialize Anvil
 anvil init
 
-# Step 2: Install development tools
+# Step 2: Verify setup is working
+anvil doctor
+
+# Step 3: Install development tools
 anvil install dev
 
-# Step 3: Add essential applications
+# Step 4: Add essential applications
 anvil install new-laptop
 
-# Step 4: Add any additional tools as needed
+# Step 5: Verify all installations
+anvil doctor dependencies
+
+# Step 6: Add any additional tools as needed
 # (Additional tools can be installed through custom groups)
 ```
 
@@ -229,11 +272,17 @@ Quickly onboard a new team member:
 # Initialize
 anvil init
 
+# Verify environment before proceeding
+anvil doctor
+
 # Install team-standard tools
 anvil install dev
 
 # Add team communication tools
 anvil install slack
+
+# Final verification
+anvil doctor
 
 # Additional tools can be defined in custom groups
 # See configuration section for custom group setup
@@ -516,6 +565,37 @@ anvil config push
 
 ## Troubleshooting
 
+### First Step: Run Health Check
+
+When experiencing any issues with Anvil, your first step should always be to run the diagnostic command:
+
+```bash
+anvil doctor
+```
+
+This will automatically detect and report:
+
+- ✅ Environment setup issues
+- ✅ Missing or broken dependencies
+- ✅ Configuration problems
+- ✅ Connectivity issues
+
+**For specific areas:**
+
+```bash
+# Check only environment setup
+anvil doctor --category environment
+
+# Check only dependencies
+anvil doctor --category dependencies
+
+# Check only configuration
+anvil doctor --category configuration
+
+# Auto-fix detected issues
+anvil doctor --fix
+```
+
 ### Common Issues and Solutions
 
 #### Command Not Found
@@ -541,6 +621,9 @@ chmod 755 ~/.anvil
 #### Tool Installation Failures
 
 ```bash
+# Run health check first
+anvil doctor --category dependencies
+
 # Update Homebrew (macOS)
 brew update
 
@@ -555,6 +638,9 @@ anvil install git
 #### Configuration Issues
 
 ```bash
+# Check configuration health
+anvil doctor --category configuration
+
 # Reinitialize if configuration is corrupted
 rm -rf ~/.anvil
 anvil init

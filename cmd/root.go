@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/rocajuanma/anvil/cmd/config"
+	"github.com/rocajuanma/anvil/cmd/doctor"
 	"github.com/rocajuanma/anvil/cmd/initcmd"
 	"github.com/rocajuanma/anvil/cmd/install"
 	"github.com/rocajuanma/anvil/pkg/constants"
@@ -53,6 +54,7 @@ func init() {
 	rootCmd.AddCommand(initcmd.InitCmd)
 	rootCmd.AddCommand(install.InstallCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
+	rootCmd.AddCommand(doctor.DoctorCmd)
 	//rootCmd.AddCommand(draw.DrawCmd)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

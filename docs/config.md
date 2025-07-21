@@ -1,18 +1,37 @@
 # Configuration Management
 
-Anvil's configuration management system allows you to sync dotfiles and configuration files across machines using GitHub repositories.
+Anvil's configuration management system allows you to sync dotfiles and configuration files across machines using **PRIVATE** GitHub repositories for security.
+
+## 🚨 CRITICAL SECURITY REQUIREMENT
+
+**Anvil REQUIRES private repositories for configuration management.**
+
+Configuration files contain sensitive data that must NEVER be exposed publicly:
+
+- **🔑 API keys and tokens** - GitHub tokens, cloud provider credentials
+- **📁 Personal paths** - Home directories, SSH key paths, private file locations
+- **⚙️ System information** - Usernames, email addresses, development settings
+- **🔐 Authentication data** - SSH configurations, git credentials
+
+**🛡️ Security Guarantees:**
+
+- ✅ Anvil **BLOCKS** all pushes to public repositories
+- ✅ Repository privacy is **verified before every push**
+- ✅ Clear error messages guide users to make repositories private
+- ⚠️ **Push operations will FAIL** if repository is public
 
 ## Overview
 
-The `config` command provides centralized management of configuration files and dotfiles for your development environment. It serves as a parent command for configuration-related operations.
+The `config` command provides centralized management of configuration files and dotfiles for your development environment using **private GitHub repositories only**.
 
 ### Features
 
-- **📁 Centralize configurations** - Store all your dotfiles and configuration files in a GitHub repository
+- **📁 Centralize configurations** - Store all your dotfiles and configuration files in a **PRIVATE** GitHub repository
 - **🔄 Sync across machines** - Keep consistent configurations across all your development environments
 - **📦 Directory-specific operations** - Pull only the configuration directory you need
-- **🛡️ Version control** - Track changes to your configurations over time
-- **👥 Team sharing** - Share team configurations and best practices
+- **🛡️ Version control** - Track changes to your configurations over time with full privacy protection
+- **👥 Team sharing** - Share team configurations and best practices through private repositories
+- **🔒 Security-first** - Mandatory private repository validation prevents data exposure
 
 ### Current Implementation Status
 
@@ -178,24 +197,40 @@ For now, use 'anvil config push' to push anvil settings only.
 anvil init
 ```
 
-### 2. Configure GitHub Repository
+### 2. Create a PRIVATE GitHub Repository
+
+**🚨 CRITICAL: Repository MUST be private for security**
+
+1. **Create a new repository on GitHub:**
+
+   - Go to https://github.com/new
+   - ⚠️ **IMPORTANT**: Select **"Private"** repository
+   - Name it something like `dotfiles`, `configs`, or `dev-environment`
+   - ✅ Verify the repository shows as **Private** before proceeding
+
+2. **Verify repository privacy:**
+   - Check repository settings at `https://github.com/username/repository/settings`
+   - Ensure "Visibility" section shows **"Private repository"**
+   - If public, change it: **Danger Zone** → **Change repository visibility** → **Private**
+
+### 3. Configure GitHub Repository
 
 Edit your `~/.anvil/settings.yaml` file:
 
 ```yaml
 github:
-  config_repo: "username/repository" # Your GitHub repository
+  config_repo: "username/repository" # Your PRIVATE GitHub repository
   branch: "main" # Branch to use (main/master)
   token_env_var: "GITHUB_TOKEN" # Environment variable for authentication
 ```
 
-### 3. Set Up Authentication
+### 4. Set Up Authentication
 
 #### Option 1: GitHub Token (Recommended)
 
 1. Create a GitHub Personal Access Token:
    - Go to GitHub Settings → Developer settings → Personal access tokens
-   - Generate new token with `repo` scope
+   - Generate new token with `repo` scope (required for private repos)
 2. Set environment variable:
    ```bash
    export GITHUB_TOKEN="your_token_here"
@@ -209,9 +244,21 @@ Ensure your SSH key is added to your GitHub account:
 ssh -T git@github.com
 ```
 
-### 4. Repository Structure
+### 5. Verify Security Setup
 
-Organize your repository with directory-based configurations:
+```bash
+# Run connectivity check to verify repository access and privacy
+anvil doctor connectivity
+
+# Look for the security confirmation:
+# ✅ Private repository accessible with proper authentication
+# 🔒 Repository is private (secure)
+# 🛡️ Configuration data is protected
+```
+
+### 6. Repository Structure
+
+Organize your **PRIVATE** repository with directory-based configurations:
 
 ```
 your-dotfiles-repo/
@@ -261,15 +308,21 @@ anvil config sync team-dev
 ### Configuration Backup and Sync Workflow
 
 ```bash
-# 1. Make changes to your anvil settings locally
-# 2. Push changes to repository for backup
+# 1. Verify connectivity before config operations
+anvil doctor connectivity
+
+# 2. Make changes to your anvil settings locally
+# 3. Push changes to repository for backup
 anvil config push
 
-# 3. On another machine, pull latest settings
+# 4. On another machine, pull latest settings
 anvil config pull anvil
 
-# 4. Install any missing applications
+# 5. Install any missing applications
 anvil config sync
+
+# 6. Verify setup is complete
+anvil doctor
 ```
 
 ### Repository Organization Example

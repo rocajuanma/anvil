@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Comprehensive Health Check System** - New `anvil doctor` command for environment validation and troubleshooting
+  - **Multi-Category Validation** - Systematic checks across environment, dependencies, configuration, and connectivity
+  - **12 Built-in Validators** - Complete coverage from initialization to GitHub repository access
+  - **Auto-Fix Capabilities** - Automatic resolution of common issues (Homebrew updates, directory permissions, missing dependencies)
+  - **Granular Execution** - Run all checks, specific categories, or individual validators
+  - **Interactive Fix Mode** - User-confirmed automatic fixes with verification
+  - **Detailed Reporting** - Structured output with actionable fix recommendations
+  - **Extensible Architecture** - Scalable validator framework following DRY principles
 - **Simplified Groups Structure** - Removed "custom:" header requirement, all groups now at the same level in settings.yaml
 - **Automatic App Tracking** - Individual apps installed via `anvil install [app-name]` are automatically tracked in `tools.installed_apps`
 - **Smart Duplicate Prevention** - Prevents tracking apps already in groups, required_tools, or optional_tools

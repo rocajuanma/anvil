@@ -30,7 +30,23 @@ $ anvil init
 🔧 Generating default settings.yaml...
 ✅ Default settings.yaml generated
 
-# Step 2: See what tools are available
+# Step 2: Verify setup is working correctly
+$ anvil doctor
+
+=== Running Anvil Health Check ===
+
+✅ Environment
+  ✅ Anvil initialization complete
+  ✅ Settings file is valid
+  ✅ Directory structure is correct
+
+✅ Dependencies
+  ✅ Homebrew is installed and functional
+  ✅ All required tools installed (2/2)
+
+✅ Overall status: Healthy
+
+# Step 3: See what tools are available
 $ anvil install --list
 
 === Available Setup Groups ===
@@ -45,7 +61,7 @@ Group: new-laptop
   • chrome
   • 1password
 
-# Step 3: Install development tools
+# Step 4: Install development tools
 $ anvil install dev
 
 === Setting up 'dev' group ===
@@ -842,11 +858,61 @@ anvil install --git --vscode
 
 ## Troubleshooting Examples
 
-### Example 16: Fixing Installation Failures
+### Example 16: Using Health Checks for Diagnostics
+
+**Scenario**: Something isn't working and you need to diagnose the issue.
+
+```bash
+# Always start with a comprehensive health check
+$ anvil doctor
+
+=== Running Anvil Health Check ===
+
+✅ Environment
+  ✅ Anvil initialization complete
+  ✅ Settings file is valid
+  ✅ Directory structure is correct
+
+⚠️ Dependencies
+  ⚠️ Homebrew has available updates
+      💡 Homebrew will be updated
+  ✅ All required tools installed (2/2)
+
+❌ Configuration
+  ❌ Git configuration incomplete: username not set
+      💡 Git configuration must be set manually in settings.yaml
+
+✅ Connectivity
+  ✅ GitHub SSH access confirmed
+  ✅ Git operations are functional
+
+=== Health Check Summary ===
+Total checks: 12
+✅ Passed: 9  ⚠️ Warnings: 1  ❌ Failed: 1
+
+🔧 1 issues can be auto-fixed
+Run 'anvil doctor --fix' to automatically fix them
+
+# Fix auto-fixable issues
+$ anvil doctor --fix
+Successfully fixed: homebrew
+
+# Check specific categories when targeting issues
+$ anvil doctor configuration
+$ anvil doctor dependencies
+
+# Check individual validators
+$ anvil doctor git-config
+```
+
+### Example 17: Fixing Installation Failures
 
 **Scenario**: Some tools fail to install.
 
 ```bash
+# First, run health check to see if it's a dependency issue
+anvil doctor dependencies
+
 # Check what failed
 anvil install dev
 
@@ -867,17 +933,24 @@ brew install --cask visual-studio-code
 code --version
 ```
 
-### Example 17: Recovering from Bad Configuration
+### Example 18: Recovering from Bad Configuration
 
 **Scenario**: Configuration file got corrupted.
 
 ```bash
+# Run health check to see what's wrong
+anvil doctor
+
+# If configuration is severely broken:
 # Backup current config
 cp ~/.anvil/settings.yaml ~/.anvil/settings.yaml.backup
 
 # Reset to defaults
 rm -rf ~/.anvil
 anvil init
+
+# Verify new setup
+anvil doctor
 
 # Restore custom groups from backup if needed
 # Edit ~/.anvil/settings.yaml to add custom configurations
