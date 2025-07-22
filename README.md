@@ -55,7 +55,7 @@
 - **🔍 Dry-run Support** - Preview installations and changes before execution
 - **🎨 Beautiful Output** - Colored, structured progress indicators
 - **⚡ Fast Operations** - Concurrent installation and smart caching
-- **🩺 Health Checks** - Comprehensive environment validation with `anvil doctor`
+- **🩺 Health Checks** - Comprehensive environment validation with real-time progress feedback via `anvil doctor`
 
 ## 🚀 Quick Start
 
@@ -79,7 +79,7 @@ sudo mv anvil /usr/local/bin/
 # Initialize Anvil (run this first!)
 anvil init
 
-# Verify setup is working correctly
+# Verify setup is working correctly with real-time progress feedback
 anvil doctor
 
 # Install applications dynamically
@@ -100,7 +100,7 @@ anvil install docker --dry-run
 # Set up GitHub repository (one-time setup)
 # Edit ~/.anvil/settings.yaml with your repo details
 
-# Verify connectivity before config operations
+# Verify connectivity with detailed progress feedback
 anvil doctor connectivity
 
 # Pull configurations from your repository

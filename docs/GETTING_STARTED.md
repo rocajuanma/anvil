@@ -92,15 +92,33 @@ anvil doctor
 
 This command will:
 
-- ✅ Verify anvil initialization is complete
+- ✅ Verify anvil initialization is complete with **real-time progress feedback**
 - ✅ Check that all required dependencies are installed and functional
 - ✅ Validate your configuration settings
 - ✅ Test connectivity to external services (if configured)
+- ✅ Show **live progress indicators** so you know exactly what's happening
 
 **What to expect:**
 
 ```
 === Running Anvil Health Check ===
+
+🔍 Validating environment, dependencies, configuration, and connectivity...
+
+🔧 Executing 12 health checks...
+[1/12] 8% - Running init-run
+   ✅ Anvil initialization complete
+[2/12] 17% - Running settings-file
+   ✅ Settings file is valid
+[3/12] 25% - Running directory-structure
+   ✅ Directory structure is correct
+[4/12] 33% - Running homebrew
+   ✅ Homebrew is installed and functional
+[5/12] 42% - Running required-tools
+   ✅ All required tools installed (2/2)
+...
+
+✅ All validation checks completed
 
 ✅ Environment
   ✅ Anvil initialization complete
@@ -114,7 +132,7 @@ This command will:
 ✅ Overall status: Healthy
 ```
 
-If you see any issues, the doctor will provide specific fix recommendations.
+If you see any issues, the doctor will provide specific fix recommendations. Use `anvil doctor --verbose` for detailed troubleshooting information.
 
 ### 3. Explore Available Commands
 

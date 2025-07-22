@@ -76,7 +76,8 @@ func showAppPushInDevelopment(appName string) error {
 func pushAnvilConfig() error {
 	terminal.PrintHeader("Push Anvil Configuration")
 
-	// Load anvil configuration
+	// Stage 1: Load and validate configuration
+	terminal.PrintStage("Loading anvil configuration...")
 	anvilConfig, err := config.LoadConfig()
 	if err != nil {
 		return errors.NewConfigurationError(constants.OpPush, "load-config", err)
@@ -87,6 +88,7 @@ func pushAnvilConfig() error {
 		return errors.NewConfigurationError(constants.OpPush, "missing-repo",
 			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your settings.yaml"))
 	}
+	terminal.PrintSuccess("Configuration loaded successfully")
 
 	// 🚨 SECURITY WARNING: Remind users about private repository requirement
 	terminal.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
@@ -100,13 +102,16 @@ func pushAnvilConfig() error {
 	terminal.PrintInfo("   • Verify at: https://github.com/%s/settings", anvilConfig.GitHub.ConfigRepo)
 	terminal.PrintInfo("")
 
-	// Get GitHub token
+	// Stage 2: Authentication setup
+	terminal.PrintStage("Setting up authentication...")
 	var token string
 	if anvilConfig.GitHub.TokenEnvVar != "" {
 		token = os.Getenv(anvilConfig.GitHub.TokenEnvVar)
 		if token == "" {
 			terminal.PrintWarning("GitHub token not found in environment variable: %s", anvilConfig.GitHub.TokenEnvVar)
 			terminal.PrintInfo("Proceeding with SSH authentication if available...")
+		} else {
+			terminal.PrintSuccess("GitHub token found in environment")
 		}
 	}
 
@@ -129,13 +134,15 @@ func pushAnvilConfig() error {
 	terminal.PrintInfo("Branch: %s", anvilConfig.GitHub.Branch)
 	terminal.PrintInfo("Settings file: %s", settingsPath)
 
-	// Confirm with user
+	// Stage 3: User confirmation
+	terminal.PrintStage("Requesting user confirmation...")
 	if !terminal.Confirm("Do you want to push your anvil settings to the repository?") {
 		terminal.PrintInfo("Push cancelled by user")
 		return nil
 	}
 
-	// Push configuration
+	// Stage 4: Push configuration
+	terminal.PrintStage("Pushing configuration to repository...")
 	ctx := context.Background()
 	result, err := githubClient.PushAnvilConfig(ctx, settingsPath)
 	if err != nil {
@@ -149,6 +156,7 @@ func pushAnvilConfig() error {
 	}
 
 	// Display success message for actual push
+	terminal.PrintHeader("Push Complete!")
 	terminal.PrintSuccess("Configuration push completed successfully!")
 	terminal.PrintInfo("")
 	terminal.PrintInfo("📋 Push Summary:")

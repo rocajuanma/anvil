@@ -181,10 +181,10 @@ Perfect for creating distinctive headers, banners, or decorative elements in scr
 and command-line interfaces that need visual impact and professional presentation.`
 
 // Doctor command descriptions
-const DOCTOR_COMMAND_LONG_DESCRIPTION = `Run comprehensive health checks to validate your anvil environment.
+const DOCTOR_COMMAND_LONG_DESCRIPTION = `Run comprehensive health checks to validate your anvil environment with real-time progress feedback.
 
-The doctor command performs validation across four key areas, and you can run checks
-at different levels of granularity:
+The doctor command performs validation across four key areas with live progress indicators,
+so you always know what's happening. You can run checks at different levels of granularity:
 
 CATEGORIES (groups of related checks):
 • environment    - Verify anvil initialization and directory structure  
@@ -195,8 +195,14 @@ CATEGORIES (groups of related checks):
 SPECIFIC CHECKS (individual validators):
 Run 'anvil doctor --list' to see all 12 available individual checks.
 
+KEY FEATURES:
+✨ Real-time progress indicators with counters (e.g., [1/12] 8% - Running init-run)
+🔍 Two output modes: brief default output and detailed verbose mode
+🔒 Secure non-interactive authentication (no credential prompts)
+🎨 Professional user experience with consistent formatting
+
 Examples:
-  anvil doctor                    # Run all health checks
+  anvil doctor                    # Run all health checks with progress feedback
   anvil doctor --list             # Show available categories and checks
   anvil doctor environment        # Run all environment checks (3 checks)
   anvil doctor dependencies       # Run all dependency checks (3 checks)
@@ -204,7 +210,7 @@ Examples:
   anvil doctor homebrew           # Run only the Homebrew check
   anvil doctor --fix              # Auto-fix detected issues
   anvil doctor dependencies --fix # Auto-fix dependency issues
-  anvil doctor --verbose          # Show detailed output
+  anvil doctor --verbose          # Show detailed output with step-by-step results
 
-The doctor will provide actionable recommendations for any issues found
-and can automatically fix many common problems.`
+The doctor provides actionable recommendations for any issues found, shows real-time
+progress so you never wait in silence, and can automatically fix many common problems.`

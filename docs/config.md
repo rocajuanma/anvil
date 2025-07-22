@@ -126,11 +126,31 @@ $ anvil config push
 
 === Push Anvil Configuration ===
 
+🔧 Loading anvil configuration...
+✅ Configuration loaded successfully
+
+🚨 SECURITY REMINDER: Configuration files contain sensitive data
+   • API keys, tokens, and credentials
+   • Personal file paths and system information
+   • Private development environment details
+
+🛡️  Anvil REQUIRES private repositories for security
+   • Repository 'username/dotfiles' must be PRIVATE
+   • Public repositories will be BLOCKED
+   • Verify at: https://github.com/username/dotfiles/settings
+
+🔧 Setting up authentication...
+✅ GitHub token found in environment
+
 🔧 Preparing to push anvil configuration...
 Repository: username/dotfiles
 Branch: main
 Settings file: /Users/username/.anvil/settings.yaml
+
+🔧 Requesting user confirmation...
 ? Do you want to push your anvil settings to the repository? (y/N): y
+
+🔧 Pushing configuration to repository...
 
 # If no changes:
 ✅ Configuration is up-to-date!
@@ -138,12 +158,14 @@ Local anvil settings match the remote repository.
 No changes to push.
 
 # If changes detected:
+🔒 Repository privacy verified - safe to push configuration data
 Differences detected between local and remote configuration
 Created and switched to branch: config-push-18072025-2147
 Changes detected, proceeding with commit...
 ✅ Committed changes: anvil[push]: anvil
 ✅ Pushed branch 'config-push-18072025-2147' to origin
 
+=== Push Complete! ===
 ✅ Configuration push completed successfully!
 
 📋 Push Summary:
@@ -160,15 +182,13 @@ Direct link: https://github.com/username/dotfiles/compare/main...config-push-180
 
 #### Option 2: Application Config Push (`anvil config push <app-name>`)
 
-🚧 **Status**: In Development
+**🚧 Status: In Development**
+
+Push application-specific configurations to your repository:
 
 ```bash
 $ anvil config push cursor
 
-=== Push 'cursor' Configuration ===
-
-⚠️  Application-specific configuration push is currently in development
-This feature will allow you to push cursor configuration files to your GitHub repository
 Expected functionality:
   • Create timestamped branch: config-push-<DDMMYYYY>-<HHMM>
   • Commit message: anvil[push]: cursor
@@ -228,81 +248,78 @@ github:
 
 #### Option 1: GitHub Token (Recommended)
 
-1. Create a GitHub Personal Access Token:
-   - Go to GitHub Settings → Developer settings → Personal access tokens
-   - Generate new token with `repo` scope (required for private repos)
-2. Set environment variable:
-   ```bash
-   export GITHUB_TOKEN="your_token_here"
-   ```
+```bash
+# Create a personal access token at: https://github.com/settings/tokens
+# Select these scopes: repo, read:user
+
+# Set environment variable (add to ~/.zshrc or ~/.bashrc)
+export GITHUB_TOKEN="your_token_here"
+
+# Verify token works
+curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
+```
 
 #### Option 2: SSH Keys
 
-Ensure your SSH key is added to your GitHub account:
-
 ```bash
+# Generate SSH key
+ssh-keygen -t ed25519 -C "your.email@example.com"
+
+# Add to SSH agent
+ssh-add ~/.ssh/id_ed25519
+
+# Copy public key and add to GitHub
+cat ~/.ssh/id_ed25519.pub | pbcopy
+# Add at: https://github.com/settings/keys
+
+# Test SSH connection
 ssh -T git@github.com
 ```
 
-### 5. Verify Security Setup
+## Example Workflows
+
+### Basic Configuration Management
 
 ```bash
-# Run connectivity check to verify repository access and privacy
+# 1. Set up repository and authentication
+anvil init
+# Edit ~/.anvil/settings.yaml with your GitHub repository
+
+# 2. Verify connectivity
 anvil doctor connectivity
 
-# Look for the security confirmation:
-# ✅ Private repository accessible with proper authentication
-# 🔒 Repository is private (secure)
-# 🛡️ Configuration data is protected
-```
-
-### 6. Repository Structure
-
-Organize your **PRIVATE** repository with directory-based configurations:
-
-```
-your-dotfiles-repo/
-├── cursor/
-│   ├── settings.json
-│   └── keybindings.json
-├── vscode/
-│   ├── settings.json
-│   └── extensions.json
-└── zsh/
-    ├── .zshrc
-    └── .zsh_aliases
-```
-
-## Examples
-
-### Personal Configuration Setup
-
-```bash
-# Pull your cursor settings
+# 3. Pull application configs from repository
 anvil config pull cursor
-
-# Review what was pulled
 anvil config show cursor
 
-# Install missing apps from your settings
-anvil config sync
-
-# Push any local changes back to repository
+# 4. Make local changes to anvil settings
+# 5. Push anvil settings to repository
 anvil config push
+
+# 6. On another machine, pull and sync
+anvil config pull team-dev
+anvil config show team-dev
 ```
 
-### Team Configuration Sharing
+### Team Development Workflow
 
 ```bash
-# Pull team's development setup
-anvil config pull team-dev
+# Team member sets up their environment
+anvil init
 
-# See what tools the team uses
-anvil config show team-dev
+# Configure team repository
+# Edit ~/.anvil/settings.yaml:
+#   github.config_repo: "team/dev-configs"
 
-# Install team's recommended tools
-anvil config sync team-dev --dry-run
+# Pull shared configurations
+anvil config pull shared-dev
 anvil config sync team-dev
+
+# Push personal anvil settings (if desired)
+anvil config push
+
+# Verify setup is complete
+anvil doctor
 ```
 
 ### Configuration Backup and Sync Workflow

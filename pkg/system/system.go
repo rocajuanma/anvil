@@ -45,6 +45,17 @@ func RunCommand(command string, args ...string) (*CommandResult, error) {
 func RunCommandWithTimeout(ctx context.Context, command string, args ...string) (*CommandResult, error) {
 	cmd := exec.CommandContext(ctx, command, args...)
 
+	// For git commands, ensure non-interactive mode to prevent credential prompts
+	if command == "git" {
+		// Set environment variables to prevent credential prompts
+		cmd.Env = append(os.Environ(),
+			"GIT_TERMINAL_PROMPT=0",  // Disable terminal prompts
+			"GIT_ASKPASS=/bin/false", // Disable credential prompts
+			"SSH_ASKPASS=/bin/false", // Disable SSH passphrase prompts
+			"GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=no", // Non-interactive SSH
+		)
+	}
+
 	// Capture both stdout and stderr
 	output, err := cmd.CombinedOutput()
 
@@ -77,6 +88,17 @@ func RunCommandWithOutputTimeout(ctx context.Context, command string, args ...st
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// For git commands, ensure non-interactive mode to prevent credential prompts
+	if command == "git" {
+		// Set environment variables to prevent credential prompts
+		cmd.Env = append(os.Environ(),
+			"GIT_TERMINAL_PROMPT=0",  // Disable terminal prompts
+			"GIT_ASKPASS=/bin/false", // Disable credential prompts
+			"SSH_ASKPASS=/bin/false", // Disable SSH passphrase prompts
+			"GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=no", // Non-interactive SSH
+		)
+	}
+
 	return cmd.Run()
 }
 
@@ -102,6 +124,17 @@ func RunCommandInDirectory(dir, command string, args ...string) (*CommandResult,
 func RunCommandInDirectoryWithTimeout(ctx context.Context, dir, command string, args ...string) (*CommandResult, error) {
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Dir = dir
+
+	// For git commands, ensure non-interactive mode to prevent credential prompts
+	if command == "git" {
+		// Set environment variables to prevent credential prompts
+		cmd.Env = append(os.Environ(),
+			"GIT_TERMINAL_PROMPT=0",  // Disable terminal prompts
+			"GIT_ASKPASS=/bin/false", // Disable credential prompts
+			"SSH_ASKPASS=/bin/false", // Disable SSH passphrase prompts
+			"GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=no", // Non-interactive SSH
+		)
+	}
 
 	output, err := cmd.CombinedOutput()
 
