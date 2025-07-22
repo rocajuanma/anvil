@@ -113,6 +113,49 @@ func getCachedConfig() (*AnvilConfig, error) {
 	return configCache, err
 }
 
+// PopulateGitConfigFromSystem populates git configuration from local git settings and auto-detects SSH keys
+func PopulateGitConfigFromSystem(gitConfig *GitConfig) error {
+	// Always populate username from local git config
+	if gitUser, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserName); err == nil && gitUser.Success {
+		gitConfig.Username = strings.TrimSpace(gitUser.Output)
+	}
+
+	// Always populate email from local git config
+	if gitEmail, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserEmail); err == nil && gitEmail.Success {
+		gitConfig.Email = strings.TrimSpace(gitEmail.Output)
+	}
+
+	// Auto-detect SSH key path from common locations
+	homeDir, _ := os.UserHomeDir()
+	sshDir := filepath.Join(homeDir, ".ssh")
+	gitConfig.SSHDir = sshDir
+
+	// Common SSH key names in order of preference
+	commonKeyNames := []string{
+		"id_ed25519",
+		"id_ed25519_personal",
+		"id_rsa",
+		"id_rsa_personal",
+		"id_ecdsa",
+	}
+
+	// Find the first existing SSH key
+	for _, keyName := range commonKeyNames {
+		keyPath := filepath.Join(sshDir, keyName)
+		if _, err := os.Stat(keyPath); err == nil {
+			gitConfig.SSHKeyPath = keyPath
+			break
+		}
+	}
+
+	// If no common keys found, use the default path (will be created if needed)
+	if gitConfig.SSHKeyPath == "" {
+		gitConfig.SSHKeyPath = filepath.Join(sshDir, "id_ed25519")
+	}
+
+	return nil
+}
+
 // invalidateCache clears the configuration cache
 func invalidateCache() {
 	configCacheMutex.Lock()
@@ -197,13 +240,7 @@ func GenerateDefaultSettings() error {
 	config := GetDefaultConfig()
 
 	// Try to populate git configuration from system
-	if gitUser, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserName); err == nil && gitUser.Success {
-		config.Git.Username = strings.TrimSpace(gitUser.Output)
-	}
-
-	if gitEmail, err := system.RunCommand(constants.GitCommand, constants.GitConfig, constants.GitGlobal, constants.GitUserEmail); err == nil && gitEmail.Success {
-		config.Git.Email = strings.TrimSpace(gitEmail.Output)
-	}
+	PopulateGitConfigFromSystem(&config.Git)
 
 	// Marshal to YAML
 	data, err := yaml.Marshal(config)
