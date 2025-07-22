@@ -219,7 +219,7 @@ func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
 	result := engine.RunCheck(ctx, checkName)
 	displayResults([]*validators.ValidationResult{result}, false)
 
-	if result.Status == validators.PASS {
+	if result.Status == validators.PASS && checkName != "git-config" {
 		terminal.PrintSuccess("Check is already passing, no fix needed")
 		return nil
 	}

@@ -69,8 +69,8 @@ func (v *GitConfigValidator) Validate(ctx context.Context, cfg *config.AnvilConf
 			Status:   FAIL,
 			Message:  "Git configuration incomplete: " + strings.Join(issues, ", "),
 			Details:  details,
-			FixHint:  "Git configuration must be set manually in settings.yaml",
-			AutoFix:  false,
+			FixHint:  "Run 'anvil doctor git-config --fix' to regenerate from local git configuration",
+			AutoFix:  true,
 		}
 	}
 
@@ -80,13 +80,75 @@ func (v *GitConfigValidator) Validate(ctx context.Context, cfg *config.AnvilConf
 		Status:   PASS,
 		Message:  "Git configuration is complete",
 		Details:  details,
-		AutoFix:  false,
+		FixHint:  "Run 'anvil doctor git-config --fix' to refresh from local git configuration",
+		AutoFix:  true, // Always allow regenerating from local git config
 	}
 }
 
 func (v *GitConfigValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error {
-	// For now, git configuration fixes must be done manually
-	return fmt.Errorf("git configuration must be set manually in settings.yaml")
+	// Load current configuration
+	currentConfig, err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load current configuration: %w", err)
+	}
+
+	// Store original values for comparison and logging
+	originalUsername := currentConfig.Git.Username
+	originalEmail := currentConfig.Git.Email
+	originalSSHKeyPath := currentConfig.Git.SSHKeyPath
+
+	// ALWAYS regenerate ALL git configuration from local git settings
+	// This handles typos, invalid paths, and incorrect values
+	if err := config.PopulateGitConfigFromSystem(&currentConfig.Git); err != nil {
+		return fmt.Errorf("failed to read local git configuration: %w", err)
+	}
+
+	// Check if local git config is available
+	if currentConfig.Git.Username == "" && currentConfig.Git.Email == "" {
+		return fmt.Errorf("no local git configuration found (git config --global user.name/user.email not set)")
+	}
+
+	// Log what we're updating (for user visibility)
+	changes := []string{}
+	if currentConfig.Git.Username != originalUsername {
+		if originalUsername == "" {
+			changes = append(changes, fmt.Sprintf("username: (empty) → %s", currentConfig.Git.Username))
+		} else {
+			changes = append(changes, fmt.Sprintf("username: %s → %s", originalUsername, currentConfig.Git.Username))
+		}
+	}
+	if currentConfig.Git.Email != originalEmail {
+		if originalEmail == "" {
+			changes = append(changes, fmt.Sprintf("email: (empty) → %s", currentConfig.Git.Email))
+		} else {
+			changes = append(changes, fmt.Sprintf("email: %s → %s", originalEmail, currentConfig.Git.Email))
+		}
+	}
+	if currentConfig.Git.SSHKeyPath != originalSSHKeyPath {
+		if originalSSHKeyPath == "" {
+			changes = append(changes, fmt.Sprintf("ssh_key_path: (empty) → %s", currentConfig.Git.SSHKeyPath))
+		} else {
+			changes = append(changes, fmt.Sprintf("ssh_key_path: %s → %s", originalSSHKeyPath, currentConfig.Git.SSHKeyPath))
+		}
+	}
+
+	// Always save the updated configuration (even if no visible changes)
+	// This ensures the latest auto-detected values are persisted
+	if err := config.SaveConfig(currentConfig); err != nil {
+		return fmt.Errorf("failed to save updated configuration: %w", err)
+	}
+
+	// Provide user feedback about what was updated
+	if len(changes) > 0 {
+		fmt.Printf("\n🔧 Updated git configuration:\n")
+		for _, change := range changes {
+			fmt.Printf("  • %s\n", change)
+		}
+	} else {
+		fmt.Printf("\n✅ Git configuration verified and refreshed from local git config\n")
+	}
+
+	return nil
 }
 
 // GitHubConfigValidator checks if GitHub configuration is properly set
