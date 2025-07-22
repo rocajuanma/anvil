@@ -144,7 +144,9 @@ func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose b
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	result := engine.RunCheck(ctx, checkName)
+	terminal.PrintStage(fmt.Sprintf("Executing %s check...", checkName))
+
+	result := engine.RunCheckWithProgress(ctx, checkName, verbose)
 	displayResults([]*validators.ValidationResult{result}, verbose)
 
 	if result.Status == validators.FAIL {
@@ -161,7 +163,16 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	results := engine.RunCategory(ctx, category)
+	// Get validators for this category to show count
+	categoryValidators := engine.GetValidatorsByCategory(category)
+	if len(categoryValidators) == 0 {
+		terminal.PrintError("Category '%s' not found", category)
+		return errors.NewValidationError(constants.OpDoctor, category, fmt.Errorf("category not found"))
+	}
+
+	terminal.PrintStage(fmt.Sprintf("Executing %d checks in %s category...", len(categoryValidators), category))
+
+	results := engine.RunCategoryWithProgress(ctx, category, verbose)
 	displayResults(results, verbose)
 	printSummary(results)
 
@@ -184,7 +195,13 @@ func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	results := engine.RunAll(ctx)
+	// Get all validators to show total count
+	allValidators := engine.GetAllValidators()
+	totalChecks := len(allValidators)
+
+	terminal.PrintStage(fmt.Sprintf("Executing %d health checks...", totalChecks))
+
+	results := engine.RunAllWithProgress(ctx, verbose)
 	displayResults(results, verbose)
 	printSummary(results)
 

@@ -84,57 +84,72 @@ func (v *GitHubAccessValidator) Validate(ctx context.Context, cfg *config.AnvilC
 		}
 	}
 
-	// Check if GitHub token is available
+	var details []string
+	details = append(details, fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo))
+	details = append(details, fmt.Sprintf("Token environment variable: %s", cfg.GitHub.TokenEnvVar))
+
+	// Check if GitHub token is available from environment variable
 	var token string
 	if cfg.GitHub.TokenEnvVar != "" {
 		token = os.Getenv(cfg.GitHub.TokenEnvVar)
+		if token != "" {
+			details = append(details, "✓ GitHub token found in environment")
+		} else {
+			details = append(details, "✗ No GitHub token found in environment")
+		}
 	}
 
 	if token == "" {
-		// Test SSH access as fallback
-		result, err := system.RunCommand("ssh", "-T", "git@github.com")
+		// Test SSH access as fallback - use non-interactive mode
+		details = append(details, "Attempting SSH authentication...")
+		result, err := system.RunCommand("ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-T", "git@github.com")
 		if err != nil || !strings.Contains(result.Output, "successfully authenticated") {
+			details = append(details, "✗ SSH authentication failed")
 			return &ValidationResult{
 				Name:     v.Name(),
 				Category: v.Category(),
 				Status:   FAIL,
 				Message:  "No GitHub authentication available",
-				Details:  []string{"No token found", "SSH authentication failed"},
+				Details:  details,
 				FixHint:  fmt.Sprintf("Set %s environment variable or configure SSH keys", cfg.GitHub.TokenEnvVar),
 				AutoFix:  false,
 			}
 		}
 
+		details = append(details, "✓ SSH authentication successful")
 		return &ValidationResult{
 			Name:     v.Name(),
 			Category: v.Category(),
 			Status:   PASS,
 			Message:  "GitHub SSH access confirmed",
-			Details:  []string{"SSH authentication successful"},
+			Details:  details,
 			AutoFix:  false,
 		}
 	}
 
 	// Test GitHub API with token
+	details = append(details, "Testing GitHub API access with token...")
 	result, err := system.RunCommand("curl", "-s", "-f", "-H", fmt.Sprintf("Authorization: token %s", token), "https://api.github.com/user")
 	if err != nil || !result.Success {
+		details = append(details, "✗ GitHub API request failed")
 		return &ValidationResult{
 			Name:     v.Name(),
 			Category: v.Category(),
 			Status:   FAIL,
 			Message:  "GitHub API access failed",
-			Details:  []string{"Token authentication failed"},
-			FixHint:  fmt.Sprintf("Check %s environment variable", cfg.GitHub.TokenEnvVar),
+			Details:  details,
+			FixHint:  fmt.Sprintf("Check %s environment variable and ensure token is valid", cfg.GitHub.TokenEnvVar),
 			AutoFix:  false,
 		}
 	}
 
+	details = append(details, "✓ GitHub API access successful")
 	return &ValidationResult{
 		Name:     v.Name(),
 		Category: v.Category(),
 		Status:   PASS,
 		Message:  "GitHub API access confirmed",
-		Details:  []string{"Token authentication successful"},
+		Details:  details,
 		AutoFix:  false,
 	}
 }

@@ -57,6 +57,10 @@ func runShowCommand(cmd *cobra.Command, args []string) error {
 
 // showAnvilSettings displays the main anvil settings.yaml file
 func showAnvilSettings() error {
+	terminal.PrintHeader("Anvil Settings Configuration")
+
+	// Stage 1: Locate settings file
+	terminal.PrintStage("Locating anvil settings file...")
 	configPath := config.GetConfigPath()
 
 	// Check if settings file exists
@@ -65,16 +69,19 @@ func showAnvilSettings() error {
 		terminal.PrintInfo("💡 Run 'anvil init' to create the initial settings file")
 		return fmt.Errorf("settings file not found")
 	}
+	terminal.PrintSuccess("Settings file located")
 
-	terminal.PrintHeader("Anvil Settings Configuration")
 	terminal.PrintInfo("File: %s", configPath)
 	terminal.PrintInfo("")
 
-	// Read and display the file content
+	// Stage 2: Read and display content
+	terminal.PrintStage("Reading configuration content...")
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		return errors.NewFileSystemError(constants.OpShow, "read-settings", err)
 	}
+	terminal.PrintSuccess("Configuration content loaded")
+	terminal.PrintInfo("")
 
 	fmt.Print(string(content))
 	return nil
@@ -82,13 +89,18 @@ func showAnvilSettings() error {
 
 // showPulledConfig displays configuration files from a pulled directory
 func showPulledConfig(targetDir string) error {
-	// Get config directory
+	terminal.PrintHeader(fmt.Sprintf("Configuration Directory: %s", targetDir))
+
+	// Stage 1: Load anvil configuration
+	terminal.PrintStage("Loading anvil configuration...")
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return errors.NewConfigurationError(constants.OpShow, "load-config", err)
 	}
+	terminal.PrintSuccess("Configuration loaded")
 
-	// Build path to the pulled config directory
+	// Stage 2: Locate pulled configuration directory
+	terminal.PrintStage("Locating pulled configuration directory...")
 	tempDir := filepath.Join(cfg.Directories.Config, "temp", targetDir)
 
 	// Check if the directory exists
@@ -98,16 +110,39 @@ func showPulledConfig(targetDir string) error {
 		terminal.PrintInfo("💡 This could be because:")
 		terminal.PrintInfo("   • The app name is incorrect")
 		terminal.PrintInfo("   • The configuration was never pulled")
-		terminal.PrintInfo("   • The directory name doesn't match what was pulled")
+		terminal.PrintInfo("   • Use 'anvil config pull %s' to pull this configuration first", targetDir)
 		terminal.PrintInfo("")
-		terminal.PrintInfo("🔧 To fix this:")
-		terminal.PrintInfo("   • Run 'anvil config pull %s' to download the configuration", targetDir)
-		terminal.PrintInfo("   • Check available pulled configs in: %s", filepath.Join(cfg.Directories.Config, "temp"))
+
+		// Show available pulled configurations
+		tempBasePath := filepath.Join(cfg.Directories.Config, "temp")
+		if entries, err := os.ReadDir(tempBasePath); err == nil && len(entries) > 0 {
+			terminal.PrintInfo("Available pulled configurations:")
+			for _, entry := range entries {
+				if entry.IsDir() {
+					terminal.PrintInfo("  • %s", entry.Name())
+				}
+			}
+		} else {
+			terminal.PrintInfo("No configurations have been pulled yet.")
+			terminal.PrintInfo("Use 'anvil config pull <directory>' to pull configurations from your repository.")
+		}
+
 		return fmt.Errorf("configuration directory not found")
 	}
+	terminal.PrintSuccess("Configuration directory located")
 
-	// Build and display the tree structure
-	return showDirectoryTree(tempDir, targetDir)
+	terminal.PrintInfo("Directory: %s", tempDir)
+	terminal.PrintInfo("")
+
+	// Stage 3: Display directory contents
+	terminal.PrintStage("Reading configuration files...")
+	err = showDirectoryTree(tempDir, targetDir)
+	if err != nil {
+		return err
+	}
+	terminal.PrintSuccess("Configuration files displayed")
+
+	return nil
 }
 
 // TreeNode represents a node in the file tree

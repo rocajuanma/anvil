@@ -65,15 +65,17 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	terminal.PrintInfo("Repository: %s", cfg.GitHub.ConfigRepo)
 	terminal.PrintInfo("Branch: %s", cfg.GitHub.Branch)
 	terminal.PrintInfo("Target directory: %s", targetDir)
+	terminal.PrintInfo("")
 
-	// Get GitHub token from environment variable if configured
+	// Stage 1: Authentication check
+	terminal.PrintStage("Checking authentication...")
 	token := ""
 	if cfg.GitHub.TokenEnvVar != "" {
 		token = os.Getenv(cfg.GitHub.TokenEnvVar)
 		if token != "" {
-			terminal.PrintInfo("✅ GitHub token found in environment variable: %s", cfg.GitHub.TokenEnvVar)
+			terminal.PrintSuccess(fmt.Sprintf("GitHub token found in environment variable: %s", cfg.GitHub.TokenEnvVar))
 		} else {
-			terminal.PrintWarning("⚠️  No GitHub token found in %s - will attempt SSH authentication", cfg.GitHub.TokenEnvVar)
+			terminal.PrintWarning("No GitHub token found in %s - will attempt SSH authentication", cfg.GitHub.TokenEnvVar)
 		}
 	}
 
@@ -92,35 +94,40 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	// Check if repository is accessible and branch exists
+	// Stage 2: Repository validation
 	terminal.PrintStage("Validating repository access and branch configuration...")
 	if err := githubClient.ValidateRepository(ctx); err != nil {
-		// Provide additional context for branch configuration errors
+		// Provide additional context for repository validation errors
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
 			terminal.PrintError("\n" + err.Error())
-			terminal.PrintInfo("\n💡 Quick Help:")
-			terminal.PrintInfo("   • Most repositories use 'main' or 'master' as the default branch")
-			terminal.PrintInfo("   • Check your repository on GitHub to see available branches")
-			terminal.PrintInfo("   • Your settings file is at: %s/settings.yaml", config.GetConfigDirectory())
-			return fmt.Errorf("branch configuration validation failed")
+			terminal.PrintInfo("\n🔄 The repository exists but the configured branch is not available.")
+			terminal.PrintInfo("    You may need to:")
+			terminal.PrintInfo("    • Update the branch in your settings.yaml")
+			terminal.PrintInfo("    • Or check the available branches in your repository")
+			return fmt.Errorf("repository validation failed due to branch configuration issue")
 		}
-		return fmt.Errorf("repository validation failed: %w", err)
+		return fmt.Errorf("failed to validate repository: %w", err)
 	}
-	terminal.PrintSuccess("Repository and branch configuration validated")
+	terminal.PrintSuccess("Repository access confirmed")
 
-	// Clone repository if it doesn't exist locally
-	terminal.PrintStage("Setting up local repository...")
+	// Stage 3: Clone/update repository
+	terminal.PrintStage("Cloning or updating repository...")
 	if err := githubClient.CloneRepository(ctx); err != nil {
-		// Provide additional context for branch configuration errors during clone
+		// Provide additional context for clone errors
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
 			terminal.PrintError("\n" + err.Error())
+			terminal.PrintInfo("\n🔄 The repository exists but the configured branch is not available during clone.")
+			terminal.PrintInfo("    You may need to:")
+			terminal.PrintInfo("    • Update the branch in your settings.yaml")
+			terminal.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
+			terminal.PrintInfo("      (It will be re-cloned with the correct branch)")
 			return fmt.Errorf("clone failed due to branch configuration issue")
 		}
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
-	terminal.PrintSuccess("Local repository ready")
+	terminal.PrintSuccess("Repository ready")
 
-	// Pull latest changes
+	// Stage 4: Pull latest changes
 	terminal.PrintStage("Pulling latest changes...")
 	if err := githubClient.PullChanges(ctx); err != nil {
 		// Provide additional context for branch configuration errors during pull
@@ -137,7 +144,7 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	}
 	terminal.PrintSuccess("Repository updated")
 
-	// Copy specific directory to temp location
+	// Stage 5: Copy configuration directory
 	terminal.PrintStage("Copying configuration directory...")
 	tempDir, err := copyDirectoryToTemp(cfg, targetDir)
 	if err != nil {
