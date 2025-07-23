@@ -73,6 +73,7 @@ type AnvilConfig struct {
 	Directories AnvilDirectories  `yaml:"directories"`
 	Tools       AnvilTools        `yaml:"tools"`
 	Groups      AnvilGroups       `yaml:"groups"`
+	Configs     map[string]string `yaml:"configs"` // Maps app names to their local config paths
 	Git         GitConfig         `yaml:"git"`
 	GitHub      GitHubConfig      `yaml:"github"`
 	Environment map[string]string `yaml:"environment"`
@@ -181,6 +182,7 @@ func GetDefaultConfig() *AnvilConfig {
 			"dev":        {constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
 			"new-laptop": {constants.PkgSlack, constants.PkgChrome, constants.Pkg1Password},
 		},
+		Configs: make(map[string]string), // Initialize empty configs section
 		Git: GitConfig{
 			Username:   "",
 			Email:      "",
@@ -566,4 +568,113 @@ func RemoveInstalledApp(appName string) error {
 	}
 
 	return nil // App not found, nothing to remove
+}
+
+// LocationSource represents where an app config location was found
+type LocationSource int
+
+const (
+	LocationConfigs LocationSource = iota // Found in configs section of settings.yaml
+	LocationTemp                          // Found in temp directory (pulled but not configured)
+)
+
+// String returns a string representation of the location source
+func (ls LocationSource) String() string {
+	switch ls {
+	case LocationConfigs:
+		return "configs"
+	case LocationTemp:
+		return "temp"
+	default:
+		return "unknown"
+	}
+}
+
+// GetAppConfigPath checks if an app has a configured local path in the configs section
+func GetAppConfigPath(appName string) (string, bool, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if config.Configs == nil {
+		return "", false, nil
+	}
+
+	path, exists := config.Configs[appName]
+	if !exists {
+		return "", false, nil
+	}
+
+	// Verify the path exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", false, fmt.Errorf("configured path for %s does not exist: %s", appName, path)
+	}
+
+	return path, true, nil
+}
+
+// GetTempAppPath checks if an app directory exists in the temp directory (from previous pull)
+func GetTempAppPath(appName string) (string, bool, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	tempPath := filepath.Join(config.Directories.Config, "temp", appName)
+	if _, err := os.Stat(tempPath); os.IsNotExist(err) {
+		return "", false, nil
+	}
+
+	return tempPath, true, nil
+}
+
+// ResolveAppLocation finds the config location for an app following the priority order
+func ResolveAppLocation(appName string) (string, LocationSource, error) {
+	// Priority 1: Check configs section in settings.yaml
+	if path, found, err := GetAppConfigPath(appName); err != nil {
+		return "", LocationConfigs, err
+	} else if found {
+		return path, LocationConfigs, nil
+	}
+
+	// Priority 2: Check temp directory (pulled configs)
+	if path, found, err := GetTempAppPath(appName); err != nil {
+		return "", LocationTemp, err
+	} else if found {
+		return path, LocationTemp, nil
+	}
+
+	// Not found anywhere
+	return "", LocationConfigs, fmt.Errorf("app '%s' not found in configs or temp directory", appName)
+}
+
+// SetAppConfigPath sets the config path for an app in the configs section
+func SetAppConfigPath(appName, configPath string) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if config.Configs == nil {
+		config.Configs = make(map[string]string)
+	}
+
+	config.Configs[appName] = configPath
+	return SaveConfig(config)
+}
+
+// GetConfiguredApps returns a list of all apps that have configured paths
+func GetConfiguredApps() ([]string, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	var apps []string
+	for appName := range config.Configs {
+		apps = append(apps, appName)
+	}
+
+	return apps, nil
 }

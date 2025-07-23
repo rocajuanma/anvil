@@ -17,6 +17,7 @@ limitations under the License.
 package github
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -153,7 +154,71 @@ func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath s
 		return nil, err
 	}
 
-	return nil, fmt.Errorf("application config push is still in development")
+	// Ensure repository is ready
+	if err := gc.ensureRepositoryReady(ctx); err != nil {
+		return nil, err
+	}
+
+	// Check if there are differences before proceeding
+	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
+	hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for app config changes: %w", err)
+	}
+
+	if !hasChanges {
+		terminal.PrintSuccess("Configuration is up-to-date!")
+		terminal.PrintInfo("Local %s configs match the remote repository.", appName)
+		terminal.PrintInfo("No changes to push.")
+		return nil, nil
+	}
+
+	terminal.PrintInfo("Differences detected between local and remote %s configuration", appName)
+
+	// Generate branch name with timestamp
+	branchName := generateTimestampedBranchName("config-push")
+
+	// Create and checkout new branch
+	if err := gc.createAndCheckoutBranch(ctx, branchName); err != nil {
+		return nil, err
+	}
+
+	// Copy app configs to repo
+	targetDir := filepath.Join(gc.LocalPath, appName)
+	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
+	}
+
+	// Copy the config path (file or directory) to the target directory
+	if err := gc.copyConfigToRepo(configPath, targetDir); err != nil {
+		return nil, err
+	}
+
+	// Commit changes
+	commitMessage := fmt.Sprintf("anvil[push]: %s", appName)
+	if err := gc.commitChanges(ctx, commitMessage); err != nil {
+		return nil, err
+	}
+
+	// Push branch
+	if err := gc.pushBranch(ctx, branchName); err != nil {
+		return nil, err
+	}
+
+	// Determine files committed
+	filesCommitted, err := gc.getCommittedFiles(targetDir, appName)
+	if err != nil {
+		filesCommitted = []string{fmt.Sprintf("%s/", appName)} // Fallback
+	}
+
+	result := &PushConfigResult{
+		BranchName:     branchName,
+		CommitMessage:  commitMessage,
+		RepositoryURL:  gc.getRepositoryURL(),
+		FilesCommitted: filesCommitted,
+	}
+
+	return result, nil
 }
 
 // ensureRepositoryReady ensures the repository is cloned and up to date
@@ -350,4 +415,208 @@ func (gc *GitHubClient) getRepositoryURL() string {
 		return gc.RepoURL
 	}
 	return fmt.Sprintf("https://github.com/%s", gc.RepoURL)
+}
+
+// hasAppConfigChanges checks if the local app config differs from the remote
+func (gc *GitHubClient) hasAppConfigChanges(localConfigPath, targetPath string) (bool, error) {
+	// Check if the target directory exists in the repo
+	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
+
+	// If target doesn't exist in repo, there are definitely changes
+	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
+		return true, nil
+	}
+
+	// Compare the local config with the repo version
+	return gc.hasFileOrDirChanges(localConfigPath, repoTargetPath)
+}
+
+// hasFileOrDirChanges compares a local file or directory with a repo version
+func (gc *GitHubClient) hasFileOrDirChanges(localPath, repoPath string) (bool, error) {
+	localInfo, err := os.Stat(localPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to stat local path %s: %w", localPath, err)
+	}
+
+	repoInfo, err := os.Stat(repoPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return true, nil // Repo version doesn't exist, so there are changes
+		}
+		return false, fmt.Errorf("failed to stat repo path %s: %w", repoPath, err)
+	}
+
+	// If one is a file and the other is a directory, there are changes
+	if localInfo.IsDir() != repoInfo.IsDir() {
+		return true, nil
+	}
+
+	if localInfo.IsDir() {
+		// Compare directories recursively
+		return gc.hasDirectoryChanges(localPath, repoPath)
+	} else {
+		// Compare files
+		return gc.hasFileChanges(localPath, repoPath)
+	}
+}
+
+// hasDirectoryChanges recursively compares two directories
+func (gc *GitHubClient) hasDirectoryChanges(localDir, repoDir string) (bool, error) {
+	// Get all files in both directories
+	localFiles := make(map[string]os.FileInfo)
+	repoFiles := make(map[string]os.FileInfo)
+
+	// Walk local directory
+	err := filepath.Walk(localDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(localDir, path)
+		if err != nil {
+			return err
+		}
+		localFiles[relPath] = info
+		return nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to walk local directory: %w", err)
+	}
+
+	// Walk repo directory
+	err = filepath.Walk(repoDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(repoDir, path)
+		if err != nil {
+			return err
+		}
+		repoFiles[relPath] = info
+		return nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to walk repo directory: %w", err)
+	}
+
+	// Check if file lists differ
+	if len(localFiles) != len(repoFiles) {
+		return true, nil
+	}
+
+	// Compare each file
+	for relPath, localInfo := range localFiles {
+		_, exists := repoFiles[relPath]
+		if !exists {
+			return true, nil
+		}
+
+		// Skip directories for content comparison
+		if localInfo.IsDir() {
+			continue
+		}
+
+		// Compare file contents
+		localFilePath := filepath.Join(localDir, relPath)
+		repoFilePath := filepath.Join(repoDir, relPath)
+		hasChanges, err := gc.hasFileChanges(localFilePath, repoFilePath)
+		if err != nil {
+			return false, err
+		}
+		if hasChanges {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// hasFileChanges compares two files for differences
+func (gc *GitHubClient) hasFileChanges(localFile, repoFile string) (bool, error) {
+	localContent, err := os.ReadFile(localFile)
+	if err != nil {
+		return false, fmt.Errorf("failed to read local file %s: %w", localFile, err)
+	}
+
+	repoContent, err := os.ReadFile(repoFile)
+	if err != nil {
+		return false, fmt.Errorf("failed to read repo file %s: %w", repoFile, err)
+	}
+
+	return !bytes.Equal(localContent, repoContent), nil
+}
+
+// copyConfigToRepo copies a file or directory to the repository
+func (gc *GitHubClient) copyConfigToRepo(sourcePath, targetDir string) error {
+	sourceInfo, err := os.Stat(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to stat source path %s: %w", sourcePath, err)
+	}
+
+	if sourceInfo.IsDir() {
+		// Copy directory contents to target directory
+		return gc.copyDirectoryContents(sourcePath, targetDir)
+	} else {
+		// Copy single file to target directory
+		fileName := filepath.Base(sourcePath)
+		targetFile := filepath.Join(targetDir, fileName)
+		return copyFile(sourcePath, targetFile)
+	}
+}
+
+// copyDirectoryContents recursively copies directory contents
+func (gc *GitHubClient) copyDirectoryContents(sourceDir, targetDir string) error {
+	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Get relative path
+		relPath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(targetDir, relPath)
+
+		if info.IsDir() {
+			// Create directory
+			return os.MkdirAll(targetPath, info.Mode())
+		} else {
+			// Copy file
+			return copyFile(path, targetPath)
+		}
+	})
+}
+
+// getCommittedFiles returns a list of files that were committed in the target directory
+func (gc *GitHubClient) getCommittedFiles(targetDir, appName string) ([]string, error) {
+	var files []string
+
+	err := filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			// Get relative path from the repo root
+			relPath, err := filepath.Rel(gc.LocalPath, path)
+			if err != nil {
+				return err
+			}
+			files = append(files, relPath)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk target directory: %w", err)
+	}
+
+	if len(files) == 0 {
+		// Fallback to just showing the app directory
+		files = []string{fmt.Sprintf("%s/", appName)}
+	}
+
+	return files, nil
 }
