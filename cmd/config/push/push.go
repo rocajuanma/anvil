@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
@@ -44,32 +45,159 @@ var PushCmd = &cobra.Command{
 
 // runPushCommand executes the configuration push process
 func runPushCommand(cmd *cobra.Command, args []string) error {
-	// Option 2: App-specific config push (in development)
+	// Option 2: App-specific config push
 	if len(args) > 0 {
 		appName := args[0]
-		return showAppPushInDevelopment(appName)
+		return pushAppConfig(appName)
 	}
 
 	// Option 1: Anvil config push
 	return pushAnvilConfig()
 }
 
-// showAppPushInDevelopment displays development message for app config push
-func showAppPushInDevelopment(appName string) error {
+// pushAppConfig pushes application-specific configuration to the repository
+func pushAppConfig(appName string) error {
 	terminal.PrintHeader(fmt.Sprintf("Push '%s' Configuration", appName))
-	terminal.PrintWarning("Application-specific configuration push is currently in development")
-	terminal.PrintInfo("This feature will allow you to push %s configuration files to your GitHub repository", appName)
-	terminal.PrintInfo("Expected functionality:")
-	terminal.PrintInfo("  • Create timestamped branch: config-push-<DDMMYYYY>-<HHMM>")
-	terminal.PrintInfo("  • Commit message: anvil[push]: %s", appName)
-	terminal.PrintInfo("  • Push %s configs to /%s directory in repository", appName, appName)
-	terminal.PrintInfo("  • Create pull request for review")
+
+	// Stage 1: Load and validate configuration
+	terminal.PrintStage("Loading anvil configuration...")
+	anvilConfig, err := config.LoadConfig()
+	if err != nil {
+		return errors.NewConfigurationError(constants.OpPush, "load-config", err)
+	}
+
+	// Validate GitHub configuration
+	if anvilConfig.GitHub.ConfigRepo == "" {
+		return errors.NewConfigurationError(constants.OpPush, "missing-repo",
+			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your settings.yaml"))
+	}
+	terminal.PrintSuccess("Configuration loaded successfully")
+
+	// Stage 2: Resolve app location
+	terminal.PrintStage("Resolving app configuration location...")
+	configPath, locationSource, err := config.ResolveAppLocation(appName)
+	if err != nil {
+		return handleAppLocationError(appName, err)
+	}
+
+	// Handle different location sources
+	if locationSource == config.LocationTemp {
+		terminal.PrintWarning("App '%s' found in temp directory but not configured in settings", appName)
+		terminal.PrintInfo("")
+		terminal.PrintInfo("💡 To push app configurations, you need to configure the local path in settings.yaml:")
+		terminal.PrintInfo("")
+		terminal.PrintInfo("configs:")
+		terminal.PrintInfo("  %s: /path/to/your/%s/configs", appName, appName)
+		terminal.PrintInfo("")
+		terminal.PrintInfo("This ensures anvil knows where to find your local configurations.")
+		terminal.PrintInfo("The temp directory (%s) contains pulled configs for review only.", configPath)
+		return fmt.Errorf("app config path not configured in settings")
+	}
+
+	terminal.PrintSuccess("App configuration location resolved")
+	terminal.PrintInfo("Config path: %s", configPath)
+
+	// Stage 3: 🚨 SECURITY WARNING
+	terminal.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
+	terminal.PrintInfo("   • API keys, tokens, and credentials")
+	terminal.PrintInfo("   • Personal file paths and system information")
+	terminal.PrintInfo("   • Private development environment details")
 	terminal.PrintInfo("")
-	terminal.PrintInfo("🚧 Status: In Development")
-	terminal.PrintInfo("📅 Expected: Future release")
+	terminal.PrintInfo("🛡️  Anvil REQUIRES private repositories for security")
+	terminal.PrintInfo("   • Repository '%s' must be PRIVATE", anvilConfig.GitHub.ConfigRepo)
+	terminal.PrintInfo("   • Public repositories will be BLOCKED")
+	terminal.PrintInfo("   • Verify at: https://github.com/%s/settings", anvilConfig.GitHub.ConfigRepo)
 	terminal.PrintInfo("")
-	terminal.PrintInfo("For now, use 'anvil config push' to push anvil settings only.")
+
+	// Stage 4: Authentication setup
+	terminal.PrintStage("Setting up authentication...")
+	var token string
+	if anvilConfig.GitHub.TokenEnvVar != "" {
+		token = os.Getenv(anvilConfig.GitHub.TokenEnvVar)
+		if token == "" {
+			terminal.PrintWarning("GitHub token not found in environment variable: %s", anvilConfig.GitHub.TokenEnvVar)
+			terminal.PrintInfo("Proceeding with SSH authentication if available...")
+		} else {
+			terminal.PrintSuccess("GitHub token found in environment")
+		}
+	}
+
+	// Create GitHub client
+	githubClient := github.NewGitHubClient(
+		anvilConfig.GitHub.ConfigRepo,
+		anvilConfig.GitHub.Branch,
+		anvilConfig.GitHub.LocalPath,
+		token,
+		anvilConfig.Git.SSHKeyPath,
+		anvilConfig.Git.Username,
+		anvilConfig.Git.Email,
+	)
+
+	terminal.PrintStage(fmt.Sprintf("Preparing to push %s configuration...", appName))
+	terminal.PrintInfo("Repository: %s", anvilConfig.GitHub.ConfigRepo)
+	terminal.PrintInfo("Branch: %s", anvilConfig.GitHub.Branch)
+	terminal.PrintInfo("App: %s", appName)
+	terminal.PrintInfo("Local config path: %s", configPath)
+
+	// Stage 5: User confirmation
+	terminal.PrintStage("Requesting user confirmation...")
+	if !terminal.Confirm(fmt.Sprintf("Do you want to push your %s configurations to the repository?", appName)) {
+		terminal.PrintInfo("Push cancelled by user")
+		return nil
+	}
+
+	// Stage 6: Push configuration
+	terminal.PrintStage(fmt.Sprintf("Pushing %s configuration to repository...", appName))
+	ctx := context.Background()
+	result, err := githubClient.PushAppConfig(ctx, appName, configPath)
+	if err != nil {
+		return errors.NewInstallationError(constants.OpPush, "push-app-config", err)
+	}
+
+	// Check if no changes were detected (result will be nil)
+	if result == nil {
+		// Configuration was up-to-date, success message already shown in PushAppConfig
+		return nil
+	}
+
+	// Display success message for actual push
+	terminal.PrintHeader("Push Complete!")
+	terminal.PrintSuccess(fmt.Sprintf("%s configuration push completed successfully!", appName))
+	terminal.PrintInfo("")
+	terminal.PrintInfo("📋 Push Summary:")
+	terminal.PrintInfo("  • Branch created: %s", result.BranchName)
+	terminal.PrintInfo("  • Commit message: %s", result.CommitMessage)
+	terminal.PrintInfo("  • Files committed: %v", result.FilesCommitted)
+	terminal.PrintInfo("")
+	terminal.PrintInfo("🔗 Repository: %s", result.RepositoryURL)
+	terminal.PrintInfo("🌿 Branch: %s", result.BranchName)
+	terminal.PrintInfo("")
+	terminal.PrintSuccess("You can now create a Pull Request on GitHub to merge these changes!")
+	terminal.PrintInfo("Direct link: %s/compare/%s...%s", result.RepositoryURL, anvilConfig.GitHub.Branch, result.BranchName)
+
 	return nil
+}
+
+// handleAppLocationError provides helpful error messages for app location resolution failures
+func handleAppLocationError(appName string, err error) error {
+	if strings.Contains(err.Error(), "not found in configs or temp directory") {
+		terminal.PrintError("App '%s' is not known to anvil", appName)
+		terminal.PrintInfo("")
+		terminal.PrintInfo("💡 To push app configurations:")
+		terminal.PrintInfo("")
+		terminal.PrintInfo("1. Configure the app's local config path in settings.yaml:")
+		terminal.PrintInfo("")
+		terminal.PrintInfo("configs:")
+		terminal.PrintInfo("  %s: /path/to/your/%s/configs", appName, appName)
+		terminal.PrintInfo("")
+		terminal.PrintInfo("2. Or pull the app's configs first to discover it:")
+		terminal.PrintInfo("   anvil config pull %s", appName)
+		terminal.PrintInfo("")
+		terminal.PrintInfo("3. Then configure the local path in settings.yaml")
+		return fmt.Errorf("app not configured")
+	}
+
+	return fmt.Errorf("failed to resolve app location: %w", err)
 }
 
 // pushAnvilConfig pushes the anvil settings.yaml to the repository
