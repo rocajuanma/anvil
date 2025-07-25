@@ -116,6 +116,17 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 			fmt.Errorf("group '%s' has no tools defined", groupName))
 	}
 
+	// Deduplicate tools within the group and update settings if needed
+	deduplicatedTools, err := deduplicateGroupTools(groupName, tools)
+	if err != nil {
+		terminal.PrintWarning("Failed to deduplicate group tools: %v", err)
+		// Continue with original tools list
+		deduplicatedTools = tools
+	} else {
+		// Use the deduplicated tools list for installation
+		tools = deduplicatedTools
+	}
+
 	terminal.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
 	// Use concurrent installation if requested
@@ -125,6 +136,41 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 
 	// Use existing serial installation
 	return installGroupSerial(groupName, tools, dryRun)
+}
+
+// deduplicateGroupTools removes duplicate tools within a group and updates the settings file
+func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
+	// Track which tools we've seen
+	seen := make(map[string]bool)
+	var deduplicatedTools []string
+	var duplicatesFound []string
+
+	// Build deduplicated list
+	for _, tool := range tools {
+		if !seen[tool] {
+			seen[tool] = true
+			deduplicatedTools = append(deduplicatedTools, tool)
+		} else {
+			duplicatesFound = append(duplicatesFound, tool)
+		}
+	}
+
+	// If no duplicates found, return original list
+	if len(duplicatesFound) == 0 {
+		return tools, nil
+	}
+
+	// Report found duplicates
+	terminal.PrintWarning("Found duplicates in group '%s': %s", groupName, strings.Join(duplicatesFound, ", "))
+	terminal.PrintInfo("Removing duplicates from settings file...")
+
+	// Update the configuration with deduplicated tools
+	if err := config.UpdateGroupTools(groupName, deduplicatedTools); err != nil {
+		return tools, fmt.Errorf("failed to update group with deduplicated tools: %w", err)
+	}
+
+	terminal.PrintSuccess(fmt.Sprintf("Successfully removed %d duplicate(s) from group '%s'", len(duplicatesFound), groupName))
+	return deduplicatedTools, nil
 }
 
 // installGroupConcurrent installs tools concurrently
