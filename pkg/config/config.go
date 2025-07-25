@@ -367,6 +367,24 @@ func AddCustomGroup(name string, tools []string) error {
 	return SaveConfig(config)
 }
 
+// UpdateGroupTools updates the tools list for an existing group
+func UpdateGroupTools(groupName string, tools []string) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Check if the group exists
+	if _, exists := config.Groups[groupName]; !exists {
+		return fmt.Errorf("group '%s' does not exist", groupName)
+	}
+
+	// Update the group with new tools list
+	config.Groups[groupName] = tools
+
+	return SaveConfig(config)
+}
+
 // CheckEnvironmentConfigurations checks local environment configurations
 func CheckEnvironmentConfigurations() []string {
 	var warnings []string
