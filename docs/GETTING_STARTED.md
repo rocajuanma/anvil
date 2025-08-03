@@ -469,9 +469,10 @@ anvil config pull zsh
 anvil config show cursor
 anvil config show vs-code
 
-# Sync missing apps from settings.yaml
-anvil config sync
-anvil config sync --dry-run
+# Sync pulled configs to their destinations
+anvil config sync              # Apply pulled anvil settings
+anvil config sync cursor      # Apply pulled app configs
+anvil config sync --dry-run   # Preview sync changes
 ```
 
 **Current Behavior**: Always fetches the latest changes from your repository and pulls files to `~/.anvil/temp/[directory]` for review before manual application.
@@ -750,7 +751,8 @@ anvil config pull cursor      # Pull Cursor configurations from remote
 anvil config pull vs-code     # Pull VS Code configurations from remote
 anvil config show cursor      # View pulled Cursor configurations
 anvil config show            # View anvil settings.yaml
-anvil config sync            # Install missing apps from settings.yaml
+anvil config sync            # Apply pulled anvil settings
+anvil config sync cursor     # Apply pulled app configs
 anvil config sync --dry-run  # Preview sync changes
 anvil config push            # Push anvil settings to remote
 anvil config push cursor      # Push app configurations (in development)

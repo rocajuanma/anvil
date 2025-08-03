@@ -374,7 +374,7 @@ anvil install --git --vscode
 
 **Scenario**: You want to sync your dotfiles and application configurations across multiple machines.
 
-#### Setting Up Configuration Sync
+#### Setting Up Configuration Management
 
 **Step 1**: Create a GitHub repository with organized directories
 
@@ -452,7 +452,7 @@ anvil config pull zsh
 anvil config pull git
 ```
 
-#### Using Configuration Sync on New Machines
+#### Applying Configurations on New Machines
 
 **Complete setup example on a new machine:**
 
@@ -507,9 +507,11 @@ anvil config pull zsh
 anvil config show vs-code
 anvil config show zsh
 
-# 7. Sync missing apps from settings.yaml
-anvil config sync --dry-run
-anvil config sync
+# 7. Apply pulled configurations
+anvil config sync --dry-run     # Preview changes
+anvil config sync               # Apply anvil settings
+anvil config sync vs-code       # Apply VS Code configs
+anvil config sync zsh           # Apply zsh configs
 ```
 
 #### Current vs. Future Implementation
@@ -1170,35 +1172,42 @@ echo "  - Configure Git: git config --global user.email 'you@example.com'"
 echo "  - Check installed tools: anvil install --list"
 ```
 
-### Example 23: Bulk App Installation with Config Sync
+### Example 23: Bulk Configuration Sync
 
-**Scenario**: Install multiple applications by editing settings.yaml and syncing.
+**Scenario**: Apply multiple pulled configurations to their local destinations.
 
-**File**: `bulk-install.sh`
+**File**: `bulk-config-sync.sh`
 
 ```bash
 #!/bin/bash
 
-echo "📝 Editing settings.yaml to add multiple apps..."
+echo "📝 Setting up configuration paths in settings.yaml..."
 
-# Add apps to installed_apps in settings.yaml
+# Configure local paths for applications
 cat >> ~/.anvil/settings.yaml << 'EOF'
-  installed_apps:
-  - figma
-  - notion
-  - slack
-  - discord
-  - zoom
-  - spotify
+configs:
+  cursor: "~/Library/Application Support/Cursor"
+  obsidian: "~/.config/obsidian"
+  zsh: "~/.config/zsh"
+  neovim: "~/.config/nvim"
 EOF
 
-echo "🔍 Preview what will be installed..."
+echo "⬇️ Pulling configurations from repository..."
+anvil config pull cursor
+anvil config pull obsidian
+anvil config pull zsh
+anvil config pull neovim
+
+echo "🔍 Preview what will be applied..."
 anvil config sync --dry-run
 
-echo "🚀 Install missing applications..."
-anvil config sync
+echo "🚀 Apply configurations..."
+anvil config sync cursor
+anvil config sync obsidian
+anvil config sync zsh
+anvil config sync neovim
 
-echo "✅ Bulk installation complete!"
+echo "✅ Bulk configuration sync complete!"
 anvil install --list | grep "Individually Tracked Apps"
 ```
 

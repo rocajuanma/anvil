@@ -148,23 +148,23 @@ Features:
 Perfect for reviewing pulled configurations before applying them, checking current anvil settings,
 and understanding repository structure and organization.`
 
-const SYNC_COMMAND_LONG_DESCRIPTION = `The sync command reconciles configuration state between settings.yaml and system reality
-with intelligent difference analysis and bulk installation capabilities.
+const SYNC_COMMAND_LONG_DESCRIPTION = `The sync command moves pulled configuration files from the temp directory to their local destinations
+with automatic archiving and safety confirmations.
 
 Usage Modes:
-• anvil config sync              - Sync anvil settings (install missing apps from installed_apps)
-• anvil config sync [directory]  - Show sync status for pulled app configurations (development)
+• anvil config sync              - Sync anvil settings.yaml file from pulled configs
+• anvil config sync [app-name]   - Sync specific app configurations to their local paths
 
 Features:
-• 📋 Smart Difference Analysis: Compares what's installed versus what's defined in configuration
-• ✅ Interactive Confirmation: Asks for permission before making any system changes  
+• 📋 Safe Configuration Override: Archives existing configs before applying new ones
+• ✅ Interactive Confirmation: Always asks permission before overriding local files  
 • 🔍 Comprehensive Dry-Run: Preview all changes without applying them using --dry-run flag
-• 📊 Detailed Progress Tracking: Visual feedback during installations with real-time status updates
-• 🎯 Intelligent App Detection: Uses same hybrid detection as install command for accurate analysis
-• ⚡ Concurrent Installation: Supports parallel installation for faster bulk operations
+• 📦 Automatic Archiving: Backs up existing configs to timestamped archive directories
+• 🎯 Smart Path Resolution: Uses configs section in settings.yaml for app-specific destinations
+• 💡 Clear Error Messages: Helpful guidance when pulled configs or paths are missing
 
-Perfect for maintaining consistent development environments, bulk installing missing applications,
-and ensuring your system matches your configuration definitions across different machines.`
+Perfect for applying pulled configurations safely, maintaining config consistency across machines,
+and ensuring you always have recovery options through the automatic archiving system.`
 
 const DRAW_COMMAND_LONG_DESCRIPTION = `The draw command generates beautiful ASCII art representations of text using the
 go-figure library for enhanced terminal output and visual appeal.

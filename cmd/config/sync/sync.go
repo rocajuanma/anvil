@@ -21,8 +21,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
@@ -31,8 +31,8 @@ import (
 )
 
 var SyncCmd = &cobra.Command{
-	Use:   "sync [directory]",
-	Short: "Sync configuration state with system reality",
+	Use:   "sync [app-name]",
+	Short: "Sync pulled configuration files to their local destinations",
 	Long:  constants.SYNC_COMMAND_LONG_DESCRIPTION,
 	Args:  cobra.MaximumNArgs(1), // Accept 0 or 1 argument
 	Run: func(cmd *cobra.Command, args []string) {
@@ -53,347 +53,270 @@ func runSyncCommand(cmd *cobra.Command, args []string) error {
 		return syncAnvilSettings(dryRun)
 	}
 
-	// Show specific app config sync (placeholder)
-	targetDir := args[0]
-	return syncAppConfig(targetDir, dryRun)
+	// Sync specific app config
+	appName := args[0]
+	return syncAppConfig(appName, dryRun)
 }
 
-// syncAnvilSettings syncs the main anvil settings (installed_apps)
+// syncAnvilSettings syncs the main anvil settings.yaml file
 func syncAnvilSettings(dryRun bool) error {
-	terminal.PrintHeader("Configuration Sync")
+	terminal.PrintHeader("Configuration Sync: anvil settings")
 
-	// Ensure Homebrew is installed
-	if !brew.IsBrewInstalled() {
-		terminal.PrintError("Homebrew is not installed")
-		terminal.PrintInfo("💡 Run 'anvil init' to install Homebrew")
-		return fmt.Errorf("homebrew required for sync")
-	}
-
-	terminal.PrintInfo("📋 Analyzing configuration differences...")
-	terminal.PrintInfo("")
-
-	// Get apps from settings.yaml
-	installedApps, err := config.GetInstalledApps()
+	// Load current config to get temp directory
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return errors.NewConfigurationError(constants.OpSync, "load-config", err)
 	}
 
-	if len(installedApps) == 0 {
-		terminal.PrintInfo("No apps found in installed_apps to sync")
-		terminal.PrintInfo("💡 Use 'anvil install [app-name]' to add apps to tracking")
-		return nil
+	// Check if pulled anvil settings exist
+	tempSettingsPath := filepath.Join(cfg.Directories.Config, "temp", "anvil", "settings.yaml")
+	if _, err := os.Stat(tempSettingsPath); os.IsNotExist(err) {
+		terminal.PrintError("Pulled anvil settings not found")
+		terminal.PrintInfo("")
+		terminal.PrintInfo("💡 No pulled settings found at: %s", tempSettingsPath)
+		terminal.PrintInfo("🔧 To fix this:")
+		terminal.PrintInfo("   • Run 'anvil config pull anvil' to download settings")
+		terminal.PrintInfo("   • Ensure your repository has an 'anvil' directory with settings.yaml")
+		return fmt.Errorf("config not pulled yet")
 	}
 
-	terminal.PrintInfo("Apps in settings.yaml: %s", strings.Join(installedApps, ", "))
-	terminal.PrintInfo("")
+	// Get current settings path
+	currentSettingsPath := config.GetConfigPath()
 
-	// Check which ones are missing
-	var missingApps []string
-	var alreadyInstalled []string
-
-	for _, app := range installedApps {
-		if brew.IsPackageInstalled(app) {
-			alreadyInstalled = append(alreadyInstalled, app)
-		} else {
-			missingApps = append(missingApps, app)
-		}
-	}
-
-	// Report status
-	terminal.PrintInfo("installed_apps:")
-	for _, app := range alreadyInstalled {
-		terminal.PrintInfo("  ✅ %s (already installed)", app)
-	}
-	for _, app := range missingApps {
-		terminal.PrintInfo("  ⬇️  %s (missing - will install)", app)
-	}
-
-	terminal.PrintInfo("")
-
-	if len(missingApps) == 0 {
-		terminal.PrintSuccess("✅ Configuration is already synced!")
-		terminal.PrintInfo("All apps from settings.yaml are installed")
-		return nil
-	}
-
-	terminal.PrintInfo("🔍 Found %d apps to install, %d already synced", len(missingApps), len(alreadyInstalled))
+	// Display sync information
+	terminal.PrintInfo("Source: %s", tempSettingsPath)
+	terminal.PrintInfo("Destination: %s", currentSettingsPath)
 	terminal.PrintInfo("")
 
 	if dryRun {
-		terminal.PrintInfo("Dry run - would install: %s", strings.Join(missingApps, ", "))
+		terminal.PrintInfo("Dry run - would sync anvil settings")
 		return nil
 	}
 
+	// Create archive before syncing
+	archivePath, err := createArchiveDirectory("anvil-settings")
+	if err != nil {
+		return fmt.Errorf("failed to create archive directory: %w", err)
+	}
+
+	terminal.PrintInfo("Archive: %s", archivePath)
+	terminal.PrintInfo("")
+
 	// Ask for confirmation
-	if !terminal.Confirm("Proceed with sync?") {
+	if !terminal.Confirm("Override local settings.yaml? Old copy will be archived.") {
 		terminal.PrintInfo("Sync cancelled")
 		return nil
 	}
 
 	terminal.PrintInfo("")
 
-	// Install missing apps
-	return installMissingApps(missingApps)
-}
-
-// installMissingApps installs the list of missing applications
-func installMissingApps(missingApps []string) error {
-	terminal.PrintInfo("🔧 Installing missing applications...")
-	terminal.PrintInfo("")
-
-	successCount := 0
-	var failedApps []string
-
-	for i, app := range missingApps {
-		terminal.PrintProgress(i+1, len(missingApps), fmt.Sprintf("Installing %s", app))
-
-		if err := brew.InstallPackage(app); err != nil {
-			terminal.PrintError("Failed to install %s: %v", app, err)
-			failedApps = append(failedApps, app)
-		} else {
-			terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", app))
-			successCount++
-		}
+	// Archive existing settings
+	if err := archiveExistingConfig("anvil-settings", currentSettingsPath, archivePath); err != nil {
+		return fmt.Errorf("failed to archive existing settings: %w", err)
 	}
 
-	terminal.PrintInfo("")
-	terminal.PrintHeader("Configuration Sync Complete!")
-
-	if successCount > 0 {
-		terminal.PrintSuccess(fmt.Sprintf("✅ Successfully installed %d of %d apps", successCount, len(missingApps)))
+	// Copy new settings
+	if err := copyFile(tempSettingsPath, currentSettingsPath); err != nil {
+		return fmt.Errorf("failed to copy new settings: %w", err)
 	}
 
-	if len(failedApps) > 0 {
-		terminal.PrintWarning("⚠️  Failed to install: %s", strings.Join(failedApps, ", "))
-		terminal.PrintInfo("💡 Check app names or try installing manually with 'brew install [app-name]'")
-		return fmt.Errorf("failed to install %d apps", len(failedApps))
-	}
+	// Report success
+	terminal.PrintSuccess("✅ Settings synced successfully")
+	terminal.PrintInfo("📦 Old settings archived to: %s", archivePath)
+	terminal.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
 
 	return nil
 }
 
-// syncAppConfig handles app-specific config sync (placeholder functionality)
-func syncAppConfig(targetDir string, dryRun bool) error {
-	// Get config directory
+// syncAppConfig syncs configuration files for a specific app
+func syncAppConfig(appName string, dryRun bool) error {
+	terminal.PrintHeader(fmt.Sprintf("Configuration Sync: %s", appName))
+
+	// Load current config
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return errors.NewConfigurationError(constants.OpSync, "load-config", err)
 	}
 
-	// Build path to the pulled config directory
-	tempDir := filepath.Join(cfg.Directories.Config, "temp", targetDir)
-
-	// Check if the directory exists
-	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		terminal.PrintError("Configuration directory '%s' not found", targetDir)
+	// Check if pulled app config exists
+	tempAppPath := filepath.Join(cfg.Directories.Config, "temp", appName)
+	if _, err := os.Stat(tempAppPath); os.IsNotExist(err) {
+		terminal.PrintError("Pulled %s configuration not found", appName)
 		terminal.PrintInfo("")
-		terminal.PrintInfo("💡 This could be because:")
-		terminal.PrintInfo("   • The app name is incorrect")
-		terminal.PrintInfo("   • The configuration was never pulled")
-		terminal.PrintInfo("   • The directory name doesn't match what was pulled")
-		terminal.PrintInfo("")
+		terminal.PrintInfo("💡 No pulled config found at: %s", tempAppPath)
 		terminal.PrintInfo("🔧 To fix this:")
-		terminal.PrintInfo("   • Run 'anvil config pull %s' to download the configuration", targetDir)
-		terminal.PrintInfo("   • Check available pulled configs in: %s", filepath.Join(cfg.Directories.Config, "temp"))
-		return fmt.Errorf("configuration directory not found")
+		terminal.PrintInfo("   • Run 'anvil config pull %s' to download configuration", appName)
+		terminal.PrintInfo("   • Ensure your repository has a '%s' directory", appName)
+		return fmt.Errorf("config not pulled yet")
 	}
 
-	// Build and display the tree structure (reuse from show command)
-	return showAppSyncStatus(tempDir, targetDir, dryRun)
-}
-
-// showAppSyncStatus displays app config sync status (reuses tree logic from show)
-func showAppSyncStatus(basePath, targetDir string, dryRun bool) error {
-	// Import the tree building logic from show command
-	root, err := buildTree(basePath)
-	if err != nil {
-		return errors.NewFileSystemError(constants.OpSync, "build-tree", err)
+	// Check if app config path is defined in settings
+	if cfg.Configs == nil {
+		return fmt.Errorf("no configs section found in settings.yaml")
 	}
 
-	terminal.PrintHeader(fmt.Sprintf("Configuration Sync: %s", targetDir))
-	terminal.PrintInfo("Path: %s", basePath)
-	terminal.PrintInfo("")
-
-	// If there's only one file at root level, show single file status
-	if len(root.Children) == 1 && !root.Children[0].IsDir {
-		terminal.PrintInfo("📄 Configuration file: %s", root.Children[0].Name)
-	} else {
-		// Display the tree structure
-		terminal.PrintInfo("📁 Configuration structure:")
+	localConfigPath, exists := cfg.Configs[appName]
+	if !exists {
+		terminal.PrintError("App config path not configured")
 		terminal.PrintInfo("")
-
-		// Sort children for consistent display
-		sortChildren(root)
-
-		// Print the tree starting from root
-		printTreeNode(root, "", true, true)
+		terminal.PrintInfo("💡 The app '%s' doesn't have a local config path defined", appName)
+		terminal.PrintInfo("🔧 To fix this:")
+		terminal.PrintInfo("   • Edit your settings.yaml file")
+		terminal.PrintInfo("   • Add the following to the 'configs' section:")
+		terminal.PrintInfo("")
+		terminal.PrintInfo("configs:")
+		terminal.PrintInfo("  %s: \"/path/to/%s/config\"", appName, appName)
+		terminal.PrintInfo("")
+		terminal.PrintInfo("Example paths:")
+		terminal.PrintInfo("  • ~/.config/%s", appName)
+		terminal.PrintInfo("  • ~/Library/Application Support/%s", strings.Title(appName))
+		return fmt.Errorf("app config path not defined")
 	}
 
+	// Display sync information
+	terminal.PrintInfo("Source: %s", tempAppPath)
+	terminal.PrintInfo("Destination: %s", localConfigPath)
 	terminal.PrintInfo("")
-	terminal.PrintWarning("🚧 Syncing %s configurations is in active development", targetDir)
-	terminal.PrintInfo("💡 This feature will automatically apply configuration files to their destinations")
 
 	if dryRun {
-		terminal.PrintInfo("Dry run - would sync configuration files when feature is ready")
+		terminal.PrintInfo("Dry run - would sync %s configuration", appName)
+		return nil
 	}
+
+	// Create archive before syncing
+	archivePath, err := createArchiveDirectory(fmt.Sprintf("%s-configs", appName))
+	if err != nil {
+		return fmt.Errorf("failed to create archive directory: %w", err)
+	}
+
+	terminal.PrintInfo("Archive: %s", archivePath)
+	terminal.PrintInfo("")
+
+	// Ask for confirmation
+	if !terminal.Confirm(fmt.Sprintf("Override %s configs? Old copy will be archived.", appName)) {
+		terminal.PrintInfo("Sync cancelled")
+		return nil
+	}
+
+	terminal.PrintInfo("")
+
+	// Archive existing config
+	if err := archiveExistingConfig(fmt.Sprintf("%s-configs", appName), localConfigPath, archivePath); err != nil {
+		return fmt.Errorf("failed to archive existing config: %w", err)
+	}
+
+	// Copy new config
+	if err := copyDirRecursive(tempAppPath, localConfigPath); err != nil {
+		return fmt.Errorf("failed to copy new config: %w", err)
+	}
+
+	// Report success
+	terminal.PrintSuccess(fmt.Sprintf("✅ %s configs synced successfully", strings.Title(appName)))
+	terminal.PrintInfo("📦 Old configs archived to: %s", archivePath)
+	terminal.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
 
 	return nil
 }
 
-// TreeNode represents a node in the file tree (reused from show)
-type TreeNode struct {
-	Name     string
-	Path     string
-	IsDir    bool
-	Children []*TreeNode
-}
-
-// buildTree recursively builds a tree structure from the filesystem (reused from show)
-func buildTree(dirPath string) (*TreeNode, error) {
-	root := &TreeNode{
-		Name:     filepath.Base(dirPath),
-		Path:     dirPath,
-		IsDir:    true,
-		Children: []*TreeNode{},
+// createArchiveDirectory creates a timestamped archive directory
+func createArchiveDirectory(prefix string) (string, error) {
+	// Load config to get base directory
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return "", err
 	}
 
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	// Create timestamp
+	timestamp := time.Now().Format("2006-01-02-15-04-05")
+	archiveName := fmt.Sprintf("%s-%s", prefix, timestamp)
+	archivePath := filepath.Join(cfg.Directories.Config, "archive", archiveName)
 
-		// Skip the root directory itself
-		if path == dirPath {
-			return nil
-		}
+	// Create archive directory
+	if err := os.MkdirAll(archivePath, constants.DirPerm); err != nil {
+		return "", err
+	}
 
-		// Get relative path from root
-		relPath, err := filepath.Rel(dirPath, path)
-		if err != nil {
-			return err
-		}
+	return archivePath, nil
+}
 
-		// Split the path into components
-		parts := strings.Split(relPath, string(filepath.Separator))
-
-		// Find or create the parent node
-		current := root
-		for i, part := range parts[:len(parts)-1] {
-			found := false
-			for _, child := range current.Children {
-				if child.Name == part && child.IsDir {
-					current = child
-					found = true
-					break
-				}
-			}
-			if !found {
-				// Create intermediate directory
-				newDir := &TreeNode{
-					Name:     part,
-					Path:     filepath.Join(dirPath, strings.Join(parts[:i+1], string(filepath.Separator))),
-					IsDir:    true,
-					Children: []*TreeNode{},
-				}
-				current.Children = append(current.Children, newDir)
-				current = newDir
-			}
-		}
-
-		// Add the final node
-		finalNode := &TreeNode{
-			Name:  parts[len(parts)-1],
-			Path:  path,
-			IsDir: info.IsDir(),
-		}
-		if info.IsDir() {
-			finalNode.Children = []*TreeNode{}
-		}
-		current.Children = append(current.Children, finalNode)
-
+// archiveExistingConfig archives the existing configuration
+func archiveExistingConfig(configType, sourcePath, archivePath string) error {
+	// Check if source exists
+	if _, err := os.Stat(sourcePath); os.IsNotExist(err) {
+		// Nothing to archive
 		return nil
+	}
+
+	// Determine destination in archive
+	var destPath string
+	if configType == "anvil-settings" {
+		destPath = filepath.Join(archivePath, "settings.yaml")
+	} else {
+		// For app configs, preserve the directory structure
+		destPath = archivePath
+	}
+
+	// Copy to archive
+	sourceInfo, err := os.Stat(sourcePath)
+	if err != nil {
+		return err
+	}
+
+	if sourceInfo.IsDir() {
+		return copyDirRecursive(sourcePath, destPath)
+	} else {
+		// Ensure parent directory exists
+		if err := os.MkdirAll(filepath.Dir(destPath), constants.DirPerm); err != nil {
+			return err
+		}
+		return copyFile(sourcePath, destPath)
+	}
+}
+
+// copyFile copies a single file
+func copyFile(src, dst string) error {
+	// Read source file
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	// Create destination directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(dst), constants.DirPerm); err != nil {
+		return err
+	}
+
+	// Write destination file
+	return os.WriteFile(dst, data, constants.FilePerm)
+}
+
+// copyDirRecursive recursively copies a directory
+func copyDirRecursive(src, dst string) error {
+	// Remove destination if it exists
+	if err := os.RemoveAll(dst); err != nil {
+		return err
+	}
+
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Calculate destination path
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			// Create directory
+			return os.MkdirAll(destPath, info.Mode())
+		} else {
+			// Copy file
+			return copyFile(path, destPath)
+		}
 	})
-
-	return root, err
-}
-
-// sortChildren recursively sorts all children in the tree (reused from show)
-func sortChildren(node *TreeNode) {
-	if node.Children == nil {
-		return
-	}
-
-	// Sort children: directories first, then files, both alphabetically
-	for i := 0; i < len(node.Children)-1; i++ {
-		for j := i + 1; j < len(node.Children); j++ {
-			// Compare: directories first, then alphabetically
-			if (!node.Children[i].IsDir && node.Children[j].IsDir) ||
-				(node.Children[i].IsDir == node.Children[j].IsDir && node.Children[i].Name > node.Children[j].Name) {
-				node.Children[i], node.Children[j] = node.Children[j], node.Children[i]
-			}
-		}
-	}
-
-	// Recursively sort children
-	for _, child := range node.Children {
-		sortChildren(child)
-	}
-}
-
-// printTreeNode prints a tree node with ASCII art and colors (reused from show)
-func printTreeNode(node *TreeNode, prefix string, isLast bool, isRoot bool) {
-	if !isRoot {
-		// Choose the appropriate tree character
-		var treeChar string
-		if isLast {
-			treeChar = "└── "
-		} else {
-			treeChar = "├── "
-		}
-
-		// Color the output based on file type
-		var coloredName string
-		if node.IsDir {
-			coloredName = fmt.Sprintf("%s%s%s%s", terminal.ColorBold, terminal.ColorBlue, node.Name, terminal.ColorReset)
-		} else {
-			// Color files based on extension
-			ext := strings.ToLower(filepath.Ext(node.Name))
-			switch ext {
-			case ".json", ".yaml", ".yml", ".toml":
-				coloredName = fmt.Sprintf("%s%s%s", terminal.ColorGreen, node.Name, terminal.ColorReset)
-			case ".md", ".txt", ".log":
-				coloredName = fmt.Sprintf("%s%s%s", terminal.ColorCyan, node.Name, terminal.ColorReset)
-			case ".sh", ".zsh", ".bash":
-				coloredName = fmt.Sprintf("%s%s%s", terminal.ColorYellow, node.Name, terminal.ColorReset)
-			default:
-				coloredName = node.Name
-			}
-		}
-
-		// Print the current node
-		fmt.Printf("%s%s%s\n", prefix, treeChar, coloredName)
-	}
-
-	// Print children
-	if node.Children != nil {
-		for i, child := range node.Children {
-			isChildLast := i == len(node.Children)-1
-
-			// Calculate prefix for child
-			var childPrefix string
-			if isRoot {
-				childPrefix = ""
-			} else {
-				if isLast {
-					childPrefix = prefix + "    "
-				} else {
-					childPrefix = prefix + "│   "
-				}
-			}
-
-			printTreeNode(child, childPrefix, isChildLast, false)
-		}
-	}
 }
 
 func init() {

@@ -78,23 +78,73 @@ anvil config show cursor
 - 📁 Multiple files: Shows tree structure with file listings
 - ✅ Smart file detection: Automatically determines best display method
 
-### anvil config sync [directory]
+### anvil config sync [app-name]
 
-Reconcile configuration state between settings.yaml and system reality.
+Move pulled configuration files from the temp directory to their local destinations with automatic archiving.
 
 ```bash
-# Sync anvil settings (install missing apps)
+# Sync anvil settings.yaml from pulled configs
 anvil config sync
+
+# Sync specific app configurations
+anvil config sync obsidian
+anvil config sync cursor
 
 # Preview changes without applying them
 anvil config sync --dry-run
+anvil config sync obsidian --dry-run
 ```
+
+**How it works:**
+
+#### Option 1: Anvil Settings Sync (`anvil config sync`)
+
+- 📋 **Source Check**: Verifies that `~/.anvil/temp/anvil/settings.yaml` exists from a previous pull
+- 📦 **Automatic Archiving**: Creates timestamped backup in `~/.anvil/archive/anvil-settings-YYYY-MM-DD-HH-MM-SS/`
+- ✅ **Safe Override**: Replaces your local `~/.anvil/settings.yaml` with the pulled version
+- 💡 **Clear Feedback**: Shows source, destination, and archive paths before proceeding
+
+#### Option 2: App Config Sync (`anvil config sync [app-name]`)
+
+- 📋 **Source Check**: Verifies that `~/.anvil/temp/[app-name]/` exists from a previous pull
+- 🎯 **Path Resolution**: Uses the `configs` section in your settings.yaml to determine local destination
+- 📦 **Automatic Archiving**: Creates timestamped backup in `~/.anvil/archive/[app-name]-configs-YYYY-MM-DD-HH-MM-SS/`
+- ✅ **Safe Override**: Replaces your local app configs with the pulled version
+- 💡 **Configuration Guidance**: Provides clear instructions if the app config path isn't defined
 
 **Features:**
 
-- 📋 Smart difference analysis: Shows what's installed vs what's missing
-- ✅ Confirmation prompts: Ask before making changes to system
+- 📋 Safe configuration override: Always archives existing configs before applying new ones
+- ✅ Interactive confirmation: Asks permission before overriding local files
 - 🔍 Dry-run support: Preview changes without applying them
+- 📦 Automatic archiving: Timestamped backups ensure you can always recover
+- 🎯 Smart path resolution: Uses your settings.yaml configs section for destinations
+- 💡 Clear error messages: Helpful guidance when configs or paths are missing
+
+**Example sync workflow:**
+
+```bash
+# 1. Pull configurations from repository
+anvil config pull obsidian
+
+# 2. Review what was pulled
+anvil config show obsidian
+
+# 3. Preview sync changes
+anvil config sync obsidian --dry-run
+
+# 4. Apply the configurations
+anvil config sync obsidian
+```
+
+**Archive and Recovery:**
+
+All sync operations create automatic backups in `~/.anvil/archive/`:
+
+- Anvil settings: `archive/anvil-settings-2024-01-15-14-30-25/settings.yaml`
+- App configs: `archive/[app-name]-configs-2024-01-15-14-30-25/` (preserves directory structure)
+
+Manual recovery is possible by copying files from the archive directory back to their original locations. An automatic recovery command is planned for future releases.
 
 ### anvil config push [app-name]
 
@@ -292,13 +342,16 @@ anvil doctor connectivity
 anvil config pull cursor
 anvil config show cursor
 
-# 4. Make local changes to anvil settings
-# 5. Push anvil settings to repository
+# 4. Sync configuration files to their destinations
+anvil config sync cursor
+
+# 5. Make local changes to anvil settings
+# 6. Push anvil settings to repository
 anvil config push
 
-# 6. On another machine, pull and sync
-anvil config pull team-dev
-anvil config show team-dev
+# 7. On another machine, pull and sync
+anvil config pull anvil
+anvil config sync
 ```
 
 ### Team Development Workflow
@@ -313,7 +366,7 @@ anvil init
 
 # Pull shared configurations
 anvil config pull shared-dev
-anvil config sync team-dev
+anvil config sync shared-dev
 
 # Push personal anvil settings (if desired)
 anvil config push
@@ -335,7 +388,7 @@ anvil config push
 # 4. On another machine, pull latest settings
 anvil config pull anvil
 
-# 5. Install any missing applications
+# 5. Apply the pulled settings
 anvil config sync
 
 # 6. Verify setup is complete
@@ -404,6 +457,22 @@ ssh -T git@github.com
 - Verify directory exists in repository
 - Check case sensitivity
 - Use `anvil config show` to see available directories
+
+**Config Path Not Defined**
+
+- Edit your `~/.anvil/settings.yaml` to add app config paths
+- Add entries to the `configs` section like:
+  ```yaml
+  configs:
+    obsidian: "~/.config/obsidian"
+    cursor: "~/Library/Application Support/Cursor"
+  ```
+
+**Archive Directory Issues**
+
+- Check permissions on `~/.anvil/archive/`
+- Ensure sufficient disk space for backups
+- Manual recovery available from timestamped archive directories
 
 ### Getting Help
 
