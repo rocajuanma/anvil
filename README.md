@@ -17,45 +17,13 @@
 
 **Anvil** is the complete macOS development environment automation tool. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
 
-## ✨ What Anvil Solves
+## ✨ Why Choose Anvil
 
-### 🚀 **Installation & Tool Management**
+**🚀 Tool Installation** - Install your full tool-chain in one command using user defined groups and `anvil install <group-name>` or individual apps with smart deduplication. Perfect for engineers switching jobs, team onboarding or setting up new laptops.
 
-- **Environment Inconsistency** → Smart tool installation with automatic tracking
-- **Manual Setup Pain** → Group-based installation for common scenarios
-- **Tool Discovery** → Install any macOS app with `anvil install [app-name]`
-- **Setup Documentation** → Self-documenting configuration in `settings.yaml`
+**🔄 Configuration Sync** - No more tracking multiple configs across machines. Safely sync all dotfiles using private GitHub repositories with automatic archiving and recovery.
 
-### ⚙️ **Configuration Management & Sync**
-
-- **Config Drift** → Version-controlled dotfiles and settings via GitHub
-- **Team Onboarding** → Shared configuration repositories for instant setup
-- **Machine Migrations** → Cross-machine sync with `anvil config pull/push`
-- **Configuration Loss** → Automated backup and recovery of development environments
-
-## 🎯 Key Features
-
-### 📦 **Smart Installation**
-
-- **🎯 Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
-- **📝 Intelligent Tracking** - Apps automatically tracked in `tools.installed_apps`
-- **📦 Group Management** - Predefined and custom tool groups for common scenarios
-- **🍺 Homebrew Integration** - Automatic installation with intelligent app verification (detects Homebrew, manual, and system installations)
-
-### 🔄 **Configuration Sync**
-
-- **🌐 Cross-Machine Sync** - Keep configs consistent across all your development environments
-- **👥 Team Collaboration** - Share configurations via GitHub repositories
-- **🔍 Smart Change Detection** - Pre-push diff analysis prevents unnecessary commits
-- **📁 Directory Organization** - App-specific config management (cursor, vscode, zsh)
-
-### 🛠 **Developer Experience**
-
-- **🚀 Zero Configuration** - Works out of the box with sensible defaults
-- **🔍 Dry-run Support** - Preview installations and changes before execution
-- **🎨 Beautiful Output** - Colored, structured progress indicators
-- **⚡ Fast Operations** - Concurrent installation and smart caching
-- **🩺 Health Checks** - Comprehensive environment validation with real-time progress feedback via `anvil doctor`
+**🎯 Developer Experience** - Zero configuration required. Dry-run previews, beautiful output, and `anvil doctor` to automatically fix issues for you—just like popular CLI tools you already know.
 
 ## 🚀 Quick Start
 
@@ -110,8 +78,9 @@ anvil config pull vscode
 # View pulled configurations
 anvil config show cursor
 
-# Sync configuration state with system
-anvil config sync        # Install missing apps from settings
+# Sync configuration files to their destinations
+anvil config sync        # Apply pulled anvil settings
+anvil config sync cursor # Apply pulled app configs
 
 # Push local changes back to repository
 anvil config push       # Push anvil settings to GitHub
@@ -170,50 +139,57 @@ groups:
 
 ## 🔧 Configuration Management
 
-Sync dotfiles and configurations across machines using GitHub repositories with full version control.
+Sync dotfiles and configurations across machines using **private GitHub repositories** with full version control, automatic archiving, and safety confirmations.
+
+### Workflow Overview
+
+![Configuration Management Workflow](assets/config-workflow.png)
 
 ### Cross-Machine Synchronization
 
 ```bash
-# Pull configurations from your repository
-anvil config pull neovim
-anvil config pull tmux
-anvil config pull zsh
+# MACHINE A: Push local configurations to repository
+anvil config push           # Upload anvil settings with timestamped branch
 
-# View configurations before applying
-anvil config show neovim
+# MACHINE B: Pull, review, and apply configurations
+anvil config pull neovim    # Download configs to ~/.anvil/temp/neovim/
+anvil config pull obsidian  # Download configs to ~/.anvil/temp/obsidian/
+anvil config pull anvil     # Download anvil settings
 
-# Sync missing apps from your settings
-anvil config sync --dry-run # Preview changes
-anvil config sync           # Apply changes
+# Review configurations before applying
+anvil config show neovim    # Preview neovim configurations
+anvil config show anvil     # View anvil settings
 
-# Push local changes to repository
-anvil config push           # Creates timestamped branch with PR link
+# Apply configurations with automatic archiving
+anvil config sync --dry-run # Preview all changes
+anvil config sync           # Apply anvil settings (archives old ones)
+anvil config sync neovim    # Apply neovim configs (archives old ones)
 ```
 
 ### Team Configuration Sharing
 
 ```bash
-# Pull team's development setup by specialty
-anvil config pull team-backend
-anvil config pull team-frontend
-anvil config pull team-devops
+# Team member shares configurations
+anvil config pull team-dev-setup
+anvil config show team-dev-setup
 
-# Install team's recommended tools
-anvil config sync team-backend
+# Apply team configurations safely
+anvil config sync team-dev-setup  # Archives existing configs first
 
-# View team configurations
-anvil config show team-backend
+# Share your own configurations
+anvil config push  # Creates PR for team review
 ```
 
-### Key Configuration Features
+### Key Features
 
-- **🔍 Smart Change Detection** - Only pushes when configurations actually differ
-- **🌿 Timestamped Branches** - Creates branches like `config-push-18072025-1234`
-- **🔗 PR-Ready Workflow** - Provides direct GitHub PR links
-- **📁 Organized Storage** - Directory-based config organization in repositories
-- **🔐 Multiple Auth Methods** - SSH keys, GitHub tokens, or public access
-- **⚡ Efficient Operations** - Local caching and smart diff algorithms
+- **🔒 Private Repository Required** - Mandatory privacy protection for sensitive configuration data
+- **📦 Automatic Archiving** - Every sync creates timestamped backups in `~/.anvil/archive/`
+- **✅ Interactive Confirmations** - Always asks permission before overriding local configurations
+- **🔍 Comprehensive Dry-Run** - Preview all changes without applying them
+- **🎯 Smart Path Resolution** - Uses `configs` section in settings.yaml for app destinations
+- **🌿 Timestamped Branches** - Creates branches like `config-push-18072025-1234` for safe collaboration
+- **🔗 PR-Ready Workflow** - Provides direct GitHub PR links for team review
+- **💡 Manual Recovery** - Easy recovery from archive directory (auto-recovery coming soon)
 
 📖 **[Complete Configuration Guide](docs/config.md)** - Setup, authentication, repository structure, and team workflows
 
@@ -248,7 +224,7 @@ github:
 | `install --list`    | List available groups  | `anvil install --list`      |
 | `config pull [app]` | Pull configurations    | `anvil config pull neovim`  |
 | `config show [app]` | Show configurations    | `anvil config show neovim`  |
-| `config sync [app]` | Sync configurations    | `anvil config sync`         |
+| `config sync [app]` | Apply pulled configs   | `anvil config sync cursor`  |
 | `config push [app]` | Push configurations    | `anvil config push`         |
 | `doctor`            | Run health checks      | `anvil doctor`              |
 | `doctor [category]` | Check specific area    | `anvil doctor dependencies` |
