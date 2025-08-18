@@ -135,6 +135,58 @@ Installing tools for group 'new-laptop': slack, chrome, 1password
 Successfully installed 3 of 3 tools in group 'new-laptop'
 ```
 
+### Example 3.5: Organizing Applications into Groups
+
+**Scenario**: Installing applications and organizing them into logical groups for better management.
+
+```bash
+# Initialize first
+$ anvil init
+
+# Install and organize browsers
+$ anvil install firefox --group-name browsers
+✅ firefox installed successfully
+✅ Added firefox to group 'browsers'
+
+$ anvil install chrome --group-name browsers
+✅ chrome installed successfully
+✅ Added chrome to group 'browsers'
+
+# Install and organize design tools
+$ anvil install figma --group-name design
+✅ figma installed successfully
+✅ Added figma to group 'design'
+
+$ anvil install sketch --group-name design
+✅ sketch installed successfully
+✅ Added sketch to group 'design'
+
+# Install and organize development tools
+$ anvil install docker --group-name devops
+✅ docker installed successfully
+✅ Added docker to group 'devops'
+
+$ anvil install kubernetes-cli --group-name devops
+✅ kubernetes-cli installed successfully
+✅ Added kubernetes-cli to group 'devops'
+
+# Verify your organized groups
+$ anvil install --list
+
+=== Available Groups ===
+Built-in Groups:
+  • dev: git, zsh, iterm2, visual-studio-code
+  • new-laptop: slack, google-chrome, 1password
+
+Custom Groups:
+  • browsers: firefox, chrome
+  • design: figma, sketch
+  • devops: docker, kubernetes-cli
+
+Individually Tracked Apps:
+  (none - all apps are organized in groups)
+```
+
 ## Development Workflows
 
 ### Example 4: Frontend Developer Setup

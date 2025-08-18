@@ -34,7 +34,7 @@ import (
 
 // InstallCmd represents the install command
 var InstallCmd = &cobra.Command{
-	Use:   "install [group-name|app-name]",
+	Use:   "install [group-name|app-name] [--group-name group]",
 	Short: "Install development tools and applications dynamically via Homebrew",
 	Long:  constants.INSTALL_COMMAND_LONG_DESCRIPTION,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -104,7 +104,7 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 	}
 
 	// If not a group, treat as individual application
-	return installIndividualApp(target, dryRun)
+	return installIndividualApp(target, dryRun, cmd)
 }
 
 // installGroup installs all tools in a group
@@ -228,7 +228,7 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 }
 
 // installIndividualApp installs a single application using unified installation logic
-func installIndividualApp(appName string, dryRun bool) error {
+func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error {
 	terminal.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
 
 	// Validate app name
@@ -247,7 +247,21 @@ func installIndividualApp(appName string, dryRun bool) error {
 
 	// Only track the app in settings if it was newly installed and not dry-run
 	if !dryRun && wasNewlyInstalled {
-		return trackAppInSettings(appName)
+		// Check if --group-name flag is provided
+		groupName, _ := cmd.Flags().GetString("group-name")
+		if groupName != "" {
+			// Add app to the specified group
+			if err := config.AddAppToGroup(groupName, appName); err != nil {
+				terminal.PrintWarning("Failed to add %s to group '%s': %v", appName, groupName, err)
+				// Continue with normal tracking as fallback
+				return trackAppInSettings(appName)
+			}
+			terminal.PrintSuccess(fmt.Sprintf("Added %s to group '%s'", appName, groupName))
+			return nil
+		} else {
+			// Normal tracking in installed_apps
+			return trackAppInSettings(appName)
+		}
 	}
 
 	return nil
@@ -431,9 +445,12 @@ func listAvailableGroups() error {
 	terminal.PrintInfo("\nUsage:")
 	terminal.PrintInfo("  anvil install [group-name] - Install all apps in a group")
 	terminal.PrintInfo("  anvil install [app-name]   - Install individual app (auto-tracked)")
+	terminal.PrintInfo("  anvil install [app-name] --group-name [group] - Install app and add to group")
 	terminal.PrintInfo("Examples:")
 	terminal.PrintInfo("  anvil install dev")
 	terminal.PrintInfo("  anvil install 1password")
+	terminal.PrintInfo("  anvil install firefox --group-name essentials")
+	terminal.PrintInfo("  anvil install final-cut --group-name editing")
 
 	return nil
 }
@@ -443,6 +460,7 @@ func init() {
 	InstallCmd.Flags().Bool("dry-run", false, "Show what would be installed without installing")
 	InstallCmd.Flags().Bool("list", false, "List all available groups")
 	InstallCmd.Flags().Bool("update", false, "Update Homebrew before installation")
+	InstallCmd.Flags().String("group-name", "", "Add the installed app to a group (creates group if it doesn't exist)")
 
 	// Add concurrent installation flags
 	InstallCmd.Flags().Bool("concurrent", false, "Enable concurrent installation for improved performance")
