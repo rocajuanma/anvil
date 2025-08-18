@@ -55,7 +55,6 @@ type GitConfig struct {
 	Username   string `yaml:"username"`
 	Email      string `yaml:"email"`
 	SSHKeyPath string `yaml:"ssh_key_path,omitempty"` // Reference to SSH private key
-	SSHDir     string `yaml:"ssh_dir,omitempty"`      // Reference to .ssh directory
 }
 
 // GitHubConfig represents GitHub repository configuration for config sync
@@ -70,19 +69,12 @@ type GitHubConfig struct {
 // AnvilConfig represents the main anvil configuration
 type AnvilConfig struct {
 	Version     string            `yaml:"version"`
-	Directories AnvilDirectories  `yaml:"directories"`
 	Tools       AnvilTools        `yaml:"tools"`
 	Groups      AnvilGroups       `yaml:"groups"`
 	Configs     map[string]string `yaml:"configs"` // Maps app names to their local config paths
 	Git         GitConfig         `yaml:"git"`
 	GitHub      GitHubConfig      `yaml:"github"`
-	Environment map[string]string `yaml:"environment"`
 	ToolConfigs AnvilToolConfigs  `yaml:"tool_configs,omitempty"`
-}
-
-// AnvilDirectories represents directory configurations
-type AnvilDirectories struct {
-	Config string `yaml:"config"`
 }
 
 // AnvilTools represents tool configurations
@@ -129,7 +121,6 @@ func PopulateGitConfigFromSystem(gitConfig *GitConfig) error {
 	// Auto-detect SSH key path from common locations
 	homeDir, _ := os.UserHomeDir()
 	sshDir := filepath.Join(homeDir, ".ssh")
-	gitConfig.SSHDir = sshDir
 
 	// Common SSH key names in order of preference
 	commonKeyNames := []string{
@@ -170,9 +161,6 @@ func GetDefaultConfig() *AnvilConfig {
 
 	return &AnvilConfig{
 		Version: "1.0.0",
-		Directories: AnvilDirectories{
-			Config: filepath.Join(homeDir, constants.AnvilConfigDir),
-		},
 		Tools: AnvilTools{
 			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
 			OptionalTools: []string{constants.BrewCommand, constants.PkgDocker, constants.PkgKubectl},
@@ -187,7 +175,6 @@ func GetDefaultConfig() *AnvilConfig {
 			Username:   "",
 			Email:      "",
 			SSHKeyPath: filepath.Join(homeDir, constants.SSHDir, "id_rsa"),
-			SSHDir:     filepath.Join(homeDir, constants.SSHDir),
 		},
 		GitHub: GitHubConfig{
 			ConfigRepo:  "", // User needs to populate this
@@ -195,7 +182,6 @@ func GetDefaultConfig() *AnvilConfig {
 			LocalPath:   filepath.Join(homeDir, constants.AnvilConfigDir, "dotfiles"),
 			TokenEnvVar: "GITHUB_TOKEN", // Recommend using env var for token
 		},
-		Environment: make(map[string]string),
 		ToolConfigs: AnvilToolConfigs{
 			Tools: map[string]ToolInstallConfig{
 				constants.PkgZsh: {
@@ -220,11 +206,11 @@ func GetConfigPath() string {
 
 // CreateDirectories creates necessary directories for anvil
 func CreateDirectories() error {
-	config := GetDefaultConfig()
+	configDir := GetConfigDirectory()
 
 	// Only create the main config directory
-	if err := os.MkdirAll(config.Directories.Config, constants.DirPerm); err != nil {
-		return fmt.Errorf("failed to create directory %s: %w", config.Directories.Config, err)
+	if err := os.MkdirAll(configDir, constants.DirPerm); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", configDir, err)
 	}
 
 	return nil
@@ -634,12 +620,7 @@ func GetAppConfigPath(appName string) (string, bool, error) {
 
 // GetTempAppPath checks if an app directory exists in the temp directory (from previous pull)
 func GetTempAppPath(appName string) (string, bool, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return "", false, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	tempPath := filepath.Join(config.Directories.Config, "temp", appName)
+	tempPath := filepath.Join(GetConfigDirectory(), "temp", appName)
 	if _, err := os.Stat(tempPath); os.IsNotExist(err) {
 		return "", false, nil
 	}

@@ -166,10 +166,7 @@ func (v *DirectoryStructureValidator) Description() string {
 func (v *DirectoryStructureValidator) CanFix() bool { return true }
 
 func (v *DirectoryStructureValidator) Validate(ctx context.Context, cfg *config.AnvilConfig) *ValidationResult {
-	anvilDir := cfg.Directories.Config
-	if anvilDir == "" {
-		anvilDir = filepath.Join(os.Getenv("HOME"), ".anvil")
-	}
+	anvilDir := config.GetConfigDirectory()
 
 	// Required directories
 	requiredDirs := []string{
@@ -226,10 +223,7 @@ func (v *DirectoryStructureValidator) Validate(ctx context.Context, cfg *config.
 }
 
 func (v *DirectoryStructureValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error {
-	anvilDir := cfg.Directories.Config
-	if anvilDir == "" {
-		anvilDir = filepath.Join(os.Getenv("HOME"), ".anvil")
-	}
+	anvilDir := config.GetConfigDirectory()
 
 	// Create required directories
 	requiredDirs := []string{
