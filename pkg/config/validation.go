@@ -110,11 +110,6 @@ func (cv *ConfigValidator) ValidateConfig(config interface{}) error {
 		return fmt.Errorf("version validation failed: %w", err)
 	}
 
-	// Validate directories
-	if err := cv.validateDirectories(&anvilConfig.Directories); err != nil {
-		return fmt.Errorf("directory validation failed: %w", err)
-	}
-
 	// Validate tools
 	if err := cv.validateTools(&anvilConfig.Tools); err != nil {
 		return fmt.Errorf("tools validation failed: %w", err)
@@ -147,20 +142,6 @@ func (cv *ConfigValidator) validateVersion(version string) error {
 	// Check semantic version format
 	if matched, _ := regexp.MatchString(`^\d+\.\d+\.\d+$`, version); !matched {
 		return fmt.Errorf("version '%s' is not in valid semantic version format (e.g., 1.0.0)", version)
-	}
-
-	return nil
-}
-
-// validateDirectories validates directory configurations
-func (cv *ConfigValidator) validateDirectories(dirs *AnvilDirectories) error {
-	if dirs.Config == "" {
-		return fmt.Errorf("config directory cannot be empty")
-	}
-
-	// Check if directory is an absolute path
-	if !filepath.IsAbs(dirs.Config) {
-		return fmt.Errorf("config directory must be an absolute path: %s", dirs.Config)
 	}
 
 	return nil

@@ -62,14 +62,8 @@ func runSyncCommand(cmd *cobra.Command, args []string) error {
 func syncAnvilSettings(dryRun bool) error {
 	terminal.PrintHeader("Configuration Sync: anvil settings")
 
-	// Load current config to get temp directory
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return errors.NewConfigurationError(constants.OpSync, "load-config", err)
-	}
-
 	// Check if pulled anvil settings exist
-	tempSettingsPath := filepath.Join(cfg.Directories.Config, "temp", "anvil", "settings.yaml")
+	tempSettingsPath := filepath.Join(config.GetConfigDirectory(), "temp", "anvil", "settings.yaml")
 	if _, err := os.Stat(tempSettingsPath); os.IsNotExist(err) {
 		terminal.PrintError("Pulled anvil settings not found")
 		terminal.PrintInfo("")
@@ -139,7 +133,7 @@ func syncAppConfig(appName string, dryRun bool) error {
 	}
 
 	// Check if pulled app config exists
-	tempAppPath := filepath.Join(cfg.Directories.Config, "temp", appName)
+	tempAppPath := filepath.Join(config.GetConfigDirectory(), "temp", appName)
 	if _, err := os.Stat(tempAppPath); os.IsNotExist(err) {
 		terminal.PrintError("Pulled %s configuration not found", appName)
 		terminal.PrintInfo("")
@@ -220,16 +214,11 @@ func syncAppConfig(appName string, dryRun bool) error {
 
 // createArchiveDirectory creates a timestamped archive directory
 func createArchiveDirectory(prefix string) (string, error) {
-	// Load config to get base directory
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return "", err
-	}
 
 	// Create timestamp
 	timestamp := time.Now().Format("2006-01-02-15-04-05")
 	archiveName := fmt.Sprintf("%s-%s", prefix, timestamp)
-	archivePath := filepath.Join(cfg.Directories.Config, "archive", archiveName)
+	archivePath := filepath.Join(config.GetConfigDirectory(), "archive", archiveName)
 
 	// Create archive directory
 	if err := os.MkdirAll(archivePath, constants.DirPerm); err != nil {

@@ -38,7 +38,6 @@ func setupTestConfig(t *testing.T) (string, func()) {
 
 	// Create a test config
 	config := GetDefaultConfig()
-	config.Directories.Config = tempDir
 
 	// Create the necessary directories
 	err := CreateDirectories()

@@ -93,15 +93,11 @@ func showPulledConfig(targetDir string) error {
 
 	// Stage 1: Load anvil configuration
 	terminal.PrintStage("Loading anvil configuration...")
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return errors.NewConfigurationError(constants.OpShow, "load-config", err)
-	}
 	terminal.PrintSuccess("Configuration loaded")
 
 	// Stage 2: Locate pulled configuration directory
 	terminal.PrintStage("Locating pulled configuration directory...")
-	tempDir := filepath.Join(cfg.Directories.Config, "temp", targetDir)
+	tempDir := filepath.Join(config.GetConfigDirectory(), "temp", targetDir)
 
 	// Check if the directory exists
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
@@ -114,7 +110,7 @@ func showPulledConfig(targetDir string) error {
 		terminal.PrintInfo("")
 
 		// Show available pulled configurations
-		tempBasePath := filepath.Join(cfg.Directories.Config, "temp")
+		tempBasePath := filepath.Join(config.GetConfigDirectory(), "temp")
 		if entries, err := os.ReadDir(tempBasePath); err == nil && len(entries) > 0 {
 			terminal.PrintInfo("Available pulled configurations:")
 			for _, entry := range entries {
@@ -136,7 +132,7 @@ func showPulledConfig(targetDir string) error {
 
 	// Stage 3: Display directory contents
 	terminal.PrintStage("Reading configuration files...")
-	err = showDirectoryTree(tempDir, targetDir)
+	err := showDirectoryTree(tempDir, targetDir)
 	if err != nil {
 		return err
 	}

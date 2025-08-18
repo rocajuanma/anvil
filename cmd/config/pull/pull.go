@@ -228,7 +228,7 @@ func copyDirectoryToTemp(cfg *config.AnvilConfig, targetDir string) (string, err
 	}
 
 	// Create temp directory inside anvil config
-	tempBasedir := filepath.Join(cfg.Directories.Config, "temp")
+	tempBasedir := filepath.Join(config.GetConfigDirectory(), "temp")
 	if err := os.MkdirAll(tempBasedir, constants.DirPerm); err != nil {
 		return "", errors.NewFileSystemError(constants.OpPull, "create-temp-dir", err)
 	}
