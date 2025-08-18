@@ -55,6 +55,5 @@ func init() {
 	rootCmd.AddCommand(install.InstallCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(doctor.DoctorCmd)
-	//rootCmd.AddCommand(draw.DrawCmd)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
