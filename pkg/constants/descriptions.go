@@ -166,20 +166,6 @@ Features:
 Perfect for applying pulled configurations safely, maintaining config consistency across machines,
 and ensuring you always have recovery options through the automatic archiving system.`
 
-const DRAW_COMMAND_LONG_DESCRIPTION = `The draw command generates beautiful ASCII art representations of text using the
-go-figure library for enhanced terminal output and visual appeal.
-
-Features:
-• 🎨 Multiple Font Options: Choose from various ASCII art fonts for different visual styles
-• ⚙️ Customizable Output: Flexible formatting options for different use cases and contexts
-• 🔧 Terminal Integration: Seamless integration with Anvil's structured output system
-• 🎭 ASCII Art Styles: Support for multiple artistic styles and character sets
-• 💡 Easy Usage: Simple command interface for quick ASCII art generation
-• 🌈 Visual Enhancement: Perfect for creating eye-catching headers and banners
-
-Perfect for creating distinctive headers, banners, or decorative elements in scripts, terminal applications,
-and command-line interfaces that need visual impact and professional presentation.`
-
 // Doctor command descriptions
 const DOCTOR_COMMAND_LONG_DESCRIPTION = `Run comprehensive health checks to validate your anvil environment with real-time progress feedback.
 

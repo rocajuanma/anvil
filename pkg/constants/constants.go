@@ -25,7 +25,6 @@ const (
 	OpPush    = "push"
 	OpShow    = "show"
 	OpSync    = "sync"
-	OpDraw    = "draw"
 	OpDoctor  = "doctor"
 )
 
@@ -34,7 +33,6 @@ const (
 	BrewCommand = "brew"
 	GitCommand  = "git"
 	CurlCommand = "curl"
-	ShCommand   = "sh"
 )
 
 // Brew subcommand constants
@@ -74,17 +72,6 @@ const (
 	Pkg1Password = "1password"
 	PkgDocker    = "docker"
 	PkgKubectl   = "kubectl"
-	PkgNode      = "node"
-	PkgPython    = "python3"
-	PkgGo        = "go"
-	PkgMysql     = "mysql"
-	PkgPostgres  = "postgresql"
-	PkgRedis     = "redis"
-	PkgVim       = "vim"
-	PkgTmux      = "tmux"
-	PkgFigma     = "figma"
-	PkgNotion    = "notion"
-	PkgObsidian  = "obsidian"
 )
 
 // Environment variables

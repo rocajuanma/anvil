@@ -154,7 +154,7 @@ Push configuration files to your GitHub repository with automated branch creatio
 # Push anvil settings to repository
 anvil config push
 
-# Push application-specific configs (in development)
+# Push application-specific configs
 anvil config push cursor
 anvil config push vscode
 ```
@@ -232,8 +232,6 @@ Direct link: https://github.com/username/dotfiles/compare/main...config-push-180
 
 #### Option 2: Application Config Push (`anvil config push <app-name>`)
 
-**🚧 Status: In Development**
-
 Push application-specific configurations to your repository:
 
 ```bash
@@ -245,10 +243,8 @@ Expected functionality:
   • Push cursor configs to /cursor directory in repository
   • Create pull request for review
 
-🚧 Status: In Development
-📅 Expected: Future release
 
-For now, use 'anvil config push' to push anvil settings only.
+For now, use 'anvil config push' to push anvil settings only by default.
 ```
 
 **Key Features:**
@@ -258,6 +254,8 @@ For now, use 'anvil config push' to push anvil settings only.
 - 📦 **Repository Organization**: Maintains clean directory structure
 - 🔄 **Workflow Integration**: Seamless integration with GitHub pull request workflow
 - 🛡️ **Safe Operations**: Always creates new branches, never pushes directly to main
+- 🔒 **Security Validation**: Verifies repository privacy before any push operations
+- 📁 **App-Specific Pushing**: Supports both anvil settings and individual app configurations
 
 ## Setup
 
