@@ -241,6 +241,25 @@ anvil install firefox --dry-run
 
 **🎯 Automatic Tracking**: Individual apps are automatically added to `tools.installed_apps` in your settings.yaml.
 
+### Installing Applications with Group Assignment
+
+Install applications and automatically organize them into groups:
+
+```bash
+# Add to existing group
+anvil install firefox --group-name essentials
+anvil install chrome --group-name browsers
+
+# Create new group and add app
+anvil install final-cut --group-name editing
+anvil install premiere --group-name editing
+
+# Preview with group assignment
+anvil install sketch --group-name design --dry-run
+```
+
+**🎯 Group Organization**: Apps are added to specified groups instead of `installed_apps`, creating logical collections for easy management.
+
 ### How Individual App Installation Works
 
 1. **Dynamic Detection**: Works with any Homebrew package

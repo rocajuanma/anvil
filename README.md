@@ -58,6 +58,10 @@ anvil install visual-studio-code
 anvil install dev        # git, zsh, iterm2, visual-studio-code
 anvil install new-laptop # slack, google-chrome, 1password
 
+# Install and organize into groups
+anvil install firefox --group-name browsers
+anvil install final-cut --group-name editing
+
 # Preview before installing
 anvil install docker --dry-run
 ```

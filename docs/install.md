@@ -32,6 +32,26 @@ anvil install visual-studio-code
 - Smart deduplication prevents tracking apps already in groups or required_tools
 - Works with any Homebrew package name
 
+### Individual Application Installation with Group Assignment
+
+Install an application and automatically add it to a group:
+
+```bash
+# Add to existing group
+anvil install firefox --group-name essentials
+
+# Create new group and add app
+anvil install final-cut --group-name editing
+```
+
+**Features:**
+
+- Installs the application using existing logic
+- Adds the app to the specified group if installation is successful
+- Creates the group if it doesn't exist
+- Prevents duplicate apps within the same group
+- Falls back to normal `installed_apps` tracking if group operation fails
+
 ### Group Installation
 
 Install all tools in a predefined or custom group:
@@ -145,6 +165,10 @@ anvil install dev
 # Add individual tools as needed
 anvil install docker
 anvil install postman
+
+# Add tools to specific groups
+anvil install terraform --group-name devops
+anvil install kubernetes-cli --group-name devops
 ```
 
 ### New Machine Setup
@@ -157,6 +181,11 @@ anvil install new-laptop
 anvil install notion
 anvil install spotify
 anvil install discord
+
+# Organize apps into logical groups
+anvil install firefox --group-name browsers
+anvil install chrome --group-name browsers
+anvil install safari --group-name browsers
 ```
 
 ### Custom Workflow
@@ -171,6 +200,11 @@ anvil install frontend
 # Add specific tools
 anvil install figma --dry-run
 anvil install figma
+
+# Create and populate custom groups
+anvil install sketch --group-name design
+anvil install adobe-creative-cloud --group-name design
+anvil install figma --group-name design
 ```
 
 ### Team Setup

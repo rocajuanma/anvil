@@ -371,6 +371,36 @@ func UpdateGroupTools(groupName string, tools []string) error {
 	return SaveConfig(config)
 }
 
+// AddAppToGroup adds an app to a group, creating the group if it doesn't exist
+func AddAppToGroup(groupName string, appName string) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Initialize groups map if it doesn't exist
+	if config.Groups == nil {
+		config.Groups = make(map[string][]string)
+	}
+
+	// Check if the group exists
+	if tools, exists := config.Groups[groupName]; exists {
+		// Check if app is already in the group to avoid duplicates
+		for _, tool := range tools {
+			if tool == appName {
+				return nil // App already in group, no need to add
+			}
+		}
+		// Add app to existing group
+		config.Groups[groupName] = append(tools, appName)
+	} else {
+		// Create new group with the app
+		config.Groups[groupName] = []string{appName}
+	}
+
+	return SaveConfig(config)
+}
+
 // CheckEnvironmentConfigurations checks local environment configurations
 func CheckEnvironmentConfigurations() []string {
 	var warnings []string

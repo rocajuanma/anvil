@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Group Assignment for Individual App Installation** 📦 - New `--group-name` flag for the `anvil install` command
+  - **Seamless Group Organization** - Install apps and automatically add them to existing or new groups
+  - **Dynamic Group Creation** - Creates new groups automatically if they don't exist
+  - **Duplicate Prevention** - Prevents adding the same app multiple times to a group
+  - **Graceful Fallback** - Falls back to normal `installed_apps` tracking if group operations fail
+  - **Success-Only Operations** - Group operations only occur if installation is successful
+  - **Usage Examples**: `anvil install firefox --group-name essentials`, `anvil install final-cut --group-name editing`
 - **Real-time Progress for Doctor Command** ✨ - Enhanced `anvil doctor` command with live feedback
   - **Live Progress Indicators** - See validation progress as each check runs with progress counters (e.g., `[1/12] 8% - Running init-run`)
   - **Stage-by-stage Feedback** - Clear indication of which validation is currently executing
