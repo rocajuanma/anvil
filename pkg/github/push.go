@@ -82,6 +82,11 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 
 // PushAnvilConfig pushes the anvil settings.yaml to the repository
 func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
+	return gc.PushAnvilConfigInternal(ctx, settingsPath, false)
+}
+
+// PushAnvilConfigInternal is the internal implementation with optional file copying
+func (gc *GitHubClient) PushAnvilConfigInternal(ctx context.Context, settingsPath string, skipCopy bool) (*PushConfigResult, error) {
 	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
 	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
 		return nil, err
@@ -115,15 +120,17 @@ func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string
 		return nil, err
 	}
 
-	// Copy anvil settings to repo
-	targetDir := filepath.Join(gc.LocalPath, "anvil")
-	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
-		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-anvil", err)
-	}
+	// Copy anvil settings to repo (if not already copied)
+	if !skipCopy {
+		targetDir := filepath.Join(gc.LocalPath, "anvil")
+		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-anvil", err)
+		}
 
-	targetFile := filepath.Join(targetDir, "settings.yaml")
-	if err := copyFile(settingsPath, targetFile); err != nil {
-		return nil, errors.NewFileSystemError(constants.OpPush, "copy-settings", err)
+		targetFile := filepath.Join(targetDir, "settings.yaml")
+		if err := copyFile(settingsPath, targetFile); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "copy-settings", err)
+		}
 	}
 
 	// Commit changes
@@ -149,6 +156,11 @@ func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string
 
 // PushAppConfig pushes application configuration files to the repository
 func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
+	return gc.PushAppConfigInternal(ctx, appName, configPath, false)
+}
+
+// PushAppConfigInternal is the internal implementation with optional file copying
+func (gc *GitHubClient) PushAppConfigInternal(ctx context.Context, appName, configPath string, skipCopy bool) (*PushConfigResult, error) {
 	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
 	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
 		return nil, err
@@ -183,15 +195,17 @@ func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath s
 		return nil, err
 	}
 
-	// Copy app configs to repo
+	// Copy app configs to repo (if not already copied)
 	targetDir := filepath.Join(gc.LocalPath, appName)
-	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
-		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
-	}
+	if !skipCopy {
+		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
+		}
 
-	// Copy the config path (file or directory) to the target directory
-	if err := gc.copyConfigToRepo(configPath, targetDir); err != nil {
-		return nil, err
+		// Copy the config path (file or directory) to the target directory
+		if err := gc.copyConfigToRepo(configPath, targetDir); err != nil {
+			return nil, err
+		}
 	}
 
 	// Commit changes
@@ -619,4 +633,127 @@ func (gc *GitHubClient) getCommittedFiles(targetDir, appName string) ([]string, 
 	}
 
 	return files, nil
+}
+
+// DiffSummary contains diff information using Git's native output
+type DiffSummary struct {
+	GitStatOutput string // Git's native --stat output
+	FullDiff      string // Full diff for small changes
+	FilesPrepared bool   // Indicates if files are already copied to repo for push
+}
+
+// GetDiffPreview generates diff preview for both anvil and app configs before pushing
+func (gc *GitHubClient) GetDiffPreview(ctx context.Context, sourcePath, targetPath string) (*DiffSummary, error) {
+	// First, ensure repository is ready
+	if err := gc.ensureRepositoryReady(ctx); err != nil {
+		return nil, err
+	}
+
+	// Auto-detect if this is anvil config based on explicit target path
+	isAnvilConfig := strings.HasSuffix(targetPath, "anvil/settings.yaml")
+
+	// Use appropriate change detection
+	var hasChanges bool
+	var err error
+	if isAnvilConfig {
+		hasChanges, err = gc.hasConfigChanges(sourcePath, targetPath)
+	} else {
+		hasChanges, err = gc.hasAppConfigChanges(sourcePath, targetPath)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for config changes: %w", err)
+	}
+
+	if !hasChanges {
+		return &DiffSummary{GitStatOutput: "", FullDiff: "", FilesPrepared: false}, nil
+	}
+
+	return gc.generateGitDiff(ctx, sourcePath, targetPath)
+}
+
+// generateGitDiff handles diff generation using Git's native capabilities (simplified)
+func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetPath string) (*DiffSummary, error) {
+	// Change to repo directory
+	originalDir, err := os.Getwd()
+	if err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "getwd", err)
+	}
+	defer os.Chdir(originalDir)
+
+	if err := os.Chdir(gc.LocalPath); err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "chdir", err)
+	}
+
+	// Setup files based on target path type
+	if strings.HasSuffix(targetPath, ".yaml") || strings.HasSuffix(targetPath, ".yml") {
+		// Single file (anvil settings)
+		repoFilePath := filepath.Join(gc.LocalPath, targetPath)
+		if err := os.MkdirAll(filepath.Dir(repoFilePath), constants.DirPerm); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
+		}
+		if err := copyFile(sourcePath, repoFilePath); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "copy-file", err)
+		}
+	} else {
+		// Directory (app configs)
+		targetDir := filepath.Join(gc.LocalPath, targetPath)
+		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
+		}
+		if err := gc.copyConfigToRepo(sourcePath, targetDir); err != nil {
+			return nil, err
+		}
+	}
+
+	// Stage the target files
+	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "add", targetPath); err != nil {
+		return nil, errors.NewInstallationError(constants.OpPush, "git-add", err)
+	}
+
+	// Get Git's native stat output
+	statResult, err := system.RunCommandWithTimeout(ctx, constants.GitCommand,
+		"diff", "--cached", "--stat", "--stat-width=80")
+	if err != nil {
+		return nil, errors.NewInstallationError(constants.OpPush, "git-diff-stat", err)
+	}
+
+	// Get full diff only for small single files
+	var fullDiff string
+	if gc.isSingleSmallFile(statResult.Output) {
+		diffResult, err := system.RunCommandWithTimeout(ctx, constants.GitCommand,
+			"diff", "--cached", "--no-color")
+		if err == nil {
+			fullDiff = diffResult.Output
+		}
+	}
+
+	// Always reset staging area and clean up copied files
+	system.RunCommandWithTimeout(ctx, constants.GitCommand, "reset", "HEAD")
+
+	// Remove the copied files to avoid conflicts with actual push
+	// Check what we actually copied based on source type
+	sourceInfo, err := os.Stat(sourcePath)
+	if err == nil {
+		targetFullPath := filepath.Join(gc.LocalPath, targetPath)
+		if sourceInfo.IsDir() {
+			// Source was a directory - remove the copied directory
+			os.RemoveAll(targetFullPath)
+		} else {
+			// Source was a file - remove the copied file
+			os.Remove(targetFullPath)
+		}
+	}
+
+	return &DiffSummary{
+		GitStatOutput: statResult.Output,
+		FullDiff:      fullDiff,
+		FilesPrepared: false, // Files are NOT prepared since we cleaned them up
+	}, nil
+}
+
+// isSingleSmallFile determines if we should include the full diff output
+func (gc *GitHubClient) isSingleSmallFile(statOutput string) bool {
+	// Only get full diff for single files with reasonable size
+	return strings.Contains(statOutput, "1 file changed") &&
+		strings.Count(statOutput, "+")+strings.Count(statOutput, "-") <= 50
 }
