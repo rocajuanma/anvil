@@ -139,6 +139,17 @@ func pushAppConfig(appName string) error {
 	terminal.PrintInfo("App: %s", appName)
 	terminal.PrintInfo("Local config path: %s", configPath)
 
+	// NEW: Add diff output before confirmation
+	terminal.PrintStage("Analyzing changes...")
+	ctx := context.Background()
+	targetPath := fmt.Sprintf("%s/", appName)
+	diffSummary, err := githubClient.GetDiffPreview(ctx, configPath, targetPath)
+	if err != nil {
+		terminal.PrintWarning("Unable to generate diff preview: %v", err)
+	} else {
+		showDiffOutput(diffSummary)
+	}
+
 	// Stage 5: User confirmation
 	terminal.PrintStage("Requesting user confirmation...")
 	if !terminal.Confirm(fmt.Sprintf("Do you want to push your %s configurations to the repository?", appName)) {
@@ -148,7 +159,6 @@ func pushAppConfig(appName string) error {
 
 	// Stage 6: Push configuration
 	terminal.PrintStage(fmt.Sprintf("Pushing %s configuration to repository...", appName))
-	ctx := context.Background()
 	result, err := githubClient.PushAppConfig(ctx, appName, configPath)
 	if err != nil {
 		return errors.NewInstallationError(constants.OpPush, "push-app-config", err)
@@ -262,6 +272,16 @@ func pushAnvilConfig() error {
 	terminal.PrintInfo("Branch: %s", anvilConfig.GitHub.Branch)
 	terminal.PrintInfo("Settings file: %s", settingsPath)
 
+	// NEW: Add diff output before confirmation
+	terminal.PrintStage("Analyzing changes...")
+	ctx := context.Background()
+	diffSummary, err := githubClient.GetDiffPreview(ctx, settingsPath, "anvil/settings.yaml")
+	if err != nil {
+		terminal.PrintWarning("Unable to generate diff preview: %v", err)
+	} else {
+		showDiffOutput(diffSummary)
+	}
+
 	// Stage 3: User confirmation
 	terminal.PrintStage("Requesting user confirmation...")
 	if !terminal.Confirm("Do you want to push your anvil settings to the repository?") {
@@ -271,7 +291,6 @@ func pushAnvilConfig() error {
 
 	// Stage 4: Push configuration
 	terminal.PrintStage("Pushing configuration to repository...")
-	ctx := context.Background()
 	result, err := githubClient.PushAnvilConfig(ctx, settingsPath)
 	if err != nil {
 		return errors.NewInstallationError(constants.OpPush, "push-config", err)
@@ -299,6 +318,42 @@ func pushAnvilConfig() error {
 	terminal.PrintInfo("Direct link: %s/compare/%s...%s", result.RepositoryURL, anvilConfig.GitHub.Branch, result.BranchName)
 
 	return nil
+}
+
+// showDiffOutput displays diff information using Git's native output
+func showDiffOutput(diffSummary *github.DiffSummary) {
+	if diffSummary.TotalFiles == 0 {
+		terminal.PrintInfo("No changes detected")
+		return
+	}
+
+	terminal.PrintInfo("")
+	terminal.PrintHeader("📋 Changes to be pushed:")
+
+	// Show Git's native stat output directly
+	if diffSummary.GitStatOutput != "" {
+		terminal.PrintInfo("")
+		terminal.PrintInfo(diffSummary.GitStatOutput)
+	}
+
+	// For single small files, show full diff
+	if diffSummary.TotalFiles == 1 && diffSummary.FullDiff != "" {
+		lines := strings.Split(diffSummary.FullDiff, "\n")
+		if len(lines) <= 50 {
+			terminal.PrintInfo("")
+			terminal.PrintInfo("📄 Full diff:")
+			terminal.PrintInfo("")
+			terminal.PrintInfo(diffSummary.FullDiff)
+		} else {
+			terminal.PrintInfo("")
+			terminal.PrintInfo("📄 Diff preview (first 50 lines):")
+			terminal.PrintInfo("")
+			terminal.PrintInfo(strings.Join(lines[:50], "\n"))
+			terminal.PrintInfo("")
+			terminal.PrintInfo("... [diff truncated] ...")
+		}
+	}
+	terminal.PrintInfo("")
 }
 
 func init() {

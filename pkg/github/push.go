@@ -23,6 +23,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -619,4 +621,136 @@ func (gc *GitHubClient) getCommittedFiles(targetDir, appName string) ([]string, 
 	}
 
 	return files, nil
+}
+
+// DiffSummary contains diff information using Git's native output
+type DiffSummary struct {
+	GitStatOutput string // Git's native --stat output
+	FullDiff      string // Full diff for small changes
+	TotalFiles    int    // Simple count of changed files
+}
+
+// GetDiffPreview generates diff preview for both anvil and app configs before pushing
+func (gc *GitHubClient) GetDiffPreview(ctx context.Context, sourcePath, targetPath string) (*DiffSummary, error) {
+	// First, ensure repository is ready
+	if err := gc.ensureRepositoryReady(ctx); err != nil {
+		return nil, err
+	}
+
+	// Auto-detect if this is anvil config based on explicit target path
+	isAnvilConfig := strings.HasSuffix(targetPath, "anvil/settings.yaml")
+
+	// Use appropriate change detection
+	var hasChanges bool
+	var err error
+	if isAnvilConfig {
+		hasChanges, err = gc.hasConfigChanges(sourcePath, targetPath)
+	} else {
+		hasChanges, err = gc.hasAppConfigChanges(sourcePath, targetPath)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for config changes: %w", err)
+	}
+
+	if !hasChanges {
+		return &DiffSummary{GitStatOutput: "", FullDiff: "", TotalFiles: 0}, nil
+	}
+
+	return gc.generateGitDiff(ctx, sourcePath, targetPath)
+}
+
+// generateGitDiff handles diff generation using Git's native capabilities (simplified)
+func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetPath string) (*DiffSummary, error) {
+	// Change to repo directory
+	originalDir, err := os.Getwd()
+	if err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "getwd", err)
+	}
+	defer os.Chdir(originalDir)
+
+	if err := os.Chdir(gc.LocalPath); err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "chdir", err)
+	}
+
+	// Setup files based on target path type
+	if strings.HasSuffix(targetPath, ".yaml") || strings.HasSuffix(targetPath, ".yml") {
+		// Single file (anvil settings)
+		repoFilePath := filepath.Join(gc.LocalPath, targetPath)
+		if err := os.MkdirAll(filepath.Dir(repoFilePath), constants.DirPerm); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
+		}
+		if err := copyFile(sourcePath, repoFilePath); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "copy-file", err)
+		}
+	} else {
+		// Directory (app configs)
+		targetDir := filepath.Join(gc.LocalPath, targetPath)
+		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
+		}
+		if err := gc.copyConfigToRepo(sourcePath, targetDir); err != nil {
+			return nil, err
+		}
+	}
+
+	// Stage the target files
+	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "add", targetPath); err != nil {
+		return nil, errors.NewInstallationError(constants.OpPush, "git-add", err)
+	}
+
+	// Get Git's native stat output
+	statResult, err := system.RunCommandWithTimeout(ctx, constants.GitCommand,
+		"diff", "--cached", "--stat", "--stat-width=80")
+	if err != nil {
+		return nil, errors.NewInstallationError(constants.OpPush, "git-diff-stat", err)
+	}
+
+	// Get full diff only for small single files
+	var fullDiff string
+	if gc.isSingleSmallFile(statResult.Output) {
+		diffResult, err := system.RunCommandWithTimeout(ctx, constants.GitCommand,
+			"diff", "--cached", "--no-color")
+		if err == nil {
+			fullDiff = diffResult.Output
+		}
+	}
+
+	// Always reset staging area
+	system.RunCommandWithTimeout(ctx, constants.GitCommand, "reset", "HEAD")
+
+	return &DiffSummary{
+		GitStatOutput: statResult.Output,
+		FullDiff:      fullDiff,
+		TotalFiles:    gc.extractFileCount(statResult.Output),
+	}, nil
+}
+
+// isSingleSmallFile determines if we should include the full diff output
+func (gc *GitHubClient) isSingleSmallFile(statOutput string) bool {
+	// Only get full diff for single files with reasonable size
+	return strings.Contains(statOutput, "1 file changed") &&
+		strings.Count(statOutput, "+")+strings.Count(statOutput, "-") <= 50
+}
+
+// extractFileCount parses the file count from Git's stat output
+func (gc *GitHubClient) extractFileCount(statOutput string) int {
+	if strings.TrimSpace(statOutput) == "" {
+		return 0
+	}
+
+	// Parse "1 file changed" or "2 files changed"
+	if strings.Contains(statOutput, "1 file changed") {
+		return 1
+	}
+
+	// Use regex to extract number from "X files changed"
+	re := regexp.MustCompile(`(\d+) files changed`)
+	matches := re.FindStringSubmatch(statOutput)
+	if len(matches) >= 2 {
+		if count, err := strconv.Atoi(matches[1]); err == nil {
+			return count
+		}
+	}
+
+	return 0
 }
