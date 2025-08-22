@@ -23,6 +23,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,87 +82,8 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 	return nil
 }
 
-// PushAnvilConfig pushes the anvil settings.yaml to the repository
-func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
-	return gc.PushAnvilConfigInternal(ctx, settingsPath, false)
-}
-
-// PushAnvilConfigInternal is the internal implementation with optional file copying
-func (gc *GitHubClient) PushAnvilConfigInternal(ctx context.Context, settingsPath string, skipCopy bool) (*PushConfigResult, error) {
-	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
-	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
-		return nil, err
-	}
-
-	// Ensure repository is ready
-	if err := gc.ensureRepositoryReady(ctx); err != nil {
-		return nil, err
-	}
-
-	// Check if there are differences before proceeding
-	hasChanges, err := gc.hasConfigChanges(settingsPath, "anvil/settings.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to check for config changes: %w", err)
-	}
-
-	if !hasChanges {
-		terminal.PrintSuccess("Configuration is up-to-date!")
-		terminal.PrintInfo("Local anvil settings match the remote repository.")
-		terminal.PrintInfo("No changes to push.")
-		return nil, nil
-	}
-
-	terminal.PrintInfo("Differences detected between local and remote configuration")
-
-	// Generate branch name with timestamp
-	branchName := generateTimestampedBranchName("config-push")
-
-	// Create and checkout new branch
-	if err := gc.createAndCheckoutBranch(ctx, branchName); err != nil {
-		return nil, err
-	}
-
-	// Copy anvil settings to repo (if not already copied)
-	if !skipCopy {
-		targetDir := filepath.Join(gc.LocalPath, "anvil")
-		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
-			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-anvil", err)
-		}
-
-		targetFile := filepath.Join(targetDir, "settings.yaml")
-		if err := copyFile(settingsPath, targetFile); err != nil {
-			return nil, errors.NewFileSystemError(constants.OpPush, "copy-settings", err)
-		}
-	}
-
-	// Commit changes
-	commitMessage := "anvil[push]: anvil"
-	if err := gc.commitChanges(ctx, commitMessage); err != nil {
-		return nil, err
-	}
-
-	// Push branch
-	if err := gc.pushBranch(ctx, branchName); err != nil {
-		return nil, err
-	}
-
-	result := &PushConfigResult{
-		BranchName:     branchName,
-		CommitMessage:  commitMessage,
-		RepositoryURL:  gc.getRepositoryURL(),
-		FilesCommitted: []string{"anvil/settings.yaml"},
-	}
-
-	return result, nil
-}
-
-// PushAppConfig pushes application configuration files to the repository
-func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
-	return gc.PushAppConfigInternal(ctx, appName, configPath, false)
-}
-
-// PushAppConfigInternal is the internal implementation with optional file copying
-func (gc *GitHubClient) PushAppConfigInternal(ctx context.Context, appName, configPath string, skipCopy bool) (*PushConfigResult, error) {
+// PushConfig pushes configuration files to the repository (unified function for both anvil and app configs)
+func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
 	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
 	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
 		return nil, err
@@ -175,7 +98,7 @@ func (gc *GitHubClient) PushAppConfigInternal(ctx context.Context, appName, conf
 	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
 	hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check for app config changes: %w", err)
+		return nil, fmt.Errorf("failed to check for config changes: %w", err)
 	}
 
 	if !hasChanges {
@@ -195,17 +118,15 @@ func (gc *GitHubClient) PushAppConfigInternal(ctx context.Context, appName, conf
 		return nil, err
 	}
 
-	// Copy app configs to repo (if not already copied)
+	// Copy configs to repo
 	targetDir := filepath.Join(gc.LocalPath, appName)
-	if !skipCopy {
-		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
-			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
-		}
+	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
+	}
 
-		// Copy the config path (file or directory) to the target directory
-		if err := gc.copyConfigToRepo(configPath, targetDir); err != nil {
-			return nil, err
-		}
+	// Copy the config path (file or directory) to the target directory
+	if err := gc.copyConfigToRepo(configPath, targetDir); err != nil {
+		return nil, err
 	}
 
 	// Commit changes
@@ -233,6 +154,16 @@ func (gc *GitHubClient) PushAppConfigInternal(ctx context.Context, appName, conf
 	}
 
 	return result, nil
+}
+
+// PushAppConfig is a wrapper for backwards compatibility - delegates to unified PushConfig
+func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
+	return gc.PushConfig(ctx, appName, configPath)
+}
+
+// PushAnvilConfig is a wrapper for backwards compatibility - delegates to unified PushConfig
+func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
+	return gc.PushConfig(ctx, "anvil", settingsPath)
 }
 
 // ensureRepositoryReady ensures the repository is cloned and up to date
@@ -393,34 +324,6 @@ func generateTimestampedBranchName(prefix string) string {
 	dateStr := now.Format("02012006") // DDMMYYYY
 	timeStr := now.Format("1504")     // HHMM (24h format)
 	return fmt.Sprintf("%s-%s-%s", prefix, dateStr, timeStr)
-}
-
-// hasConfigChanges checks if there are differences between local and remote config files
-func (gc *GitHubClient) hasConfigChanges(localFilePath, repoRelativePath string) (bool, error) {
-	repoFilePath := filepath.Join(gc.LocalPath, repoRelativePath)
-
-	// Check if the remote file exists
-	if _, err := os.Stat(repoFilePath); os.IsNotExist(err) {
-		// Remote file doesn't exist, so we have changes to push
-		terminal.PrintInfo("Remote file does not exist, will create new file")
-		return true, nil
-	}
-
-	// Read local file
-	localContent, err := os.ReadFile(localFilePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to read local file %s: %w", localFilePath, err)
-	}
-
-	// Read remote file
-	remoteContent, err := os.ReadFile(repoFilePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to read remote file %s: %w", repoFilePath, err)
-	}
-
-	// Compare file contents
-	areEqual := string(localContent) == string(remoteContent)
-	return !areEqual, nil
 }
 
 // getRepositoryURL returns the GitHub repository URL for display
@@ -639,7 +542,7 @@ func (gc *GitHubClient) getCommittedFiles(targetDir, appName string) ([]string, 
 type DiffSummary struct {
 	GitStatOutput string // Git's native --stat output
 	FullDiff      string // Full diff for small changes
-	FilesPrepared bool   // Indicates if files are already copied to repo for push
+	TotalFiles    int    // Simple count of changed files
 }
 
 // GetDiffPreview generates diff preview for both anvil and app configs before pushing
@@ -649,23 +552,14 @@ func (gc *GitHubClient) GetDiffPreview(ctx context.Context, sourcePath, targetPa
 		return nil, err
 	}
 
-	// Auto-detect if this is anvil config based on explicit target path
-	isAnvilConfig := strings.HasSuffix(targetPath, "anvil/settings.yaml")
-
-	// Use appropriate change detection
-	var hasChanges bool
-	var err error
-	if isAnvilConfig {
-		hasChanges, err = gc.hasConfigChanges(sourcePath, targetPath)
-	} else {
-		hasChanges, err = gc.hasAppConfigChanges(sourcePath, targetPath)
-	}
+	// Use unified change detection for all configs
+	hasChanges, err := gc.hasAppConfigChanges(sourcePath, targetPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check for config changes: %w", err)
 	}
 
 	if !hasChanges {
-		return &DiffSummary{GitStatOutput: "", FullDiff: "", FilesPrepared: false}, nil
+		return &DiffSummary{GitStatOutput: "", FullDiff: "", TotalFiles: 0}, nil
 	}
 
 	return gc.generateGitDiff(ctx, sourcePath, targetPath)
@@ -727,27 +621,13 @@ func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetP
 		}
 	}
 
-	// Always reset staging area and clean up copied files
+	// Always reset staging area
 	system.RunCommandWithTimeout(ctx, constants.GitCommand, "reset", "HEAD")
-
-	// Remove the copied files to avoid conflicts with actual push
-	// Check what we actually copied based on source type
-	sourceInfo, err := os.Stat(sourcePath)
-	if err == nil {
-		targetFullPath := filepath.Join(gc.LocalPath, targetPath)
-		if sourceInfo.IsDir() {
-			// Source was a directory - remove the copied directory
-			os.RemoveAll(targetFullPath)
-		} else {
-			// Source was a file - remove the copied file
-			os.Remove(targetFullPath)
-		}
-	}
 
 	return &DiffSummary{
 		GitStatOutput: statResult.Output,
 		FullDiff:      fullDiff,
-		FilesPrepared: false, // Files are NOT prepared since we cleaned them up
+		TotalFiles:    gc.extractFileCount(statResult.Output),
 	}, nil
 }
 
@@ -756,4 +636,27 @@ func (gc *GitHubClient) isSingleSmallFile(statOutput string) bool {
 	// Only get full diff for single files with reasonable size
 	return strings.Contains(statOutput, "1 file changed") &&
 		strings.Count(statOutput, "+")+strings.Count(statOutput, "-") <= 50
+}
+
+// extractFileCount parses the file count from Git's stat output
+func (gc *GitHubClient) extractFileCount(statOutput string) int {
+	if strings.TrimSpace(statOutput) == "" {
+		return 0
+	}
+
+	// Parse "1 file changed" or "2 files changed"
+	if strings.Contains(statOutput, "1 file changed") {
+		return 1
+	}
+
+	// Use regex to extract number from "X files changed"
+	re := regexp.MustCompile(`(\d+) files changed`)
+	matches := re.FindStringSubmatch(statOutput)
+	if len(matches) >= 2 {
+		if count, err := strconv.Atoi(matches[1]); err == nil {
+			return count
+		}
+	}
+
+	return 0
 }
