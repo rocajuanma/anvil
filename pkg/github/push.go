@@ -82,75 +82,8 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 	return nil
 }
 
-// PushAnvilConfig pushes the anvil settings.yaml to the repository
-func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
-	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
-	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
-		return nil, err
-	}
-
-	// Ensure repository is ready
-	if err := gc.ensureRepositoryReady(ctx); err != nil {
-		return nil, err
-	}
-
-	// Check if there are differences before proceeding
-	hasChanges, err := gc.hasConfigChanges(settingsPath, "anvil/settings.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to check for config changes: %w", err)
-	}
-
-	if !hasChanges {
-		terminal.PrintSuccess("Configuration is up-to-date!")
-		terminal.PrintInfo("Local anvil settings match the remote repository.")
-		terminal.PrintInfo("No changes to push.")
-		return nil, nil
-	}
-
-	terminal.PrintInfo("Differences detected between local and remote configuration")
-
-	// Generate branch name with timestamp
-	branchName := generateTimestampedBranchName("config-push")
-
-	// Create and checkout new branch
-	if err := gc.createAndCheckoutBranch(ctx, branchName); err != nil {
-		return nil, err
-	}
-
-	// Copy anvil settings to repo
-	targetDir := filepath.Join(gc.LocalPath, "anvil")
-	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
-		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-anvil", err)
-	}
-
-	targetFile := filepath.Join(targetDir, "settings.yaml")
-	if err := copyFile(settingsPath, targetFile); err != nil {
-		return nil, errors.NewFileSystemError(constants.OpPush, "copy-settings", err)
-	}
-
-	// Commit changes
-	commitMessage := "anvil[push]: anvil"
-	if err := gc.commitChanges(ctx, commitMessage); err != nil {
-		return nil, err
-	}
-
-	// Push branch
-	if err := gc.pushBranch(ctx, branchName); err != nil {
-		return nil, err
-	}
-
-	result := &PushConfigResult{
-		BranchName:     branchName,
-		CommitMessage:  commitMessage,
-		RepositoryURL:  gc.getRepositoryURL(),
-		FilesCommitted: []string{"anvil/settings.yaml"},
-	}
-
-	return result, nil
-}
-
-// PushAppConfig pushes application configuration files to the repository
-func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
+// PushConfig pushes configuration files to the repository (unified function for both anvil and app configs)
+func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
 	// 🚨 CRITICAL SECURITY CHECK: Verify repository is private before ANY push operations
 	if err := gc.verifyRepositoryPrivacy(ctx); err != nil {
 		return nil, err
@@ -165,7 +98,7 @@ func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath s
 	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
 	hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check for app config changes: %w", err)
+		return nil, fmt.Errorf("failed to check for config changes: %w", err)
 	}
 
 	if !hasChanges {
@@ -185,7 +118,7 @@ func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath s
 		return nil, err
 	}
 
-	// Copy app configs to repo
+	// Copy configs to repo
 	targetDir := filepath.Join(gc.LocalPath, appName)
 	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
 		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
@@ -221,6 +154,16 @@ func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath s
 	}
 
 	return result, nil
+}
+
+// PushAppConfig is a wrapper for backwards compatibility - delegates to unified PushConfig
+func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
+	return gc.PushConfig(ctx, appName, configPath)
+}
+
+// PushAnvilConfig is a wrapper for backwards compatibility - delegates to unified PushConfig
+func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
+	return gc.PushConfig(ctx, "anvil", settingsPath)
 }
 
 // ensureRepositoryReady ensures the repository is cloned and up to date
@@ -381,34 +324,6 @@ func generateTimestampedBranchName(prefix string) string {
 	dateStr := now.Format("02012006") // DDMMYYYY
 	timeStr := now.Format("1504")     // HHMM (24h format)
 	return fmt.Sprintf("%s-%s-%s", prefix, dateStr, timeStr)
-}
-
-// hasConfigChanges checks if there are differences between local and remote config files
-func (gc *GitHubClient) hasConfigChanges(localFilePath, repoRelativePath string) (bool, error) {
-	repoFilePath := filepath.Join(gc.LocalPath, repoRelativePath)
-
-	// Check if the remote file exists
-	if _, err := os.Stat(repoFilePath); os.IsNotExist(err) {
-		// Remote file doesn't exist, so we have changes to push
-		terminal.PrintInfo("Remote file does not exist, will create new file")
-		return true, nil
-	}
-
-	// Read local file
-	localContent, err := os.ReadFile(localFilePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to read local file %s: %w", localFilePath, err)
-	}
-
-	// Read remote file
-	remoteContent, err := os.ReadFile(repoFilePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to read remote file %s: %w", repoFilePath, err)
-	}
-
-	// Compare file contents
-	areEqual := string(localContent) == string(remoteContent)
-	return !areEqual, nil
 }
 
 // getRepositoryURL returns the GitHub repository URL for display
@@ -637,17 +552,8 @@ func (gc *GitHubClient) GetDiffPreview(ctx context.Context, sourcePath, targetPa
 		return nil, err
 	}
 
-	// Auto-detect if this is anvil config based on explicit target path
-	isAnvilConfig := strings.HasSuffix(targetPath, "anvil/settings.yaml")
-
-	// Use appropriate change detection
-	var hasChanges bool
-	var err error
-	if isAnvilConfig {
-		hasChanges, err = gc.hasConfigChanges(sourcePath, targetPath)
-	} else {
-		hasChanges, err = gc.hasAppConfigChanges(sourcePath, targetPath)
-	}
+	// Use unified change detection for all configs
+	hasChanges, err := gc.hasAppConfigChanges(sourcePath, targetPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check for config changes: %w", err)
 	}
