@@ -146,7 +146,6 @@ func pushAppConfig(appName string) error {
 	diffSummary, err := githubClient.GetDiffPreview(ctx, configPath, targetPath)
 	if err != nil {
 		terminal.PrintWarning("Unable to generate diff preview: %v", err)
-		diffSummary = &github.DiffSummary{FilesPrepared: false} // Default to not prepared
 	} else {
 		showDiffOutput(diffSummary)
 	}
@@ -158,9 +157,9 @@ func pushAppConfig(appName string) error {
 		return nil
 	}
 
-	// Stage 6: Push configuration (skip file copying if already prepared)
+	// Stage 6: Push configuration
 	terminal.PrintStage(fmt.Sprintf("Pushing %s configuration to repository...", appName))
-	result, err := githubClient.PushAppConfigInternal(ctx, appName, configPath, diffSummary.FilesPrepared)
+	result, err := githubClient.PushAppConfig(ctx, appName, configPath)
 	if err != nil {
 		return errors.NewInstallationError(constants.OpPush, "push-app-config", err)
 	}
@@ -279,7 +278,6 @@ func pushAnvilConfig() error {
 	diffSummary, err := githubClient.GetDiffPreview(ctx, settingsPath, "anvil/settings.yaml")
 	if err != nil {
 		terminal.PrintWarning("Unable to generate diff preview: %v", err)
-		diffSummary = &github.DiffSummary{FilesPrepared: false} // Default to not prepared
 	} else {
 		showDiffOutput(diffSummary)
 	}
@@ -291,9 +289,9 @@ func pushAnvilConfig() error {
 		return nil
 	}
 
-	// Stage 4: Push configuration (skip file copying if already prepared)
+	// Stage 4: Push configuration
 	terminal.PrintStage("Pushing configuration to repository...")
-	result, err := githubClient.PushAnvilConfigInternal(ctx, settingsPath, diffSummary.FilesPrepared)
+	result, err := githubClient.PushAnvilConfig(ctx, settingsPath)
 	if err != nil {
 		return errors.NewInstallationError(constants.OpPush, "push-config", err)
 	}
@@ -324,7 +322,7 @@ func pushAnvilConfig() error {
 
 // showDiffOutput displays diff information using Git's native output
 func showDiffOutput(diffSummary *github.DiffSummary) {
-	if diffSummary.GitStatOutput == "" {
+	if diffSummary.TotalFiles == 0 {
 		terminal.PrintInfo("No changes detected")
 		return
 	}
@@ -333,11 +331,13 @@ func showDiffOutput(diffSummary *github.DiffSummary) {
 	terminal.PrintHeader("📋 Changes to be pushed:")
 
 	// Show Git's native stat output directly
-	terminal.PrintInfo("")
-	terminal.PrintInfo(diffSummary.GitStatOutput)
+	if diffSummary.GitStatOutput != "" {
+		terminal.PrintInfo("")
+		terminal.PrintInfo(diffSummary.GitStatOutput)
+	}
 
-	// Show full diff if available (already determined by isSingleSmallFile)
-	if diffSummary.FullDiff != "" {
+	// For single small files, show full diff
+	if diffSummary.TotalFiles == 1 && diffSummary.FullDiff != "" {
 		lines := strings.Split(diffSummary.FullDiff, "\n")
 		if len(lines) <= 50 {
 			terminal.PrintInfo("")
