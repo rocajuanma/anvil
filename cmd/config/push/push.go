@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
@@ -98,16 +97,7 @@ func pushAppConfig(appName string) error {
 	terminal.PrintInfo("Config path: %s", configPath)
 
 	// Stage 3: 🚨 SECURITY WARNING
-	terminal.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
-	terminal.PrintInfo("   • API keys, tokens, and credentials")
-	terminal.PrintInfo("   • Personal file paths and system information")
-	terminal.PrintInfo("   • Private development environment details")
-	terminal.PrintInfo("")
-	terminal.PrintInfo("🛡️  Anvil REQUIRES private repositories for security")
-	terminal.PrintInfo("   • Repository '%s' must be PRIVATE", anvilConfig.GitHub.ConfigRepo)
-	terminal.PrintInfo("   • Public repositories will be BLOCKED")
-	terminal.PrintInfo("   • Verify at: https://github.com/%s/settings", anvilConfig.GitHub.ConfigRepo)
-	terminal.PrintInfo("")
+	showSecurityWarning(anvilConfig.GitHub.ConfigRepo)
 
 	// Stage 4: Authentication setup
 	terminal.PrintStage("Setting up authentication...")
@@ -170,44 +160,9 @@ func pushAppConfig(appName string) error {
 		return nil
 	}
 
-	// Display success message for actual push
-	terminal.PrintHeader("Push Complete!")
-	terminal.PrintSuccess(fmt.Sprintf("%s configuration push completed successfully!", appName))
-	terminal.PrintInfo("")
-	terminal.PrintInfo("📋 Push Summary:")
-	terminal.PrintInfo("  • Branch created: %s", result.BranchName)
-	terminal.PrintInfo("  • Commit message: %s", result.CommitMessage)
-	terminal.PrintInfo("  • Files committed: %v", result.FilesCommitted)
-	terminal.PrintInfo("")
-	terminal.PrintInfo("🔗 Repository: %s", result.RepositoryURL)
-	terminal.PrintInfo("🌿 Branch: %s", result.BranchName)
-	terminal.PrintInfo("")
-	terminal.PrintSuccess("You can now create a Pull Request on GitHub to merge these changes!")
-	terminal.PrintInfo("Direct link: %s/compare/%s...%s", result.RepositoryURL, anvilConfig.GitHub.Branch, result.BranchName)
+	displaySuccessMessage(appName, result, diffSummary, anvilConfig)
 
 	return nil
-}
-
-// handleAppLocationError provides helpful error messages for app location resolution failures
-func handleAppLocationError(appName string, err error) error {
-	if strings.Contains(err.Error(), "not found in configs or temp directory") {
-		terminal.PrintError("App '%s' is not known to anvil", appName)
-		terminal.PrintInfo("")
-		terminal.PrintInfo("💡 To push app configurations:")
-		terminal.PrintInfo("")
-		terminal.PrintInfo("1. Configure the app's local config path in settings.yaml:")
-		terminal.PrintInfo("")
-		terminal.PrintInfo("configs:")
-		terminal.PrintInfo("  %s: /path/to/your/%s/configs", appName, appName)
-		terminal.PrintInfo("")
-		terminal.PrintInfo("2. Or pull the app's configs first to discover it:")
-		terminal.PrintInfo("   anvil config pull %s", appName)
-		terminal.PrintInfo("")
-		terminal.PrintInfo("3. Then configure the local path in settings.yaml")
-		return fmt.Errorf("app not configured")
-	}
-
-	return fmt.Errorf("failed to resolve app location: %w", err)
 }
 
 // pushAnvilConfig pushes the anvil settings.yaml to the repository
@@ -228,17 +183,7 @@ func pushAnvilConfig() error {
 	}
 	terminal.PrintSuccess("Configuration loaded successfully")
 
-	// 🚨 SECURITY WARNING: Remind users about private repository requirement
-	terminal.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
-	terminal.PrintInfo("   • API keys, tokens, and credentials")
-	terminal.PrintInfo("   • Personal file paths and system information")
-	terminal.PrintInfo("   • Private development environment details")
-	terminal.PrintInfo("")
-	terminal.PrintInfo("🛡️  Anvil REQUIRES private repositories for security")
-	terminal.PrintInfo("   • Repository '%s' must be PRIVATE", anvilConfig.GitHub.ConfigRepo)
-	terminal.PrintInfo("   • Public repositories will be BLOCKED")
-	terminal.PrintInfo("   • Verify at: https://github.com/%s/settings", anvilConfig.GitHub.ConfigRepo)
-	terminal.PrintInfo("")
+	showSecurityWarning(anvilConfig.GitHub.ConfigRepo)
 
 	// Stage 2: Authentication setup
 	terminal.PrintStage("Setting up authentication...")
@@ -247,9 +192,9 @@ func pushAnvilConfig() error {
 		token = os.Getenv(anvilConfig.GitHub.TokenEnvVar)
 		if token == "" {
 			terminal.PrintWarning("GitHub token not found in environment variable: %s", anvilConfig.GitHub.TokenEnvVar)
-			terminal.PrintInfo("Proceeding with SSH authentication if available...")
+			terminal.PrintInfo("Proceeding with SSH authentication if available...\n")
 		} else {
-			terminal.PrintSuccess("GitHub token found in environment")
+			terminal.PrintSuccess("GitHub token found in environment\n")
 		}
 	}
 
@@ -302,58 +247,9 @@ func pushAnvilConfig() error {
 		return nil
 	}
 
-	// Display success message for actual push
-	terminal.PrintHeader("Push Complete!")
-	terminal.PrintSuccess("Configuration push completed successfully!")
-	terminal.PrintInfo("")
-	terminal.PrintInfo("📋 Push Summary:")
-	terminal.PrintInfo("  • Branch created: %s", result.BranchName)
-	terminal.PrintInfo("  • Commit message: %s", result.CommitMessage)
-	terminal.PrintInfo("  • Files committed: %v", result.FilesCommitted)
-	terminal.PrintInfo("")
-	terminal.PrintInfo("🔗 Repository: %s", result.RepositoryURL)
-	terminal.PrintInfo("🌿 Branch: %s", result.BranchName)
-	terminal.PrintInfo("")
-	terminal.PrintSuccess("You can now create a Pull Request on GitHub to merge these changes!")
-	terminal.PrintInfo("Direct link: %s/compare/%s...%s", result.RepositoryURL, anvilConfig.GitHub.Branch, result.BranchName)
+	displaySuccessMessage("anvil", result, diffSummary, anvilConfig)
 
 	return nil
-}
-
-// showDiffOutput displays diff information using Git's native output
-func showDiffOutput(diffSummary *github.DiffSummary) {
-	if diffSummary.TotalFiles == 0 {
-		terminal.PrintInfo("No changes detected")
-		return
-	}
-
-	terminal.PrintInfo("")
-	terminal.PrintHeader("📋 Changes to be pushed:")
-
-	// Show Git's native stat output directly
-	if diffSummary.GitStatOutput != "" {
-		terminal.PrintInfo("")
-		terminal.PrintInfo(diffSummary.GitStatOutput)
-	}
-
-	// For single small files, show full diff
-	if diffSummary.TotalFiles == 1 && diffSummary.FullDiff != "" {
-		lines := strings.Split(diffSummary.FullDiff, "\n")
-		if len(lines) <= 50 {
-			terminal.PrintInfo("")
-			terminal.PrintInfo("📄 Full diff:")
-			terminal.PrintInfo("")
-			terminal.PrintInfo(diffSummary.FullDiff)
-		} else {
-			terminal.PrintInfo("")
-			terminal.PrintInfo("📄 Diff preview (first 50 lines):")
-			terminal.PrintInfo("")
-			terminal.PrintInfo(strings.Join(lines[:50], "\n"))
-			terminal.PrintInfo("")
-			terminal.PrintInfo("... [diff truncated] ...")
-		}
-	}
-	terminal.PrintInfo("")
 }
 
 func init() {
