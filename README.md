@@ -29,6 +29,45 @@
 
 ### Installation
 
+Choose your preferred installation method:
+
+#### **📦 Pre-built Binary (Recommended)**
+
+**Quick Install (macOS/Linux):**
+```bash
+# Option 1: Download from latest release (works with private repos)
+curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+
+# Option 2: Direct from repo (requires public repo)
+curl -sSL https://raw.githubusercontent.com/rocajuanma/anvil/main/install.sh | bash
+```
+
+**Manual Download:**
+```bash
+# macOS Universal (Intel + Apple Silicon)
+curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-universal -o anvil
+chmod +x anvil && sudo mv anvil /usr/local/bin/
+
+# macOS Intel
+curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil
+chmod +x anvil && sudo mv anvil /usr/local/bin/
+
+# macOS Apple Silicon
+curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-arm64 -o anvil
+chmod +x anvil && sudo mv anvil /usr/local/bin/
+
+# Linux
+curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-linux-amd64 -o anvil
+chmod +x anvil && sudo mv anvil /usr/local/bin/
+```
+
+#### **🍺 Homebrew (Coming Soon)**
+```bash
+brew tap rocajuanma/anvil
+brew install anvil
+```
+
+#### **🔧 Build from Source**
 ```bash
 # Clone and build
 git clone https://github.com/rocajuanma/anvil.git
@@ -37,6 +76,11 @@ go build -o anvil main.go
 
 # Move to your PATH (optional)
 sudo mv anvil /usr/local/bin/
+```
+
+#### **⚡ Go Install**
+```bash
+go install github.com/rocajuanma/anvil@latest
 ```
 
 ### Basic Workflows

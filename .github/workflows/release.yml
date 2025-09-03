@@ -1,0 +1,128 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.2.0
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.17'
+
+    - name: Get version from tag
+      id: version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION="development"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+
+    - name: Build binaries
+      run: |
+        # Create dist directory
+        mkdir -p dist
+        
+        # Build for macOS Intel (amd64)
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-darwin-amd64 main.go
+        
+        # Build for macOS Apple Silicon (arm64)
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-darwin-arm64 main.go
+        
+        # Build for Linux amd64 (optional - for developers using Linux)
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-linux-amd64 main.go
+        
+        # Build for Linux arm64 (optional)
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-linux-arm64 main.go
+
+    - name: Generate checksums
+      run: |
+        cd dist
+        shasum -a 256 * > checksums.txt
+        cat checksums.txt
+
+    - name: Create universal macOS binary
+      run: |
+        # Create universal binary for macOS (combines Intel + Apple Silicon)
+        lipo -create -output dist/anvil-darwin-universal dist/anvil-darwin-amd64 dist/anvil-darwin-arm64
+        
+        # Update checksums
+        cd dist
+        shasum -a 256 anvil-darwin-universal >> checksums.txt
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        name: Anvil ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## 🎉 Anvil ${{ steps.version.outputs.VERSION }}
+          
+          ### 📦 Installation
+          
+          **macOS (Recommended - Universal Binary):**
+          ```bash
+          curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-universal -o anvil
+          chmod +x anvil
+          sudo mv anvil /usr/local/bin/
+          ```
+          
+          **macOS Intel:**
+          ```bash
+          curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-amd64 -o anvil
+          chmod +x anvil
+          sudo mv anvil /usr/local/bin/
+          ```
+          
+          **macOS Apple Silicon:**
+          ```bash
+          curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-arm64 -o anvil
+          chmod +x anvil
+          sudo mv anvil /usr/local/bin/
+          ```
+          
+          **Linux:**
+          ```bash
+          curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-linux-amd64 -o anvil
+          chmod +x anvil
+          sudo mv anvil /usr/local/bin/
+          ```
+          
+          ### ✅ Verify Installation
+          ```bash
+          anvil --version
+          anvil doctor
+          ```
+          
+          ---
+          
+          **📋 Checksums:** See `checksums.txt` for file verification
+          
+          **🐛 Issues?** Report them [here](https://github.com/rocajuanma/anvil/issues)
+        files: |
+          dist/anvil-darwin-universal
+          dist/anvil-darwin-amd64
+          dist/anvil-darwin-arm64
+          dist/anvil-linux-amd64
+          dist/anvil-linux-arm64
+          dist/checksums.txt
+          install.sh
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
