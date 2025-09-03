@@ -137,10 +137,15 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		cleanedCount++
+		itemName := filepath.Base(itemPath)
 		if info, err := os.Stat(itemPath); err == nil && info.IsDir() {
-			terminal.PrintSuccess("Cleaned contents of directory " + filepath.Base(itemPath))
+			if itemName == "dotfiles" {
+				terminal.PrintSuccess("Removed dotfiles directory completely")
+			} else {
+				terminal.PrintSuccess("Cleaned contents of directory " + itemName)
+			}
 		} else {
-			terminal.PrintSuccess("Cleaned " + filepath.Base(itemPath))
+			terminal.PrintSuccess("Cleaned " + itemName)
 		}
 	}
 
@@ -181,8 +186,19 @@ func cleanItem(itemPath string) error {
 	}
 
 	if info.IsDir() {
-		// For directories, remove contents but preserve the directory structure
-		// This is important for directories like temp/, archive/, dotfiles/ that are needed by the tool
+		itemName := filepath.Base(itemPath)
+
+		// Special handling for dotfiles directory - remove it completely
+		if itemName == "dotfiles" {
+			// Remove the entire dotfiles directory to ensure clean git repository state
+			if err := os.RemoveAll(itemPath); err != nil {
+				return fmt.Errorf("failed to remove dotfiles directory: %w", err)
+			}
+			return nil
+		}
+
+		// For other directories (temp/, archive/), remove contents but preserve the directory structure
+		// This is important for directories that are needed by the tool but can be empty
 		entries, err := os.ReadDir(itemPath)
 		if err != nil {
 			return fmt.Errorf("failed to read directory contents: %w", err)

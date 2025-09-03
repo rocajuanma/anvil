@@ -207,7 +207,8 @@ the essential settings.yaml configuration file.
 
 What it does:
 • 🧹 Removes all temporary files, archives, and downloaded configurations
-• 📁 Cleans up contents inside directories like temp/, archive/, dotfiles/ while preserving the directory structure
+• 📁 Cleans up contents inside temp/ and archive/ directories while preserving their structure
+• 🗂️ Completely removes dotfiles/ directory to ensure clean git repository state
 • ✅ Preserves your main settings.yaml file with all your configurations
 • 🔍 Shows exactly what will be deleted before proceeding
 • 🛡️ Requires confirmation unless --force flag is used
@@ -221,9 +222,10 @@ Use cases:
 
 Safety features:
 • Always preserves settings.yaml to maintain your configuration
-• Preserves essential directory structure (temp/, archive/, dotfiles/) for tool functionality
+• Preserves essential directory structure (temp/, archive/) for tool functionality
+• Completely removes dotfiles/ directory to ensure clean git repository state
 • Interactive confirmation prevents accidental deletions
 • Dry-run mode shows exactly what would be deleted
 • Force flag available for automated scripts
 
-This command is safe and will never delete your main configuration file or essential directories.`
+This command is safe and will never delete your main configuration file. The dotfiles directory will be completely removed to ensure the next pull/push operation works seamlessly.`
