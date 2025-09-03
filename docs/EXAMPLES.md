@@ -18,6 +18,11 @@ This document provides real-world examples and tutorials for using Anvil CLI eff
 
 **Scenario**: You just installed Anvil and want to set up your development environment.
 
+**Key Points:**
+- **🚀 Complete initialization** - Sets up your Anvil environment from scratch
+- **🔍 Health verification** - Ensures everything is working correctly
+- **📦 Tool installation** - Installs essential development tools
+
 ```bash
 # Step 1: Initialize Anvil
 $ anvil init
@@ -84,6 +89,11 @@ Successfully installed 4 of 4 tools in group 'dev'
 
 **Scenario**: You only need specific tools, not entire groups.
 
+**Key Points:**
+- **🔍 Preview capability** - See what would be installed before proceeding
+- **🎯 Selective installation** - Choose only the tools you need
+- **📝 Smart tracking** - Individual tools are automatically tracked
+
 ```bash
 # Preview what would be installed
 $ anvil install dev --dry-run
@@ -115,6 +125,11 @@ Installing oh-my-zsh...
 
 **Scenario**: Setting up essential applications on a new machine.
 
+**Key Points:**
+- **💻 Essential apps** - Communication, browser, and security tools
+- **🚀 Quick setup** - Get productive immediately on new hardware
+- **🔧 Team consistency** - Standard applications across team members
+
 ```bash
 # Initialize first
 $ anvil init
@@ -138,6 +153,11 @@ Successfully installed 3 of 3 tools in group 'new-laptop'
 ### Example 3.5: Organizing Applications into Groups
 
 **Scenario**: Installing applications and organizing them into logical groups for better management.
+
+**Key Points:**
+- **🗂️ Logical organization** - Group related applications together
+- **📋 Better management** - Easier to track and maintain tool collections
+- **🎯 Targeted installation** - Install entire groups with one command
 
 ```bash
 # Initialize first
@@ -185,6 +205,54 @@ Custom Groups:
 
 Individually Tracked Apps:
   (none - all apps are organized in groups)
+```
+
+### Example 3.6: Environment Maintenance and Cleanup
+
+**Scenario**: Regular maintenance of your Anvil environment to free disk space and organize files.
+
+**Key Points:**
+- **🧹 Disk space management** - Remove temporary files and old archives
+- **🔍 Preview changes** - See what will be cleaned before deletion
+- **🛡️ Safe operations** - Settings and directory structure are preserved
+
+```bash
+# Preview what would be cleaned
+$ anvil clean --dry-run
+
+=== Cleaning Anvil Directories ===
+
+🔧 Scanning .anvil directory for content to clean
+
+Found 3 root directories to clean:
+Directory structure to be cleaned:
+  📁 temp (2)
+    ├── cursor
+    ├── vscode
+  📁 archive (1)
+    ├── 2025-01-15-1430
+  📁 dotfiles (5)
+    ├── .git
+    ├── cursor
+    ├── vscode
+    ├── README.md
+    ├── .gitignore
+
+DRY RUN: Would clean contents of 3 root directories
+
+# Perform the actual cleanup
+$ anvil clean
+
+=== Cleaning Anvil Directories ===
+
+🔧 Scanning .anvil directory for content to clean
+🔧 Cleaning directories and files
+
+✅ Cleaned contents of directory temp
+✅ Cleaned contents of directory archive  
+✅ Removed dotfiles directory completely
+
+Successfully cleaned contents of 3/3 root directories
 ```
 
 ## Development Workflows

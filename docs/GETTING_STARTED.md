@@ -60,10 +60,10 @@ anvil init
 
 This command will:
 
-- ✅ Validate and install required tools (Git, cURL, Homebrew on macOS)
-- ✅ Create necessary configuration directory (`~/.anvil/`)
-- ✅ Generate default `settings.yaml` configuration
-- ✅ Check your environment and provide recommendations
+- **✅ Validate and install required tools** - Git, cURL, Homebrew on macOS
+- **📁 Create necessary configuration directory** - `~/.anvil/`
+- **⚙️ Generate default settings.yaml** - Configuration file
+- **🔍 Check your environment** - Provide recommendations
 
 **Expected output:**
 
@@ -92,11 +92,11 @@ anvil doctor
 
 This command will:
 
-- ✅ Verify anvil initialization is complete with **real-time progress feedback**
-- ✅ Check that all required dependencies are installed and functional
-- ✅ Validate your configuration settings
-- ✅ Test connectivity to external services (if configured)
-- ✅ Show **live progress indicators** so you know exactly what's happening
+- **✅ Verify anvil initialization** - Complete with real-time progress feedback
+- **🔧 Check dependencies** - All required dependencies are installed and functional
+- **⚙️ Validate configuration** - Your configuration settings
+- **🔗 Test connectivity** - External services (if configured)
+- **📊 Show live progress** - Indicators so you know exactly what's happening
 
 **What to expect:**
 
@@ -196,10 +196,10 @@ anvil install dev
 
 This installs:
 
-- **Git** - Version control
-- **Zsh** - Advanced shell with oh-my-zsh
-- **iTerm2** - Enhanced terminal (macOS)
-- **VS Code** - Code editor
+- **📝 Git** - Version control
+- **🐚 Zsh** - Advanced shell with oh-my-zsh
+- **💻 iTerm2** - Enhanced terminal (macOS)
+- **🎨 VS Code** - Code editor
 
 #### New Laptop Essentials
 
@@ -211,9 +211,9 @@ anvil install new-laptop
 
 This installs:
 
-- **Slack** - Team communication
-- **Chrome** - Web browser
-- **1Password** - Password manager
+- **💬 Slack** - Team communication
+- **🌐 Chrome** - Web browser
+- **🔐 1Password** - Password manager
 
 #### Preview Before Installing
 

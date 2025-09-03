@@ -26,12 +26,12 @@ The `config` command provides centralized management of configuration files and 
 
 ### Features
 
-- **📁 Centralize configurations** - Store all your dotfiles and configuration files in a **PRIVATE** GitHub repository
-- **🔄 Sync across machines** - Keep consistent configurations across all your development environments
-- **📦 Directory-specific operations** - Pull only the configuration directory you need
-- **🛡️ Version control** - Track changes to your configurations over time with full privacy protection
-- **👥 Team sharing** - Share team configurations and best practices through private repositories
-- **🔒 Security-first** - Mandatory private repository validation prevents data exposure
+- **📁 Centralize Configurations** - Store all your dotfiles and configuration files in a **PRIVATE** GitHub repository
+- **🔄 Sync Across Machines** - Keep consistent configurations across all your development environments
+- **📦 Directory-Specific Operations** - Pull only the configuration directory you need
+- **🛡️ Version Control** - Track changes to your configurations over time with full privacy protection
+- **👥 Team Sharing** - Share team configurations and best practices through private repositories
+- **🔒 Security-First** - Mandatory private repository validation prevents data exposure
 
 ### Current Implementation Status
 
@@ -74,9 +74,9 @@ anvil config show cursor
 
 **Features:**
 
-- 📄 Single file display: Shows file content directly in terminal
-- 📁 Multiple files: Shows tree structure with file listings
-- ✅ Smart file detection: Automatically determines best display method
+- **📄 Single File Display** - Shows file content directly in terminal
+- **📁 Multiple Files** - Shows tree structure with file listings
+- **✅ Smart File Detection** - Automatically determines best display method
 
 ### anvil config sync [app-name]
 
@@ -114,12 +114,12 @@ anvil config sync obsidian --dry-run
 
 **Features:**
 
-- 📋 Safe configuration override: Always archives existing configs before applying new ones
-- ✅ Interactive confirmation: Asks permission before overriding local files
-- 🔍 Dry-run support: Preview changes without applying them
-- 📦 Automatic archiving: Timestamped backups ensure you can always recover
-- 🎯 Smart path resolution: Uses your settings.yaml configs section for destinations
-- 💡 Clear error messages: Helpful guidance when configs or paths are missing
+- **📋 Safe Configuration Override** - Always archives existing configs before applying new ones
+- **✅ Interactive Confirmation** - Asks permission before overriding local files
+- **🔍 Dry-Run Support** - Preview changes without applying them
+- **📦 Automatic Archiving** - Timestamped backups ensure you can always recover
+- **🎯 Smart Path Resolution** - Uses your settings.yaml configs section for destinations
+- **💡 Clear Error Messages** - Helpful guidance when configs or paths are missing
 
 **Example sync workflow:**
 
