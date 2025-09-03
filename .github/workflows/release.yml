@@ -56,14 +56,12 @@ jobs:
         shasum -a 256 * > checksums.txt
         cat checksums.txt
 
-    - name: Create universal macOS binary
+    - name: Create universal macOS binary (macOS only)
       run: |
-        # Create universal binary for macOS (combines Intel + Apple Silicon)
-        lipo -create -output dist/anvil-darwin-universal dist/anvil-darwin-amd64 dist/anvil-darwin-arm64
-        
-        # Update checksums
-        cd dist
-        shasum -a 256 anvil-darwin-universal >> checksums.txt
+        # Note: We can't create universal binaries on Linux, so we'll provide separate arch binaries
+        # Users can download the appropriate one, or we could set up a macOS runner for this step
+        echo "Skipping universal binary creation on Linux runner"
+        echo "Providing separate intel and arm64 binaries instead"
 
     - name: Create release
       uses: softprops/action-gh-release@v1
@@ -74,13 +72,6 @@ jobs:
           ## 🎉 Anvil ${{ steps.version.outputs.VERSION }}
           
           ### 📦 Installation
-          
-          **macOS (Recommended - Universal Binary):**
-          ```bash
-          curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-universal -o anvil
-          chmod +x anvil
-          sudo mv anvil /usr/local/bin/
-          ```
           
           **macOS Intel:**
           ```bash
@@ -115,7 +106,6 @@ jobs:
           
           **🐛 Issues?** Report them [here](https://github.com/rocajuanma/anvil/issues)
         files: |
-          dist/anvil-darwin-universal
           dist/anvil-darwin-amd64
           dist/anvil-darwin-arm64
           dist/anvil-linux-amd64

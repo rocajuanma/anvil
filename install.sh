@@ -86,21 +86,9 @@ install_anvil() {
     
     print_status "Installing Anvil $version for $os-$arch"
     
-    # Use universal binary for macOS if available, otherwise use architecture-specific
-    if [ "$os" = "darwin" ]; then
-        local binary_name="anvil-darwin-universal"
-        local download_url="https://github.com/$REPO/releases/download/$version/$binary_name"
-        
-        # Check if universal binary exists, fallback to arch-specific
-        if ! curl -s --head "$download_url" | head -n 1 | grep -q "200 OK"; then
-            print_warning "Universal binary not available, using architecture-specific binary"
-            binary_name="anvil-$os-$arch"
-            download_url="https://github.com/$REPO/releases/download/$version/$binary_name"
-        fi
-    else
-        local binary_name="anvil-$os-$arch"
-        local download_url="https://github.com/$REPO/releases/download/$version/$binary_name"
-    fi
+    # Use architecture-specific binaries
+    local binary_name="anvil-$os-$arch"
+    local download_url="https://github.com/$REPO/releases/download/$version/$binary_name"
     
     print_status "Downloading from: $download_url"
     

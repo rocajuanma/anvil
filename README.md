@@ -43,10 +43,6 @@ curl -sSL https://raw.githubusercontent.com/rocajuanma/anvil/main/install.sh | b
 
 **Manual Download:**
 ```bash
-# macOS Universal (Intel + Apple Silicon)
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-universal -o anvil
-chmod +x anvil && sudo mv anvil /usr/local/bin/
-
 # macOS Intel
 curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil
 chmod +x anvil && sudo mv anvil /usr/local/bin/
