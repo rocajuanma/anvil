@@ -25,6 +25,17 @@ import (
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
 
+// showNewAppInfo displays information about new app additions
+func showNewAppInfo(appName, configPath string) {
+	terminal.PrintInfo("")
+	terminal.PrintHeader("🆕 New App Addition")
+	terminal.PrintInfo("App: %s", appName)
+	terminal.PrintInfo("Local path: %s", configPath)
+	terminal.PrintInfo("")
+	terminal.PrintInfo("This app will be added to the repository for the first time.")
+	terminal.PrintInfo("All configuration files will be committed to a new branch.")
+}
+
 // handleAppLocationError provides helpful error messages for app location resolution failures
 func handleAppLocationError(appName string, err error) error {
 	if strings.Contains(err.Error(), "not found in configs or temp directory") {
@@ -41,6 +52,8 @@ func handleAppLocationError(appName string, err error) error {
 		terminal.PrintInfo("   anvil config pull %s", appName)
 		terminal.PrintInfo("")
 		terminal.PrintInfo("3. Then configure the local path in settings.yaml")
+		terminal.PrintInfo("")
+		terminal.PrintInfo("4. For completely new apps, ensure the local path exists and contains config files")
 		return fmt.Errorf("app not configured")
 	}
 

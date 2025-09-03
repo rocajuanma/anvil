@@ -96,16 +96,48 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 
 	// Check if there are differences before proceeding
 	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
-	hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check for config changes: %w", err)
-	}
 
-	if !hasChanges {
-		terminal.PrintSuccess("Configuration is up-to-date!")
-		terminal.PrintInfo("Local %s configs match the remote repository.", appName)
-		terminal.PrintInfo("No changes to push.")
-		return nil, nil
+	// For new apps, we need to check if the target directory exists in the repo
+	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
+	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
+		// Target doesn't exist in repo - this is a new app
+		// Verify the local path actually exists and has content
+		if localInfo, err := os.Stat(configPath); err == nil {
+			if localInfo.IsDir() {
+				// Check if directory has files
+				entries, err := os.ReadDir(configPath)
+				if err == nil && len(entries) > 0 {
+					terminal.PrintInfo("New app '%s' detected - will be added to repository", appName)
+				} else {
+					terminal.PrintSuccess("Configuration is up-to-date!")
+					terminal.PrintInfo("Local %s configs match the remote repository.", appName)
+					terminal.PrintInfo("No changes to push.")
+					return nil, nil
+				}
+			} else if localInfo.Size() > 0 {
+				terminal.PrintInfo("New app '%s' detected - will be added to repository", appName)
+			} else {
+				terminal.PrintSuccess("Configuration is up-to-date!")
+				terminal.PrintInfo("Local %s configs match the remote repository.", appName)
+				terminal.PrintInfo("No changes to push.")
+				return nil, nil
+			}
+		} else {
+			return nil, fmt.Errorf("local config path is invalid: %w", err)
+		}
+	} else {
+		// Target exists in repo - check for changes
+		hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check for config changes: %w", err)
+		}
+
+		if !hasChanges {
+			terminal.PrintSuccess("Configuration is up-to-date!")
+			terminal.PrintInfo("Local %s configs match the remote repository.", appName)
+			terminal.PrintInfo("No changes to push.")
+			return nil, nil
+		}
 	}
 
 	terminal.PrintInfo("Differences detected between local and remote %s configuration", appName)
@@ -339,9 +371,21 @@ func (gc *GitHubClient) hasAppConfigChanges(localConfigPath, targetPath string) 
 	// Check if the target directory exists in the repo
 	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
 
-	// If target doesn't exist in repo, there are definitely changes
+	// If target doesn't exist in repo, this is a new app
 	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
-		return true, nil
+		// Verify the local path actually exists and has content
+		if localInfo, err := os.Stat(localConfigPath); err == nil {
+			if localInfo.IsDir() {
+				// Check if directory has files
+				entries, err := os.ReadDir(localConfigPath)
+				if err == nil && len(entries) > 0 {
+					return true, nil // New app with content
+				}
+			} else if localInfo.Size() > 0 {
+				return true, nil // New file with content
+			}
+		}
+		return false, fmt.Errorf("local config path is empty or invalid")
 	}
 
 	// Compare the local config with the repo version
@@ -552,17 +596,85 @@ func (gc *GitHubClient) GetDiffPreview(ctx context.Context, sourcePath, targetPa
 		return nil, err
 	}
 
-	// Use unified change detection for all configs
-	hasChanges, err := gc.hasAppConfigChanges(sourcePath, targetPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check for config changes: %w", err)
-	}
-
-	if !hasChanges {
+	// Use the same change detection logic as the actual push
+	// Check if the target directory exists in the repo
+	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
+	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
+		// Target doesn't exist in repo - this is a new app
+		// Verify the local path actually exists and has content
+		if localInfo, err := os.Stat(sourcePath); err == nil {
+			if localInfo.IsDir() {
+				// Check if directory has files
+				entries, err := os.ReadDir(sourcePath)
+				if err == nil && len(entries) > 0 {
+					// New app with content - generate diff
+					return gc.generateGitDiff(ctx, sourcePath, targetPath)
+				}
+			} else if localInfo.Size() > 0 {
+				// New file with content - generate diff
+				return gc.generateGitDiff(ctx, sourcePath, targetPath)
+			}
+		}
+		// No content or invalid path
 		return &DiffSummary{GitStatOutput: "", FullDiff: "", TotalFiles: 0}, nil
+	} else {
+		// Target exists in repo - check for changes using existing logic
+		hasChanges, err := gc.hasAppConfigChanges(sourcePath, targetPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check for config changes: %w", err)
+		}
+
+		if !hasChanges {
+			return &DiffSummary{GitStatOutput: "", FullDiff: "", TotalFiles: 0}, nil
+		}
+
+		return gc.generateGitDiff(ctx, sourcePath, targetPath)
+	}
+}
+
+// generateNewAppDiff generates a diff preview for new apps without modifying repository state
+func (gc *GitHubClient) generateNewAppDiff(ctx context.Context, sourcePath, targetPath string) (*DiffSummary, error) {
+	// For new apps, we'll simulate the diff by analyzing the local files
+	// This avoids modifying the repository state during preview
+
+	localInfo, err := os.Stat(sourcePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat source path: %w", err)
 	}
 
-	return gc.generateGitDiff(ctx, sourcePath, targetPath)
+	var fileCount int
+	var statOutput string
+
+	if localInfo.IsDir() {
+		// Count files in directory
+		entries, err := os.ReadDir(sourcePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read directory: %w", err)
+		}
+
+		fileCount = len(entries)
+		if fileCount > 0 {
+			// Generate a simulated stat output for new files
+			statOutput = fmt.Sprintf(" %s/", targetPath)
+			for _, entry := range entries {
+				if !entry.IsDir() {
+					statOutput += fmt.Sprintf("\n %s/%s | 1 +\n", targetPath, entry.Name())
+				}
+			}
+			statOutput += fmt.Sprintf("\n %d files changed, %d insertions(+)\n", fileCount, fileCount)
+		}
+	} else {
+		// Single file
+		fileCount = 1
+		fileName := filepath.Base(sourcePath)
+		statOutput = fmt.Sprintf(" %s/%s | 1 +\n 1 file changed, 1 insertion(+)\n", targetPath, fileName)
+	}
+
+	return &DiffSummary{
+		GitStatOutput: statOutput,
+		FullDiff:      "", // No full diff for new apps in preview
+		TotalFiles:    fileCount,
+	}, nil
 }
 
 // generateGitDiff handles diff generation using Git's native capabilities (simplified)
@@ -578,6 +690,19 @@ func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetP
 		return nil, errors.NewFileSystemError(constants.OpPush, "chdir", err)
 	}
 
+	// Check if this is a new app (target doesn't exist in repo)
+	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
+	isNewApp := false
+	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
+		isNewApp = true
+	}
+
+	if isNewApp {
+		// For new apps, generate diff without copying files to avoid modifying repo state
+		return gc.generateNewAppDiff(ctx, sourcePath, targetPath)
+	}
+
+	// For existing apps, use the original logic
 	// Setup files based on target path type
 	if strings.HasSuffix(targetPath, ".yaml") || strings.HasSuffix(targetPath, ".yml") {
 		// Single file (anvil settings)

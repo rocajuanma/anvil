@@ -42,6 +42,18 @@ var PushCmd = &cobra.Command{
 	},
 }
 
+// isNewAppAddition checks if this is a new app that exists locally but not in remote
+func isNewAppAddition(appName string, anvilConfig *config.AnvilConfig) bool {
+	// Check if app exists in local configs but not in remote
+	if localPath, exists := anvilConfig.Configs[appName]; exists {
+		if _, err := os.Stat(localPath); err == nil {
+			// App exists locally and is configured
+			return true
+		}
+	}
+	return false
+}
+
 // runPushCommand executes the configuration push process
 func runPushCommand(cmd *cobra.Command, args []string) error {
 	// Option 2: App-specific config push
@@ -76,7 +88,18 @@ func pushAppConfig(appName string) error {
 	terminal.PrintStage("Resolving app configuration location...")
 	configPath, locationSource, err := config.ResolveAppLocation(appName)
 	if err != nil {
-		return handleAppLocationError(appName, err)
+		// Check if this is a new app addition
+		if isNewAppAddition(appName, anvilConfig) {
+			terminal.PrintInfo("🆕 New app '%s' detected - will be added to repository", appName)
+			// Get the configured path for new apps
+			if localPath, exists := anvilConfig.Configs[appName]; exists {
+				configPath = localPath
+			} else {
+				return handleAppLocationError(appName, err)
+			}
+		} else {
+			return handleAppLocationError(appName, err)
+		}
 	}
 
 	// Handle different location sources
@@ -95,6 +118,11 @@ func pushAppConfig(appName string) error {
 
 	terminal.PrintSuccess("App configuration location resolved")
 	terminal.PrintInfo("Config path: %s", configPath)
+
+	// Show new app information if this is a new addition
+	if isNewAppAddition(appName, anvilConfig) {
+		showNewAppInfo(appName, configPath)
+	}
 
 	// Stage 3: 🚨 SECURITY WARNING
 	showSecurityWarning(anvilConfig.GitHub.ConfigRepo)
