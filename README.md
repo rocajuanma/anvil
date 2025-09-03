@@ -230,6 +230,7 @@ github:
 | `config show [app]` | Show configurations    | `anvil config show neovim`  |
 | `config sync [app]` | Apply pulled configs   | `anvil config sync cursor`  |
 | `config push [app]` | Push configurations    | `anvil config push`         |
+| `clean`             | Clean anvil directories| `anvil clean`               |
 | `doctor`            | Run health checks      | `anvil doctor`              |
 | `doctor [category]` | Check specific area    | `anvil doctor dependencies` |
 | `doctor [check]`    | Run individual check   | `anvil doctor git-config`   |
@@ -253,6 +254,7 @@ github:
 | **[Installation Guide](docs/INSTALLATION.md)** | Platform-specific installation           |
 | **[Install Command](docs/install.md)**         | Deep-dive on tool installation           |
 | **[Configuration Management](docs/config.md)** | Complete config sync setup and workflows |
+| **[Clean Command](docs/clean.md)**             | Directory cleanup and maintenance        |
 | **[Doctor Command](docs/doctor.md)**           | Health checks and environment validation |
 | **[Examples & Tutorials](docs/EXAMPLES.md)**   | Real-world usage scenarios               |
 | **[Contributing](docs/CONTRIBUTING.md)**       | Development guidelines                   |

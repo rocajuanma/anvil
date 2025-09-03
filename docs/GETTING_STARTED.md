@@ -26,7 +26,7 @@ Anvil is a CLI automation tool that helps developers:
 
 ### Key Concepts
 
-- **Commands**: Actions you can perform (`init`, `install`, `config pull`, `config show`, `config sync`, `config push`, `doctor`)
+- **Commands**: Actions you can perform (`init`, `install`, `config pull`, `config show`, `config sync`, `config push`, `clean`, `doctor`)
 - **Groups**: Collections of related tools (`dev`, `new-laptop`, custom groups)
 - **Configuration**: Settings stored in `~/.anvil/settings.yaml`
 - **Health Checks**: Validation and troubleshooting via `anvil doctor`
@@ -150,6 +150,7 @@ anvil config pull --help
 anvil config show --help
 anvil config sync --help
 anvil config push --help
+anvil clean --help
 anvil doctor --help
 ```
 
@@ -601,6 +602,13 @@ anvil config push
 3. **Document your team's setup process**
 4. **Use consistent tool versions** when possible
 
+### 🧹 Maintenance Best Practices
+
+1. **Regular cleanup** with `anvil clean` to free disk space
+2. **Clean before major operations** to ensure fresh state
+3. **Use dry-run mode** to preview cleanups with `anvil clean --dry-run`
+4. **Maintain configurations** by cleaning old archives and temporary files
+
 ## Troubleshooting
 
 ### First Step: Run Health Check
@@ -734,6 +742,7 @@ Now that you're familiar with the basics:
 
 - **[Install Command Documentation](install.md)** - Deep dive into tool installation
 - **[Init Command Documentation](init.md)** - Understand initialization process
+- **[Clean Command Documentation](clean.md)** - Directory cleanup and maintenance
 - **[Examples and Tutorials](EXAMPLES.md)** - Real-world usage scenarios
 
 ### Customize Your Setup
@@ -775,6 +784,8 @@ anvil config sync cursor     # Apply pulled app configs
 anvil config sync --dry-run  # Preview sync changes
 anvil config push            # Push anvil settings to remote
 anvil config push cursor      # Push app configurations (in development)
+anvil clean                  # Clean anvil directories and temp files
+anvil clean --dry-run        # Preview cleanup without deletion
 anvil --help                   # Get help
 ```
 
