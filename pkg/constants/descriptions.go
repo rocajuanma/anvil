@@ -200,3 +200,32 @@ Examples:
 
 The doctor provides actionable recommendations for any issues found, shows real-time
 progress so you never wait in silence, and can automatically fix many common problems.`
+
+// Clean command descriptions
+const CLEAN_COMMAND_LONG_DESCRIPTION = `The clean command removes all content inside .anvil directories while preserving
+the essential settings.yaml configuration file.
+
+What it does:
+• 🧹 Removes all temporary files, archives, and downloaded configurations
+• 📁 Cleans up contents inside temp/ and archive/ directories while preserving their structure
+• 🗂️ Completely removes dotfiles/ directory to ensure clean git repository state
+• ✅ Preserves your main settings.yaml file with all your configurations
+• 🔍 Shows exactly what will be deleted before proceeding
+• 🛡️ Requires confirmation unless --force flag is used
+• 🧪 Supports --dry-run mode to preview changes without deletion
+
+Use cases:
+• Free up disk space by removing old temporary files and archives
+• Clean up after testing or development work
+• Reset to a clean state while keeping your settings
+• Remove downloaded configurations that are no longer needed
+
+Safety features:
+• Always preserves settings.yaml to maintain your configuration
+• Preserves essential directory structure (temp/, archive/) for tool functionality
+• Completely removes dotfiles/ directory to ensure clean git repository state
+• Interactive confirmation prevents accidental deletions
+• Dry-run mode shows exactly what would be deleted
+• Force flag available for automated scripts
+
+This command is safe and will never delete your main configuration file. The dotfiles directory will be completely removed to ensure the next pull/push operation works seamlessly.`

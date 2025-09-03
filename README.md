@@ -19,11 +19,10 @@
 
 ## ✨ Why Choose Anvil
 
-**🚀 Tool Installation** - Install your full tool-chain in one command using user defined groups and `anvil install <group-name>` or individual apps with smart deduplication. Perfect for engineers switching jobs, team onboarding or setting up new laptops.
-
-**🔄 Configuration Sync** - No more tracking multiple configs across machines. Safely sync all dotfiles using private GitHub repositories with automatic archiving and recovery.
-
-**🎯 Developer Experience** - Zero configuration required. Dry-run previews, beautiful output, and `anvil doctor` to automatically fix issues for you—just like popular CLI tools you already know.
+- **🚀 Tool Installation** - Install your full tool-chain in one command using user defined groups and `anvil install <group-name>` or individual apps with smart deduplication. Perfect for engineers switching jobs, team onboarding or setting up new laptops.
+- **🔄 Configuration Sync** - No more tracking multiple configs across machines. Safely sync all dotfiles using private GitHub repositories with automatic archiving and recovery.
+- **🎯 Developer Experience** - Zero configuration required. Dry-run previews, beautiful output, and `anvil doctor` to automatically fix issues for you—just like popular CLI tools you already know.
+- **🧹 Maintenance** - Clean and organize your development environment with smart cleanup tools that preserve essential configurations.
 
 ## 🚀 Quick Start
 
@@ -107,9 +106,9 @@ anvil install obsidian
 
 **🎯 Smart Features:**
 
-- Apps automatically tracked in `tools.installed_apps`
-- Duplicate prevention (won't track apps already in groups)
-- Manual installation detection (works with pre-installed apps)
+- **📝 Auto-tracking** - Apps automatically tracked in `tools.installed_apps`
+- **🚫 Duplicate prevention** - Won't track apps already in groups
+- **🔍 Manual detection** - Works with pre-installed apps
 
 ### Predefined Groups
 
@@ -230,6 +229,7 @@ github:
 | `config show [app]` | Show configurations    | `anvil config show neovim`  |
 | `config sync [app]` | Apply pulled configs   | `anvil config sync cursor`  |
 | `config push [app]` | Push configurations    | `anvil config push`         |
+| `clean`             | Clean anvil directories| `anvil clean`               |
 | `doctor`            | Run health checks      | `anvil doctor`              |
 | `doctor [category]` | Check specific area    | `anvil doctor dependencies` |
 | `doctor [check]`    | Run individual check   | `anvil doctor git-config`   |
@@ -237,11 +237,12 @@ github:
 
 ### Useful Flags
 
-- `--dry-run` - Preview installations and changes
-- `--list` - Show available groups and tracked apps
-- `--concurrent` - Enable parallel installation (faster)
-- `--verbose` - Show detailed output (doctor command)
-- `--fix` - Automatically fix detected issues (doctor command)
+- **`--dry-run`** - Preview installations and changes
+- **`--list`** - Show available groups and tracked apps
+- **`--concurrent`** - Enable parallel installation (faster)
+- **`--verbose`** - Show detailed output (doctor command)
+- **`--fix`** - Automatically fix detected issues (doctor command)
+- **`--force`** - Skip confirmation prompts (clean command)
 
 ## 📚 Documentation
 
@@ -253,6 +254,7 @@ github:
 | **[Installation Guide](docs/INSTALLATION.md)** | Platform-specific installation           |
 | **[Install Command](docs/install.md)**         | Deep-dive on tool installation           |
 | **[Configuration Management](docs/config.md)** | Complete config sync setup and workflows |
+| **[Clean Command](docs/clean.md)**             | Directory cleanup and maintenance        |
 | **[Doctor Command](docs/doctor.md)**           | Health checks and environment validation |
 | **[Examples & Tutorials](docs/EXAMPLES.md)**   | Real-world usage scenarios               |
 | **[Contributing](docs/CONTRIBUTING.md)**       | Development guidelines                   |
@@ -262,10 +264,10 @@ github:
 
 Optimized specifically for macOS with:
 
-- **Homebrew Integration** - Automatic installation and cask support
-- **Native Terminal Colors** - Beautiful output in Terminal.app and iTerm2
-- **GUI Application Support** - Seamless installation of Mac applications
-- **Application Detection** - Smart detection of manually installed apps
+- **🍺 Homebrew Integration** - Automatic installation and cask support
+- **🌈 Native Terminal Colors** - Beautiful output in Terminal.app and iTerm2
+- **📱 GUI Application Support** - Seamless installation of Mac applications
+- **🔍 Application Detection** - Smart detection of manually installed apps
 
 ## 📄 License
 

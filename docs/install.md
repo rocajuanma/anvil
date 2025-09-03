@@ -6,12 +6,12 @@ The `anvil install` command provides automated installation of development tools
 
 The install command serves several critical functions:
 
-- **🎯 Dynamic installation** - Install any macOS application with `anvil install [app-name]`
-- **📝 Smart tracking** - Individual apps automatically tracked in `tools.installed_apps`
-- **📦 Group management** - Predefined and custom tool groups for common scenarios
-- **🚀 Zero configuration** - Works out of the box with sensible defaults
-- **🔍 Dry-run support** - Preview installations before execution
-- **🍺 Homebrew integration** - Automatic installation and management
+- **🎯 Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
+- **📝 Smart Tracking** - Individual apps automatically tracked in `tools.installed_apps`
+- **📦 Group Management** - Predefined and custom tool groups for common scenarios
+- **🚀 Zero Configuration** - Works out of the box with sensible defaults
+- **🔍 Dry-Run Support** - Preview installations before execution
+- **🍺 Homebrew Integration** - Automatic installation and management
 
 ## Usage Modes
 
