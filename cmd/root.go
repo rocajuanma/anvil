@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rocajuanma/anvil/cmd/clean"
 	"github.com/rocajuanma/anvil/cmd/config"
 	"github.com/rocajuanma/anvil/cmd/doctor"
 	"github.com/rocajuanma/anvil/cmd/initcmd"
@@ -55,5 +56,6 @@ func init() {
 	rootCmd.AddCommand(install.InstallCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(doctor.DoctorCmd)
+	rootCmd.AddCommand(clean.CleanCmd)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

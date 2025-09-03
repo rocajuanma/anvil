@@ -50,6 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Automatic App Tracking** - Individual apps installed via `anvil install [app-name]` are automatically tracked in `tools.installed_apps`
 - **Smart Duplicate Prevention** - Prevents tracking apps already in groups, required_tools, or optional_tools
 - **Dynamic Individual Installation** - Install any Homebrew package by name with automatic tracking
+- **Clean Command** 🧹 - New `anvil clean` command for environment maintenance and cleanup
+  - **Smart Cleanup** - Removes temporary files, archives, and downloaded configurations while preserving settings.yaml
+  - **Directory Structure Preservation** - Maintains essential directories (temp/, archive/) for tool functionality
+  - **Complete Git Cleanup** - Fully removes dotfiles/ directory to ensure clean repository state
+  - **Safety Features** - Interactive confirmation, dry-run support, and settings preservation
+  - **Intelligent Handling** - Different cleanup strategies for different directory types
+  - **Usage Examples**: `anvil clean`, `anvil clean --dry-run`, `anvil clean --force`
 - **Configuration Pull System** - Complete implementation of `anvil config pull [directory]` command
 - **Configuration Show System** - New `anvil config show [directory]` command to view pulled configs and settings
 - **Configuration Sync System** - New `anvil config sync [directory]` command to reconcile settings with system state
