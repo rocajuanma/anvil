@@ -32,9 +32,8 @@ Choose your preferred installation method:
 
 #### **📦 Pre-built Binary (Recommended)**
 
-**Quick Install:**
+**Quick Install (Fresh install or update):**
 ```bash
-# Download from latest release
 curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
 ```
 

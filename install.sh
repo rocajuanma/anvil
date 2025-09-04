@@ -147,13 +147,8 @@ main() {
     # Check if already installed
     if command -v anvil > /dev/null 2>&1; then
         local current_version=$(anvil --version 2>/dev/null | head -n1 || echo "unknown")
-        print_warning "Anvil is already installed: $current_version"
-        read -p "Do you want to reinstall? [y/N]: " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            print_status "Installation cancelled"
-            exit 0
-        fi
+        print_status "Anvil is already installed: $current_version"
+        print_status "Updating to latest version..."
     fi
     
     install_anvil
