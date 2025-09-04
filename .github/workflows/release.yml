@@ -76,6 +76,7 @@ jobs:
           ### 🚀 Get Started in 30 Seconds
           ```bash
           curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+          anvil --version
           anvil init && anvil install dev
           ```
 
