@@ -56,7 +56,7 @@ curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-linux
 chmod +x anvil && sudo mv anvil /usr/local/bin/
 ```
 
-#### **🍺 Homebrew (Coming Soon)**
+#### **🍺 Homebrew**
 ```bash
 brew tap rocajuanma/anvil
 brew install anvil
