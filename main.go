@@ -17,6 +17,10 @@ package main
 
 import "github.com/rocajuanma/anvil/cmd"
 
+// version is set at build time via ldflags
+var version = "dev-local"
+
 func main() {
+	cmd.SetVersion(version)
 	cmd.Execute()
 }
