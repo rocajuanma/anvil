@@ -28,12 +28,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// appVersion holds the version set at build time
+var appVersion = "dev"
+
+// SetVersion sets the application version
+func SetVersion(v string) {
+	appVersion = v
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "anvil",
 	Short: "🔥 One CLI to rule them all.",
 	Long:  fmt.Sprintf("%s\n\n%s", constants.AnvilLogo, constants.ANVIL_LONG_DESCRIPTION),
 	Run: func(cmd *cobra.Command, args []string) {
+		// Check if version flag was used
+		if version, _ := cmd.Flags().GetBool("version"); version {
+			fmt.Printf("Anvil %s\n", appVersion)
+			return
+		}
+
 		fmt.Println(constants.AnvilLogo)
 		fmt.Println()
 		fmt.Println("🔥 One CLI to rule them all.")
@@ -57,5 +71,8 @@ func init() {
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(doctor.DoctorCmd)
 	rootCmd.AddCommand(clean.CleanCmd)
+
+	// Add version flag
+	rootCmd.Flags().BoolP("version", "v", false, "Show version information")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
