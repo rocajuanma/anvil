@@ -2,6 +2,8 @@
 
 This guide explains how to create a Homebrew tap for Anvil, allowing users to install with `brew install rocajuanma/anvil/anvil`.
 
+> **Note**: This setup is for the public repository. Since Anvil is open source, the standard Homebrew formula will work directly.
+
 ## 🚀 Quick Setup Steps
 
 ### 1. Create the Tap Repository
