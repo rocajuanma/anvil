@@ -71,8 +71,22 @@ jobs:
         body: |
           ## 🎉 Anvil ${{ steps.version.outputs.VERSION }}
           
-          ### 📦 Installation
-          
+          Install your entire development tool-chain in one command.
+
+          ### 🚀 Get Started in 30 Seconds
+          ```bash
+          curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+          anvil init && anvil install dev
+          ```
+
+          ### 💬 Join the Community
+          - 🎯 [Check out our docs](https://github.com/rocajuanma/anvil/blob/main/docs/GETTING_STARTED.md)
+          - 🐛 [Report issues](https://github.com/rocajuanma/anvil/issues)
+          - 💡 [Request features](https://github.com/rocajuanma/anvil/discussions)
+          - ⭐ Star us if Anvil saves you time!
+
+          ### 📦 Manual Downloads
+
           **macOS Intel:**
           ```bash
           curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-amd64 -o anvil
@@ -93,18 +107,9 @@ jobs:
           chmod +x anvil
           sudo mv anvil /usr/local/bin/
           ```
-          
-          ### ✅ Verify Installation
-          ```bash
-          anvil --version
-          anvil doctor
-          ```
-          
           ---
           
           **📋 Checksums:** See `checksums.txt` for file verification
-          
-          **🐛 Issues?** Report them [here](https://github.com/rocajuanma/anvil/issues)
         files: |
           dist/anvil-darwin-amd64
           dist/anvil-darwin-arm64
