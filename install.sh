@@ -127,7 +127,7 @@ install_anvil() {
     rm -rf "$tmp_dir"
     
     print_success "Anvil $version installed successfully!"
-    print_status "Run 'anvil --version' to verify installation"
+    print_status "Run 'anvil' to verify installation"
     print_status "Run 'anvil init' to get started"
 }
 
@@ -164,7 +164,7 @@ main() {
     echo "Next steps:"
     echo "  1. Run 'anvil init' to initialize your environment"
     echo "  2. Run 'anvil doctor' to verify everything is working"
-    echo "  3. Run 'anvil install --list' to see available tool groups"
+    echo "  3. Run 'anvil install --list' to see available tool groups. Create your own groups in settings.yaml."
     echo ""
 }
 
