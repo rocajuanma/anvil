@@ -22,19 +22,56 @@ homebrew-anvil/
     └── anvil.rb
 ```
 
-Copy the contents from `homebrew-formula-template.rb` to `Formula/anvil.rb`.
+Create `Formula/anvil.rb` with the formula content (see example below).
 
-### 3. Update the Formula
+### 3. Create the Formula
 
-You'll need to update these values in `Formula/anvil.rb`:
+Create `Formula/anvil.rb` with this content:
 
 ```ruby
-# Update the version and URL
-url "https://github.com/rocajuanma/anvil/archive/v1.1.0.tar.gz"
+class Anvil < Formula
+  desc "Complete macOS development environment automation tool"
+  homepage "https://github.com/rocajuanma/anvil"
+  url "https://github.com/rocajuanma/anvil/archive/v1.1.1.tar.gz"
+  sha256 "REPLACE_WITH_ACTUAL_SHA256_OF_TARBALL"
+  license "Apache-2.0"
+  head "https://github.com/rocajuanma/anvil.git", branch: "main"
 
-# Get the SHA256 with this command:
-# curl -sL https://github.com/rocajuanma/anvil/archive/v1.1.0.tar.gz | shasum -a 256
-sha256 "ACTUAL_SHA256_HASH_HERE"
+  depends_on "go" => :build
+
+  def install
+    system "go", "build", *std_go_args(ldflags: "-s -w"), "./main.go"
+    
+    # Generate shell completions (optional but recommended)
+    generate_completions_from_executable(bin/"anvil", "completion")
+  end
+
+  def caveats
+    <<~EOS
+      🔨 Anvil has been installed!
+      
+      Get started:
+        anvil init          # Initialize your environment
+        anvil doctor        # Verify setup and dependencies
+        anvil install dev   # Install development tools
+      
+      📚 Documentation: https://github.com/rocajuanma/anvil/docs
+    EOS
+  end
+
+  test do
+    assert_match "Anvil", shell_output("#{bin}/anvil --help")
+    assert_match version.to_s, shell_output("#{bin}/anvil --version")
+  end
+end
+```
+
+### 4. Update the Formula for New Releases
+
+For each new release, update:
+```ruby
+url "https://github.com/rocajuanma/anvil/archive/vX.Y.Z.tar.gz"
+sha256 "NEW_SHA256_HASH"  # Get with: curl -sL URL | shasum -a 256
 ```
 
 ### 4. Test the Formula Locally
