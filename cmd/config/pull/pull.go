@@ -28,10 +28,16 @@ import (
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/github"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/rocajuanma/anvil/pkg/utils"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 var PullCmd = &cobra.Command{
 	Use:   "pull [directory]",
@@ -40,7 +46,7 @@ var PullCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1), // Require exactly one argument (directory name)
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runPullCommand(cmd, args); err != nil {
-			terminal.PrintError("Pull failed: %v", err)
+			getOutputHandler().PrintError("Pull failed: %v", err)
 			return
 		}
 	},
@@ -61,22 +67,22 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	if err := validateGitHubConfig(cfg); err != nil {
 		return err
 	}
-
-	terminal.PrintHeader(fmt.Sprintf("Pulling Configuration Directory: %s", targetDir))
-	terminal.PrintInfo("Repository: %s", cfg.GitHub.ConfigRepo)
-	terminal.PrintInfo("Branch: %s", cfg.GitHub.Branch)
-	terminal.PrintInfo("Target directory: %s", targetDir)
-	terminal.PrintInfo("")
+	output := getOutputHandler()
+	output.PrintHeader(fmt.Sprintf("Pulling Configuration Directory: %s", targetDir))
+	output.PrintInfo("Repository: %s", cfg.GitHub.ConfigRepo)
+	output.PrintInfo("Branch: %s", cfg.GitHub.Branch)
+	output.PrintInfo("Target directory: %s", targetDir)
+	output.PrintInfo("")
 
 	// Stage 1: Authentication check
-	terminal.PrintStage("Checking authentication...")
+	output.PrintStage("Checking authentication...")
 	token := ""
 	if cfg.GitHub.TokenEnvVar != "" {
 		token = os.Getenv(cfg.GitHub.TokenEnvVar)
 		if token != "" {
-			terminal.PrintSuccess(fmt.Sprintf("GitHub token found in environment variable: %s", cfg.GitHub.TokenEnvVar))
+			output.PrintSuccess(fmt.Sprintf("GitHub token found in environment variable: %s", cfg.GitHub.TokenEnvVar))
 		} else {
-			terminal.PrintWarning("No GitHub token found in %s - will attempt SSH authentication", cfg.GitHub.TokenEnvVar)
+			output.PrintWarning("No GitHub token found in %s - will attempt SSH authentication", cfg.GitHub.TokenEnvVar)
 		}
 	}
 
@@ -96,80 +102,80 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	defer cancel()
 
 	// Stage 2: Repository validation
-	terminal.PrintStage("Validating repository access and branch configuration...")
+	output.PrintStage("Validating repository access and branch configuration...")
 	if err := githubClient.ValidateRepository(ctx); err != nil {
 		// Provide additional context for repository validation errors
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
-			terminal.PrintError("\n" + err.Error())
-			terminal.PrintInfo("\n🔄 The repository exists but the configured branch is not available.")
-			terminal.PrintInfo("    You may need to:")
-			terminal.PrintInfo("    • Update the branch in your settings.yaml")
-			terminal.PrintInfo("    • Or check the available branches in your repository")
+			output.PrintError("\n" + err.Error())
+			output.PrintInfo("\n🔄 The repository exists but the configured branch is not available.")
+			output.PrintInfo("    You may need to:")
+			output.PrintInfo("    • Update the branch in your settings.yaml")
+			output.PrintInfo("    • Or check the available branches in your repository")
 			return fmt.Errorf("repository validation failed due to branch configuration issue")
 		}
 		return fmt.Errorf("failed to validate repository: %w", err)
 	}
-	terminal.PrintSuccess("Repository access confirmed")
+	output.PrintSuccess("Repository access confirmed")
 
 	// Stage 3: Clone/update repository
-	terminal.PrintStage("Cloning or updating repository...")
+	output.PrintStage("Cloning or updating repository...")
 	if err := githubClient.CloneRepository(ctx); err != nil {
 		// Provide additional context for clone errors
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
-			terminal.PrintError("\n" + err.Error())
-			terminal.PrintInfo("\n🔄 The repository exists but the configured branch is not available during clone.")
-			terminal.PrintInfo("    You may need to:")
-			terminal.PrintInfo("    • Update the branch in your settings.yaml")
-			terminal.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
-			terminal.PrintInfo("      (It will be re-cloned with the correct branch)")
+			output.PrintError("\n" + err.Error())
+			output.PrintInfo("\n🔄 The repository exists but the configured branch is not available during clone.")
+			output.PrintInfo("    You may need to:")
+			output.PrintInfo("    • Update the branch in your settings.yaml")
+			output.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
+			output.PrintInfo("      (It will be re-cloned with the correct branch)")
 			return fmt.Errorf("clone failed due to branch configuration issue")
 		}
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
-	terminal.PrintSuccess("Repository ready")
+	output.PrintSuccess("Repository ready")
 
 	// Stage 4: Pull latest changes
-	terminal.PrintStage("Pulling latest changes...")
+	output.PrintStage("Pulling latest changes...")
 	if err := githubClient.PullChanges(ctx); err != nil {
 		// Provide additional context for branch configuration errors during pull
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
-			terminal.PrintError("\n" + err.Error())
-			terminal.PrintInfo("\n🔄 The local repository exists but the configured branch is not available.")
-			terminal.PrintInfo("    You may need to:")
-			terminal.PrintInfo("    • Update the branch in your settings.yaml")
-			terminal.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
-			terminal.PrintInfo("      (It will be re-cloned with the correct branch)")
+			output.PrintError("\n" + err.Error())
+			output.PrintInfo("\n🔄 The local repository exists but the configured branch is not available.")
+			output.PrintInfo("    You may need to:")
+			output.PrintInfo("    • Update the branch in your settings.yaml")
+			output.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
+			output.PrintInfo("      (It will be re-cloned with the correct branch)")
 			return fmt.Errorf("pull failed due to branch configuration issue")
 		}
 		return fmt.Errorf("failed to pull changes: %w", err)
 	}
-	terminal.PrintSuccess("Repository updated")
+	output.PrintSuccess("Repository updated")
 
 	// Stage 5: Copy configuration directory
-	terminal.PrintStage("Copying configuration directory...")
+	output.PrintStage("Copying configuration directory...")
 	tempDir, err := copyDirectoryToTemp(cfg, targetDir)
 	if err != nil {
 		return err
 	}
-	terminal.PrintSuccess("Configuration directory copied to temp location")
+	output.PrintSuccess("Configuration directory copied to temp location")
 
 	// Display completion message
-	terminal.PrintHeader("Pull Complete!")
-	terminal.PrintInfo("Configuration directory '%s' has been pulled from: %s", targetDir, cfg.GitHub.ConfigRepo)
-	terminal.PrintInfo("Files are available at: %s", tempDir)
+	output.PrintHeader("Pull Complete!")
+	output.PrintInfo("Configuration directory '%s' has been pulled from: %s", targetDir, cfg.GitHub.ConfigRepo)
+	output.PrintInfo("Files are available at: %s", tempDir)
 
 	// List the files that were copied
 	if err := listCopiedFiles(tempDir); err == nil {
 		// Files listed successfully
 	} else {
-		terminal.PrintWarning("Could not list copied files: %v", err)
+		output.PrintWarning("Could not list copied files: %v", err)
 	}
 
 	// Provide next steps
-	terminal.PrintInfo("\nNext steps:")
-	terminal.PrintInfo("  • Review the pulled configuration files in: %s", tempDir)
-	terminal.PrintInfo("  • Apply/copy configurations to their destination as needed")
-	terminal.PrintInfo("  • Use 'anvil config push' to upload any local changes")
+	output.PrintInfo("\nNext steps:")
+	output.PrintInfo("  • Review the pulled configuration files in: %s", tempDir)
+	output.PrintInfo("  • Apply/copy configurations to their destination as needed")
+	output.PrintInfo("  • Use 'anvil config push' to upload any local changes")
 
 	return nil
 }
@@ -202,16 +208,17 @@ Example:
 			fmt.Errorf("github.local_path is not configured"))
 	}
 
+	output := getOutputHandler()
 	// Provide guidance about branch configuration
-	terminal.PrintInfo("🔧 Using branch: %s", cfg.GitHub.Branch)
+	output.PrintInfo("🔧 Using branch: %s", cfg.GitHub.Branch)
 	if cfg.GitHub.Branch != "main" && cfg.GitHub.Branch != "master" {
-		terminal.PrintWarning("⚠️  Note: You're using branch '%s'. Make sure this branch exists in your repository.", cfg.GitHub.Branch)
-		terminal.PrintInfo("💡 Common default branches are 'main' or 'master'")
+		output.PrintWarning("⚠️  Note: You're using branch '%s'. Make sure this branch exists in your repository.", cfg.GitHub.Branch)
+		output.PrintInfo("💡 Common default branches are 'main' or 'master'")
 	}
 
 	// Check if git is available
 	if cfg.Git.Username == "" || cfg.Git.Email == "" {
-		terminal.PrintWarning("⚠️  Git user configuration is incomplete. Consider setting git.username and git.email in settings.yaml")
+		output.PrintWarning("⚠️  Git user configuration is incomplete. Consider setting git.username and git.email in settings.yaml")
 	}
 
 	return nil
@@ -262,7 +269,7 @@ func copyFile(src, dst string) error {
 
 // listCopiedFiles lists the files that were copied to the temp directory
 func listCopiedFiles(tempDir string) error {
-	terminal.PrintInfo("\nCopied files:")
+	getOutputHandler().PrintInfo("\nCopied files:")
 
 	return filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -275,7 +282,7 @@ func listCopiedFiles(tempDir string) error {
 			if err != nil {
 				relPath = path
 			}
-			terminal.PrintInfo("  • %s", relPath)
+			getOutputHandler().PrintInfo("  • %s", relPath)
 		}
 
 		return nil

@@ -36,6 +36,10 @@ const (
 	SKIP
 )
 
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 func (vs ValidationStatus) String() string {
 	switch vs {
 	case PASS:
@@ -428,17 +432,18 @@ func (d *DoctorEngine) RunCheckWithProgress(ctx context.Context, checkName strin
 	}
 
 	// Show progress for single check
-	terminal.PrintInfo("🔍 Running %s check...", validator.Name())
+	o := getOutputHandler()
+	o.PrintInfo("🔍 Running %s check...", validator.Name())
 	if verbose {
-		terminal.PrintInfo("   Description: %s", validator.Description())
-		terminal.PrintInfo("   Category: %s", validator.Category())
+		o.PrintInfo("   Description: %s", validator.Description())
+		o.PrintInfo("   Category: %s", validator.Category())
 	}
 
 	result := validator.Validate(ctx, config)
 
 	// Show immediate result
 	statusEmoji := getStatusEmoji(result.Status)
-	terminal.PrintInfo("%s %s", statusEmoji, result.Message)
+	o.PrintInfo("%s %s", statusEmoji, result.Message)
 
 	return result
 }
@@ -447,14 +452,14 @@ func (d *DoctorEngine) RunCheckWithProgress(ctx context.Context, checkName strin
 func (d *DoctorEngine) runValidatorsWithProgress(ctx context.Context, config *config.AnvilConfig, validators []Validator, verbose bool) []*ValidationResult {
 	var results []*ValidationResult
 	totalValidators := len(validators)
-
+	o := getOutputHandler()
 	for i, validator := range validators {
 		// Show progress
-		terminal.PrintProgress(i+1, totalValidators, fmt.Sprintf("Running %s", validator.Name()))
+		o.PrintProgress(i+1, totalValidators, fmt.Sprintf("Running %s", validator.Name()))
 
 		if verbose {
-			terminal.PrintInfo("   Description: %s", validator.Description())
-			terminal.PrintInfo("   Category: %s", validator.Category())
+			o.PrintInfo("   Description: %s", validator.Description())
+			o.PrintInfo("   Category: %s", validator.Category())
 		}
 
 		result := validator.Validate(ctx, config)
@@ -463,19 +468,19 @@ func (d *DoctorEngine) runValidatorsWithProgress(ctx context.Context, config *co
 		// Show immediate result
 		statusEmoji := getStatusEmoji(result.Status)
 		if verbose {
-			terminal.PrintInfo("   Result: %s %s", statusEmoji, result.Message)
+			o.PrintInfo("   Result: %s %s", statusEmoji, result.Message)
 			if len(result.Details) > 0 {
 				for _, detail := range result.Details {
-					terminal.PrintInfo("      %s", detail)
+					o.PrintInfo("      %s", detail)
 				}
 			}
 		} else {
-			terminal.PrintInfo("   %s %s", statusEmoji, result.Message)
+			o.PrintInfo("   %s %s", statusEmoji, result.Message)
 		}
 	}
 
-	terminal.PrintInfo("")
-	terminal.PrintSuccess("All validation checks completed")
+	o.PrintInfo("")
+	o.PrintSuccess("All validation checks completed")
 
 	return results
 }

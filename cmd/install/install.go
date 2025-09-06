@@ -28,9 +28,15 @@ import (
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/installer"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 // InstallCmd represents the install command
 var InstallCmd = &cobra.Command{
@@ -51,13 +57,13 @@ var InstallCmd = &cobra.Command{
 		listFlag, _ := cmd.Flags().GetBool("list")
 		if listFlag {
 			if err := listAvailableGroups(); err != nil {
-				terminal.PrintError("Failed to list groups: %v", err)
+				getOutputHandler().PrintError("Failed to list groups: %v", err)
 			}
 			return
 		}
 
 		if err := runInstallCommand(cmd, args[0]); err != nil {
-			terminal.PrintError("Install failed: %v", err)
+			getOutputHandler().PrintError("Install failed: %v", err)
 			return
 		}
 	},
@@ -65,6 +71,7 @@ var InstallCmd = &cobra.Command{
 
 // runInstallCommand executes the dynamic install process
 func runInstallCommand(cmd *cobra.Command, target string) error {
+	o := getOutputHandler()
 	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
 		return errors.NewPlatformError(constants.OpInstall, target,
@@ -74,7 +81,7 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 	// Check for dry-run flag
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	if dryRun {
-		terminal.PrintInfo("Dry run mode - no actual installations will be performed")
+		o.PrintInfo("Dry run mode - no actual installations will be performed")
 	}
 
 	// Check for concurrent flag
@@ -84,17 +91,17 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 
 	// Ensure Homebrew is installed
 	if !brew.IsBrewInstalled() {
-		terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
+		o.PrintInfo("Homebrew not found. Installing Homebrew...")
 		if err := brew.InstallBrew(); err != nil {
 			return errors.NewInstallationError(constants.OpInstall, "homebrew", err)
 		}
-		terminal.PrintSuccess("Homebrew installed successfully")
+		o.PrintSuccess("Homebrew installed successfully")
 	}
 
 	// Update Homebrew before installations
-	terminal.PrintStage("Updating Homebrew...")
+	o.PrintStage("Updating Homebrew...")
 	if err := brew.UpdateBrew(); err != nil {
-		terminal.PrintWarning("Failed to update Homebrew: %v", err)
+		o.PrintWarning("Failed to update Homebrew: %v", err)
 		// Continue anyway, update failure shouldn't stop installation
 	}
 
@@ -109,7 +116,7 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 
 // installGroup installs all tools in a group
 func installGroup(groupName string, tools []string, dryRun bool, concurrent bool, maxWorkers int, timeout time.Duration) error {
-	terminal.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
+	getOutputHandler().PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
 		return errors.NewInstallationError(constants.OpInstall, groupName,
@@ -119,7 +126,7 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 	// Deduplicate tools within the group and update settings if needed
 	deduplicatedTools, err := deduplicateGroupTools(groupName, tools)
 	if err != nil {
-		terminal.PrintWarning("Failed to deduplicate group tools: %v", err)
+		getOutputHandler().PrintWarning("Failed to deduplicate group tools: %v", err)
 		// Continue with original tools list
 		deduplicatedTools = tools
 	} else {
@@ -127,7 +134,7 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 		tools = deduplicatedTools
 	}
 
-	terminal.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
+	getOutputHandler().PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
 	// Use concurrent installation if requested
 	if concurrent {
@@ -161,15 +168,16 @@ func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
 	}
 
 	// Report found duplicates
-	terminal.PrintWarning("Found duplicates in group '%s': %s", groupName, strings.Join(duplicatesFound, ", "))
-	terminal.PrintInfo("Removing duplicates from settings file...")
+	o := getOutputHandler()
+	o.PrintWarning("Found duplicates in group '%s': %s", groupName, strings.Join(duplicatesFound, ", "))
+	o.PrintInfo("Removing duplicates from settings file...")
 
 	// Update the configuration with deduplicated tools
 	if err := config.UpdateGroupTools(groupName, deduplicatedTools); err != nil {
 		return tools, fmt.Errorf("failed to update group with deduplicated tools: %w", err)
 	}
 
-	terminal.PrintSuccess(fmt.Sprintf("Successfully removed %d duplicate(s) from group '%s'", len(duplicatesFound), groupName))
+	o.PrintSuccess(fmt.Sprintf("Successfully removed %d duplicate(s) from group '%s'", len(duplicatesFound), groupName))
 	return deduplicatedTools, nil
 }
 
@@ -194,11 +202,12 @@ func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWo
 
 	// Track successfully installed apps
 	if !dryRun && stats != nil && stats.SuccessfulTools > 0 {
-		terminal.PrintInfo("Updating settings to track installed apps...")
+		o := getOutputHandler()
+		o.PrintInfo("Updating settings to track installed apps...")
 
 		// For group installations, we don't track individual apps
 		// since they're part of a group
-		terminal.PrintInfo("Group installation tracking not implemented yet")
+		o.PrintInfo("Group installation tracking not implemented yet")
 	}
 
 	return err
@@ -210,14 +219,14 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	var installErrors []string
 
 	for i, tool := range tools {
-		terminal.PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
+		getOutputHandler().PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
 
 		// Use unified installation logic - this ensures consistent behavior with availability checking
 		_, err := installSingleToolUnified(tool, dryRun)
 		if err != nil {
 			errorMsg := fmt.Sprintf("%s: %v", tool, err)
 			installErrors = append(installErrors, errorMsg)
-			terminal.PrintError("Failed to install %s: %v", tool, err)
+			getOutputHandler().PrintError("Failed to install %s: %v", tool, err)
 		} else {
 			successCount++
 		}
@@ -229,7 +238,8 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 
 // installIndividualApp installs a single application using unified installation logic
 func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error {
-	terminal.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
 
 	// Validate app name
 	if appName == "" {
@@ -252,11 +262,11 @@ func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error
 		if groupName != "" {
 			// Add app to the specified group
 			if err := config.AddAppToGroup(groupName, appName); err != nil {
-				terminal.PrintWarning("Failed to add %s to group '%s': %v", appName, groupName, err)
+				o.PrintWarning("Failed to add %s to group '%s': %v", appName, groupName, err)
 				// Continue with normal tracking as fallback
 				return trackAppInSettings(appName)
 			}
-			terminal.PrintSuccess(fmt.Sprintf("Added %s to group '%s'", appName, groupName))
+			o.PrintSuccess(fmt.Sprintf("Added %s to group '%s'", appName, groupName))
 			return nil
 		} else {
 			// Normal tracking in installed_apps
@@ -272,7 +282,7 @@ func installSingleTool(toolName string) error {
 	// Get tool-specific configuration
 	toolConfig, err := config.GetToolConfig(toolName)
 	if err != nil {
-		terminal.PrintWarning("Failed to get tool config for %s: %v", toolName, err)
+		getOutputHandler().PrintWarning("Failed to get tool config for %s: %v", toolName, err)
 		// Continue with default installation
 	}
 
@@ -283,9 +293,9 @@ func installSingleTool(toolName string) error {
 
 	// Handle post-install script if configured
 	if toolConfig != nil && toolConfig.PostInstallScript != "" {
-		terminal.PrintInfo("Running post-install script for %s...", toolName)
+		getOutputHandler().PrintInfo("Running post-install script for %s...", toolName)
 		if err := runPostInstallScript(toolConfig.PostInstallScript); err != nil {
-			terminal.PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
+			getOutputHandler().PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
 			// Don't fail the whole installation for this
 		}
 	}
@@ -293,7 +303,7 @@ func installSingleTool(toolName string) error {
 	// Handle config check if configured
 	if toolConfig != nil && toolConfig.ConfigCheck {
 		if err := checkToolConfiguration(toolName); err != nil {
-			terminal.PrintWarning("Configuration check failed for %s: %v", toolName, err)
+			getOutputHandler().PrintWarning("Configuration check failed for %s: %v", toolName, err)
 		}
 	}
 
@@ -305,13 +315,13 @@ func installSingleTool(toolName string) error {
 func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled bool, err error) {
 	// ALWAYS check availability first using the latest IsApplicationAvailable logic
 	if brew.IsApplicationAvailable(toolName) {
-		terminal.PrintAlreadyAvailable("%s is already available on the system", toolName)
+		getOutputHandler().PrintAlreadyAvailable("%s is already available on the system", toolName)
 		return false, nil
 	}
 
 	// Handle installation based on mode
 	if dryRun {
-		terminal.PrintInfo("Would install: %s", toolName)
+		getOutputHandler().PrintInfo("Would install: %s", toolName)
 		return true, nil // Would be newly installed
 	}
 
@@ -320,41 +330,43 @@ func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled b
 		return false, fmt.Errorf("failed to install %s: %w", toolName, err)
 	}
 
-	terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", toolName))
+	getOutputHandler().PrintSuccess(fmt.Sprintf("%s installed successfully", toolName))
 	return true, nil
 }
 
 // trackAppInSettings handles adding newly installed apps to settings
 func trackAppInSettings(appName string) error {
+	o := getOutputHandler()
 	// Check if already tracked to avoid duplicates
 	if isTracked, err := config.IsAppTracked(appName); err != nil {
-		terminal.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
+		o.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
 		return nil // Don't fail installation for tracking issues
 	} else if isTracked {
-		terminal.PrintInfo("%s is already tracked in settings", appName)
+		o.PrintInfo("%s is already tracked in settings", appName)
 		return nil
 	}
 
-	terminal.PrintInfo("Updating settings to track %s...", appName)
+	o.PrintInfo("Updating settings to track %s...", appName)
 	if err := config.AddInstalledApp(appName); err != nil {
-		terminal.PrintWarning("Failed to update settings file: %v", err)
+		o.PrintWarning("Failed to update settings file: %v", err)
 		return nil // Don't fail installation for tracking issues
 	}
 
-	terminal.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
+	o.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
 	return nil
 }
 
 // reportGroupInstallationResults provides unified error reporting for group installations
 func reportGroupInstallationResults(groupName string, successCount, totalCount int, installErrors []string) error {
 	// Print summary
-	terminal.PrintHeader("Group Installation Complete")
-	terminal.PrintInfo("Successfully installed %d of %d tools", successCount, totalCount)
+	o := getOutputHandler()
+	o.PrintHeader("Group Installation Complete")
+	o.PrintInfo("Successfully installed %d of %d tools", successCount, totalCount)
 
 	if len(installErrors) > 0 {
-		terminal.PrintWarning("Some installations failed:")
+		o.PrintWarning("Some installations failed:")
 		for _, err := range installErrors {
-			terminal.PrintError("  • %s", err)
+			o.PrintError("  • %s", err)
 		}
 		return errors.NewInstallationError(constants.OpInstall, groupName,
 			fmt.Errorf("failed to install %d tools", len(installErrors)))
@@ -366,8 +378,9 @@ func reportGroupInstallationResults(groupName string, successCount, totalCount i
 // runPostInstallScript runs a post-install script for a tool
 func runPostInstallScript(script string) error {
 	// For now, just provide instructions to the user
-	terminal.PrintInfo("To complete installation, run:")
-	terminal.PrintInfo("  %s", script)
+	o := getOutputHandler()
+	o.PrintInfo("To complete installation, run:")
+	o.PrintInfo("  %s", script)
 	return nil
 }
 
@@ -385,17 +398,19 @@ func checkToolConfiguration(toolName string) error {
 func checkGitConfiguration() error {
 	config, err := config.LoadConfig()
 	if err == nil && (config.Git.Username == "" || config.Git.Email == "") {
-		terminal.PrintInfo("Git installed successfully")
-		terminal.PrintWarning("Consider configuring git with:")
-		terminal.PrintInfo("  git config --global user.name 'Your Name'")
-		terminal.PrintInfo("  git config --global user.email 'your.email@example.com'")
+		o := getOutputHandler()
+		o.PrintInfo("Git installed successfully")
+		o.PrintWarning("Consider configuring git with:")
+		o.PrintInfo("  git config --global user.name 'Your Name'")
+		o.PrintInfo("  git config --global user.email 'your.email@example.com'")
 	}
 	return nil
 }
 
 // listAvailableGroups shows all available groups and their tools
 func listAvailableGroups() error {
-	terminal.PrintHeader("Available Groups")
+	o := getOutputHandler()
+	o.PrintHeader("Available Groups")
 
 	groups, err := config.GetAvailableGroups()
 	if err != nil {
@@ -406,10 +421,10 @@ func listAvailableGroups() error {
 	builtInGroups := config.GetBuiltInGroups()
 
 	// Show built-in groups first
-	terminal.PrintInfo("Built-in Groups:")
+	o.PrintInfo("Built-in Groups:")
 	for _, groupName := range builtInGroups {
 		if tools, exists := groups[groupName]; exists {
-			terminal.PrintInfo("  • %s: %s", groupName, strings.Join(tools, ", "))
+			o.PrintInfo("  • %s: %s", groupName, strings.Join(tools, ", "))
 		}
 	}
 
@@ -418,39 +433,39 @@ func listAvailableGroups() error {
 	for groupName := range groups {
 		if !config.IsBuiltInGroup(groupName) {
 			if !hasCustomGroups {
-				terminal.PrintInfo("\nCustom Groups:")
+				o.PrintInfo("\nCustom Groups:")
 				hasCustomGroups = true
 			}
-			terminal.PrintInfo("  • %s: %s", groupName, strings.Join(groups[groupName], ", "))
+			o.PrintInfo("  • %s: %s", groupName, strings.Join(groups[groupName], ", "))
 		}
 	}
 
 	if !hasCustomGroups {
-		terminal.PrintInfo("\nNo custom groups defined.")
-		terminal.PrintInfo("Add custom groups in ~/.anvil/settings.yaml")
+		o.PrintInfo("\nNo custom groups defined.")
+		o.PrintInfo("Add custom groups in ~/.anvil/settings.yaml")
 	}
 
 	// Show individually tracked installed apps
 	installedApps, err := config.GetInstalledApps()
 	if err != nil {
-		terminal.PrintWarning("Failed to load installed apps: %v", err)
+		o.PrintWarning("Failed to load installed apps: %v", err)
 	} else if len(installedApps) > 0 {
-		terminal.PrintInfo("\nIndividually Tracked Apps:")
-		terminal.PrintInfo("  %s", strings.Join(installedApps, ", "))
+		o.PrintInfo("\nIndividually Tracked Apps:")
+		o.PrintInfo("  %s", strings.Join(installedApps, ", "))
 	} else {
-		terminal.PrintInfo("\nNo individually tracked apps.")
-		terminal.PrintInfo("Apps installed via 'anvil install [app-name]' will be tracked automatically.")
+		o.PrintInfo("\nNo individually tracked apps.")
+		o.PrintInfo("Apps installed via 'anvil install [app-name]' will be tracked automatically.")
 	}
 
-	terminal.PrintInfo("\nUsage:")
-	terminal.PrintInfo("  anvil install [group-name] - Install all apps in a group")
-	terminal.PrintInfo("  anvil install [app-name]   - Install individual app (auto-tracked)")
-	terminal.PrintInfo("  anvil install [app-name] --group-name [group] - Install app and add to group")
-	terminal.PrintInfo("Examples:")
-	terminal.PrintInfo("  anvil install dev")
-	terminal.PrintInfo("  anvil install 1password")
-	terminal.PrintInfo("  anvil install firefox --group-name essentials")
-	terminal.PrintInfo("  anvil install final-cut --group-name editing")
+	o.PrintInfo("\nUsage:")
+	o.PrintInfo("  anvil install [group-name] - Install all apps in a group")
+	o.PrintInfo("  anvil install [app-name]   - Install individual app (auto-tracked)")
+	o.PrintInfo("  anvil install [app-name] --group-name [group] - Install app and add to group")
+	o.PrintInfo("Examples:")
+	o.PrintInfo("  anvil install dev")
+	o.PrintInfo("  anvil install 1password")
+	o.PrintInfo("  anvil install firefox --group-name essentials")
+	o.PrintInfo("  anvil install final-cut --group-name editing")
 
 	return nil
 }

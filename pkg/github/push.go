@@ -29,6 +29,7 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/rocajuanma/anvil/pkg/utils"
@@ -40,6 +41,11 @@ type PushConfigResult struct {
 	CommitMessage  string
 	RepositoryURL  string
 	FilesCommitted []string
+}
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
 }
 
 // verifyRepositoryPrivacy ensures the repository is private before allowing push operations
@@ -61,24 +67,25 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 
 	if httpErr == nil && httpResult.Success {
 		// 🚨 CRITICAL: Repository is public - BLOCK the push
-		terminal.PrintError("🚨 SECURITY VIOLATION: Configuration push BLOCKED")
-		terminal.PrintError("")
-		terminal.PrintError("Repository '%s' is PUBLIC", gc.RepoURL)
-		terminal.PrintError("❌ Configuration files contain sensitive data")
-		terminal.PrintError("❌ PUBLIC repositories expose API keys, paths, and personal information")
-		terminal.PrintError("❌ This could lead to security breaches and data leaks")
-		terminal.PrintError("")
-		terminal.PrintError("🔒 REQUIRED ACTION: Make repository PRIVATE")
-		terminal.PrintError("   Visit: https://github.com/%s/settings", gc.RepoURL)
-		terminal.PrintError("   Go to: Danger Zone → Change repository visibility → Private")
-		terminal.PrintError("")
-		terminal.PrintError("🛡️  Anvil will NEVER push configuration data to public repositories")
+		output := getOutputHandler()
+		output.PrintError("🚨 SECURITY VIOLATION: Configuration push BLOCKED")
+		output.PrintError("")
+		output.PrintError("Repository '%s' is PUBLIC", gc.RepoURL)
+		output.PrintError("❌ Configuration files contain sensitive data")
+		output.PrintError("❌ PUBLIC repositories expose API keys, paths, and personal information")
+		output.PrintError("❌ This could lead to security breaches and data leaks")
+		output.PrintError("")
+		output.PrintError("🔒 REQUIRED ACTION: Make repository PRIVATE")
+		output.PrintError("   Visit: https://github.com/%s/settings", gc.RepoURL)
+		output.PrintError("   Go to: Danger Zone → Change repository visibility → Private")
+		output.PrintError("")
+		output.PrintError("🛡️  Anvil will NEVER push configuration data to public repositories")
 
 		return fmt.Errorf("SECURITY BLOCK: Repository is public. Configuration push denied for security")
 	}
 
 	// Repository appears to be private and git access works - safe to proceed
-	terminal.PrintSuccess("🔒 Repository privacy verified - safe to push configuration data")
+	getOutputHandler().PrintSuccess("🔒 Repository privacy verified - safe to push configuration data")
 	return nil
 }
 
@@ -97,6 +104,9 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 	// Check if there are differences before proceeding
 	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
 
+	// Get the output handler
+	output := getOutputHandler()
+
 	// For new apps, we need to check if the target directory exists in the repo
 	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
 	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
@@ -107,19 +117,19 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 				// Check if directory has files
 				entries, err := os.ReadDir(configPath)
 				if err == nil && len(entries) > 0 {
-					terminal.PrintInfo("New app '%s' detected - will be added to repository", appName)
+					output.PrintInfo("New app '%s' detected - will be added to repository", appName)
 				} else {
-					terminal.PrintSuccess("Configuration is up-to-date!")
-					terminal.PrintInfo("Local %s configs match the remote repository.", appName)
-					terminal.PrintInfo("No changes to push.")
+					output.PrintSuccess("Configuration is up-to-date!")
+					output.PrintInfo("Local %s configs match the remote repository.", appName)
+					output.PrintInfo("No changes to push.")
 					return nil, nil
 				}
 			} else if localInfo.Size() > 0 {
-				terminal.PrintInfo("New app '%s' detected - will be added to repository", appName)
+				output.PrintInfo("New app '%s' detected - will be added to repository", appName)
 			} else {
-				terminal.PrintSuccess("Configuration is up-to-date!")
-				terminal.PrintInfo("Local %s configs match the remote repository.", appName)
-				terminal.PrintInfo("No changes to push.")
+				output.PrintSuccess("Configuration is up-to-date!")
+				output.PrintInfo("Local %s configs match the remote repository.", appName)
+				output.PrintInfo("No changes to push.")
 				return nil, nil
 			}
 		} else {
@@ -133,14 +143,14 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 		}
 
 		if !hasChanges {
-			terminal.PrintSuccess("Configuration is up-to-date!")
-			terminal.PrintInfo("Local %s configs match the remote repository.", appName)
-			terminal.PrintInfo("No changes to push.")
+			output.PrintSuccess("Configuration is up-to-date!")
+			output.PrintInfo("Local %s configs match the remote repository.", appName)
+			output.PrintInfo("No changes to push.")
 			return nil, nil
 		}
 	}
 
-	terminal.PrintInfo("Differences detected between local and remote %s configuration", appName)
+	output.PrintInfo("Differences detected between local and remote %s configuration", appName)
 
 	// Generate branch name with timestamp
 	branchName := generateTimestampedBranchName("config-push")
@@ -256,7 +266,7 @@ func (gc *GitHubClient) createAndCheckoutBranch(ctx context.Context, branchName 
 		return errors.NewInstallationError(constants.OpPush, "git-checkout-new-branch", err)
 	}
 
-	terminal.PrintInfo("Created and switched to branch: %s", branchName)
+	getOutputHandler().PrintInfo("Created and switched to branch: %s", branchName)
 	return nil
 }
 
@@ -294,14 +304,14 @@ func (gc *GitHubClient) commitChanges(ctx context.Context, commitMessage string)
 	}
 
 	// Exit code 1 means there are differences - proceed with commit
-	terminal.PrintInfo("Changes detected, proceeding with commit...")
+	getOutputHandler().PrintInfo("Changes detected, proceeding with commit...")
 
 	// Commit changes
 	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "commit", "-m", commitMessage); err != nil {
 		return errors.NewInstallationError(constants.OpPush, "git-commit", err)
 	}
 
-	terminal.PrintSuccess(fmt.Sprintf("Committed changes: %s", commitMessage))
+	getOutputHandler().PrintSuccess(fmt.Sprintf("Committed changes: %s", commitMessage))
 	return nil
 }
 
@@ -324,7 +334,7 @@ func (gc *GitHubClient) pushBranch(ctx context.Context, branchName string) error
 			fmt.Errorf("failed to push branch: %s, error: %w", result.Error, err))
 	}
 
-	terminal.PrintSuccess(fmt.Sprintf("Pushed branch '%s' to origin", branchName))
+	getOutputHandler().PrintSuccess(fmt.Sprintf("Pushed branch '%s' to origin", branchName))
 	return nil
 }
 

@@ -26,9 +26,15 @@ import (
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 var ShowCmd = &cobra.Command{
 	Use:   "show [directory]",
@@ -37,7 +43,7 @@ var ShowCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1), // Accept 0 or 1 argument
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runShowCommand(cmd, args); err != nil {
-			terminal.PrintError("Show failed: %v", err)
+			getOutputHandler().PrintError("Show failed: %v", err)
 			return
 		}
 	},
@@ -57,31 +63,30 @@ func runShowCommand(cmd *cobra.Command, args []string) error {
 
 // showAnvilSettings displays the main anvil settings.yaml file
 func showAnvilSettings() error {
-	terminal.PrintHeader("Anvil Settings Configuration")
+	o := getOutputHandler()
+	o.PrintHeader("Anvil Settings Configuration")
 
 	// Stage 1: Locate settings file
-	terminal.PrintStage("Locating anvil settings file...")
+	o.PrintStage("Locating anvil settings file...")
 	configPath := config.GetConfigPath()
 
 	// Check if settings file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		terminal.PrintError("Anvil settings file not found at: %s", configPath)
-		terminal.PrintInfo("💡 Run 'anvil init' to create the initial settings file")
+		o.PrintError("Anvil settings file not found at: %s", configPath)
+		o.PrintInfo("💡 Run 'anvil init' to create the initial settings file")
 		return fmt.Errorf("settings file not found")
 	}
-	terminal.PrintSuccess("Settings file located")
+	o.PrintSuccess("Settings file located")
 
-	terminal.PrintInfo("File: %s", configPath)
-	terminal.PrintInfo("")
+	o.PrintInfo("File: %s\n", configPath)
 
 	// Stage 2: Read and display content
-	terminal.PrintStage("Reading configuration content...")
+	o.PrintStage("Reading configuration content...")
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		return errors.NewFileSystemError(constants.OpShow, "read-settings", err)
 	}
-	terminal.PrintSuccess("Configuration content loaded")
-	terminal.PrintInfo("")
+	o.PrintSuccess("Configuration content loaded\n")
 
 	fmt.Print(string(content))
 	return nil
@@ -89,54 +94,52 @@ func showAnvilSettings() error {
 
 // showPulledConfig displays configuration files from a pulled directory
 func showPulledConfig(targetDir string) error {
-	terminal.PrintHeader(fmt.Sprintf("Configuration Directory: %s", targetDir))
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Configuration Directory: %s", targetDir))
 
 	// Stage 1: Load anvil configuration
-	terminal.PrintStage("Loading anvil configuration...")
-	terminal.PrintSuccess("Configuration loaded")
+	o.PrintStage("Loading anvil configuration...")
+	o.PrintSuccess("Configuration loaded")
 
 	// Stage 2: Locate pulled configuration directory
-	terminal.PrintStage("Locating pulled configuration directory...")
+	o.PrintStage("Locating pulled configuration directory...")
 	tempDir := filepath.Join(config.GetConfigDirectory(), "temp", targetDir)
 
 	// Check if the directory exists
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		terminal.PrintError("Configuration directory '%s' not found", targetDir)
-		terminal.PrintInfo("")
-		terminal.PrintInfo("💡 This could be because:")
-		terminal.PrintInfo("   • The app name is incorrect")
-		terminal.PrintInfo("   • The configuration was never pulled")
-		terminal.PrintInfo("   • Use 'anvil config pull %s' to pull this configuration first", targetDir)
-		terminal.PrintInfo("")
+		o.PrintError("Configuration directory '%s' not found\n", targetDir)
+		o.PrintInfo("💡 This could be because:")
+		o.PrintInfo("   • The app name is incorrect")
+		o.PrintInfo("   • The configuration was never pulled")
+		o.PrintInfo("   • Use 'anvil config pull %s' to pull this configuration first", targetDir)
+		o.PrintInfo("")
 
 		// Show available pulled configurations
 		tempBasePath := filepath.Join(config.GetConfigDirectory(), "temp")
 		if entries, err := os.ReadDir(tempBasePath); err == nil && len(entries) > 0 {
-			terminal.PrintInfo("Available pulled configurations:")
+			o.PrintInfo("Available pulled configurations:")
 			for _, entry := range entries {
 				if entry.IsDir() {
-					terminal.PrintInfo("  • %s", entry.Name())
+					o.PrintInfo("  • %s", entry.Name())
 				}
 			}
 		} else {
-			terminal.PrintInfo("No configurations have been pulled yet.")
-			terminal.PrintInfo("Use 'anvil config pull <directory>' to pull configurations from your repository.")
+			o.PrintInfo("No configurations have been pulled yet.")
+			o.PrintInfo("Use 'anvil config pull <directory>' to pull configurations from your repository.")
 		}
 
 		return fmt.Errorf("configuration directory not found")
 	}
-	terminal.PrintSuccess("Configuration directory located")
-
-	terminal.PrintInfo("Directory: %s", tempDir)
-	terminal.PrintInfo("")
+	o.PrintSuccess("Configuration directory located")
+	o.PrintInfo("Directory: %s\n", tempDir)
 
 	// Stage 3: Display directory contents
-	terminal.PrintStage("Reading configuration files...")
+	o.PrintStage("Reading configuration files...")
 	err := showDirectoryTree(tempDir, targetDir)
 	if err != nil {
 		return err
 	}
-	terminal.PrintSuccess("Configuration files displayed")
+	o.PrintSuccess("Configuration files displayed")
 
 	return nil
 }
@@ -161,14 +164,12 @@ func showDirectoryTree(basePath, targetDir string) error {
 	if len(root.Children) == 1 && !root.Children[0].IsDir {
 		return showSingleFile(root.Children[0].Path, targetDir)
 	}
-
-	terminal.PrintHeader(fmt.Sprintf("Configuration Directory: %s", targetDir))
-	terminal.PrintInfo("Path: %s", basePath)
-	terminal.PrintInfo("")
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Configuration Directory: %s", targetDir))
+	o.PrintInfo("Path: %s\n", basePath)
 
 	// Display the tree structure
-	terminal.PrintInfo("Directory structure:")
-	terminal.PrintInfo("")
+	o.PrintInfo("Directory structure:\n")
 
 	// Sort children for consistent display
 	sortChildren(root)
@@ -176,10 +177,9 @@ func showDirectoryTree(basePath, targetDir string) error {
 	// Print the tree starting from root
 	printTreeNode(root, "", true, true)
 
-	terminal.PrintInfo("")
-	terminal.PrintInfo("💡 To view a specific file, you can use:")
-	terminal.PrintInfo("   • cat %s/[filename]", basePath)
-	terminal.PrintInfo("   • Or navigate to the directory and explore manually")
+	o.PrintInfo("\n💡 To view a specific file, you can use:")
+	o.PrintInfo("   • cat %s/[filename]", basePath)
+	o.PrintInfo("   • Or navigate to the directory and explore manually")
 
 	return nil
 }
@@ -331,9 +331,9 @@ func printTreeNode(node *TreeNode, prefix string, isLast bool, isRoot bool) {
 
 // showSingleFile displays the content of a single configuration file
 func showSingleFile(filePath, targetDir string) error {
-	terminal.PrintHeader(fmt.Sprintf("Configuration: %s", targetDir))
-	terminal.PrintInfo("File: %s", filepath.Base(filePath))
-	terminal.PrintInfo("")
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Configuration: %s", targetDir))
+	o.PrintInfo("File: %s\n", filepath.Base(filePath))
 
 	// Read and display the file content
 	content, err := os.ReadFile(filePath)

@@ -25,10 +25,16 @@ import (
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/rocajuanma/anvil/pkg/tools"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 // InitCmd represents the init command for macOS environment setup
 var InitCmd = &cobra.Command{
@@ -37,7 +43,7 @@ var InitCmd = &cobra.Command{
 	Long:  constants.INIT_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runInitCommand(); err != nil {
-			terminal.PrintError("Initialization failed: %v", err)
+			getOutputHandler().PrintError("Initialization failed: %v", err)
 			os.Exit(1)
 		}
 	},
@@ -48,7 +54,8 @@ func runInitCommand() error {
 	// Display the Anvil logo
 	fmt.Println(constants.AnvilLogo)
 	fmt.Println()
-	terminal.PrintHeader("Anvil Initialization")
+	o := getOutputHandler()
+	o.PrintHeader("Anvil Initialization")
 
 	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
@@ -57,76 +64,76 @@ func runInitCommand() error {
 	}
 
 	// Stage 1: Tool validation and installation
-	terminal.PrintStage("Validating and installing required tools...")
+	o.PrintStage("Validating and installing required tools...")
 	if err := tools.ValidateAndInstallTools(); err != nil {
 		return errors.NewValidationError(constants.OpInit, "validate-tools", err)
 	}
-	terminal.PrintSuccess("All required tools are available")
+	o.PrintSuccess("All required tools are available")
 
 	// Stage 2: Create necessary directories
-	terminal.PrintStage("Creating necessary directories...")
+	o.PrintStage("Creating necessary directories...")
 	if err := config.CreateDirectories(); err != nil {
 		return errors.NewFileSystemError(constants.OpInit, "create-directories", err)
 	}
-	terminal.PrintSuccess("Directories created successfully")
+	o.PrintSuccess("Directories created successfully")
 
 	// Stage 3: Generate default settings.yaml
-	terminal.PrintStage("Generating default settings.yaml...")
+	o.PrintStage("Generating default settings.yaml...")
 	if err := config.GenerateDefaultSettings(); err != nil {
 		return errors.NewConfigurationError(constants.OpInit, "generate-settings", err)
 	}
-	terminal.PrintSuccess("Default settings.yaml generated")
+	o.PrintSuccess("Default settings.yaml generated")
 
 	// Stage 4: Check local environment configurations
-	terminal.PrintStage("Checking local environment configurations...")
+	o.PrintStage("Checking local environment configurations...")
 	warnings := config.CheckEnvironmentConfigurations()
 	if len(warnings) > 0 {
-		terminal.PrintWarning("Environment configuration warnings:")
+		o.PrintWarning("Environment configuration warnings:")
 		for _, warning := range warnings {
-			terminal.PrintWarning("  - %s", warning)
+			o.PrintWarning("  - %s", warning)
 		}
 	} else {
-		terminal.PrintSuccess("Environment configurations are properly set")
+		o.PrintSuccess("Environment configurations are properly set")
 	}
 
 	// Stage 5: Print completion message and next steps
-	terminal.PrintHeader("Initialization Complete!")
-	terminal.PrintInfo("Anvil has been successfully initialized and is ready to use.")
-	terminal.PrintInfo("Configuration files have been created in: %s", config.GetConfigDirectory())
+	o.PrintHeader("Initialization Complete!")
+	o.PrintInfo("Anvil has been successfully initialized and is ready to use.")
+	o.PrintInfo("Configuration files have been created in: %s", config.GetConfigDirectory())
 
 	// Provide specific guidance if there are configuration warnings
 	if len(warnings) > 0 {
-		terminal.PrintInfo("\nRecommended next steps to complete your setup:")
+		o.PrintInfo("\nRecommended next steps to complete your setup:")
 		for _, warning := range warnings {
-			terminal.PrintInfo("  • %s", warning)
+			o.PrintInfo("  • %s", warning)
 		}
-		terminal.PrintInfo("\nThese steps are optional but recommended for the best experience.")
+		o.PrintInfo("\nThese steps are optional but recommended for the best experience.")
 	}
 
 	// Final usage guidance
-	terminal.PrintInfo("\nYou can now use:")
-	terminal.PrintInfo("  • 'anvil install [group]' to install development tool groups")
-	terminal.PrintInfo("  • 'anvil install [app]' to install any individual application")
-	terminal.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
+	o.PrintInfo("\nYou can now use:")
+	o.PrintInfo("  • 'anvil install [group]' to install development tool groups")
+	o.PrintInfo("  • 'anvil install [app]' to install any individual application")
+	o.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
 
 	// GitHub configuration warning
-	terminal.PrintWarning("\n⚙️  Configuration Management Setup Required:")
-	terminal.PrintInfo("  • Edit the 'github.config_repo' field in settings.yaml to enable config pull/push")
-	terminal.PrintInfo("  • Example: 'github.config_repo: username/dotfiles'")
-	terminal.PrintInfo("  • Set GITHUB_TOKEN environment variable for authentication")
-	terminal.PrintInfo("  • Run 'anvil config pull' once configured to sync your dotfiles")
+	o.PrintWarning("\n⚙️  Configuration Management Setup Required:")
+	o.PrintInfo("  • Edit the 'github.config_repo' field in settings.yaml to enable config pull/push")
+	o.PrintInfo("  • Example: 'github.config_repo: username/dotfiles'")
+	o.PrintInfo("  • Set GITHUB_TOKEN environment variable for authentication")
+	o.PrintInfo("  • Run 'anvil config pull' once configured to sync your dotfiles")
 
 	// Show available groups dynamically
 	if groups, err := config.GetAvailableGroups(); err == nil {
 		builtInGroups := config.GetBuiltInGroups()
-		terminal.PrintInfo("\nAvailable groups: %s", strings.Join(builtInGroups, ", "))
+		o.PrintInfo("\nAvailable groups: %s", strings.Join(builtInGroups, ", "))
 		if len(groups) > len(builtInGroups) {
-			terminal.PrintInfo("Custom groups: %d defined", len(groups)-len(builtInGroups))
+			o.PrintInfo("Custom groups: %d defined", len(groups)-len(builtInGroups))
 		}
 	} else {
-		terminal.PrintInfo("\nAvailable groups: dev, new-laptop")
+		o.PrintInfo("\nAvailable groups: dev, new-laptop")
 	}
-	terminal.PrintInfo("Example: 'anvil install dev' or 'anvil install firefox'")
+	o.PrintInfo("Example: 'anvil install dev' or 'anvil install firefox'")
 
 	return nil
 }

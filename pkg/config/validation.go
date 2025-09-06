@@ -26,6 +26,11 @@ import (
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
 
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
+
 // ConfigValidator implements the Validator interface for configuration validation
 type ConfigValidator struct {
 	config *AnvilConfig
@@ -369,10 +374,11 @@ func ValidateAndFixGitHubConfig(config *AnvilConfig) bool {
 
 		if normalizedRepo != originalRepo {
 			config.GitHub.ConfigRepo = normalizedRepo
-			terminal.PrintInfo("🔧 Auto-corrected GitHub repository URL:")
-			terminal.PrintInfo("   From: %s", originalRepo)
-			terminal.PrintInfo("   To:   %s", normalizedRepo)
-			terminal.PrintInfo("   Expected format: 'username/repository' (without domain)")
+			o := getOutputHandler()
+			o.PrintInfo("🔧 Auto-corrected GitHub repository URL:")
+			o.PrintInfo("   From: %s", originalRepo)
+			o.PrintInfo("   To:   %s", normalizedRepo)
+			o.PrintInfo("   Expected format: 'username/repository' (without domain)")
 			fixed = true
 		}
 	}
