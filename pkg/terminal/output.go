@@ -254,3 +254,16 @@ func (oh *DefaultOutputHandler) Enable() {
 
 // Global output handler instance
 var globalOutputHandler interfaces.OutputHandler = NewOutputHandler()
+
+// SetGlobalOutputHandler sets the global output handler
+func SetGlobalOutputHandler(handler interfaces.OutputHandler) {
+	globalOutputHandler = handler
+}
+
+// GetGlobalOutputHandler returns the global output handler
+func GetGlobalOutputHandler() interfaces.OutputHandler {
+	if globalOutputHandler == nil {
+		globalOutputHandler = NewOutputHandler()
+	}
+	return globalOutputHandler
+}

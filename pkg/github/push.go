@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -32,6 +31,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/anvil/pkg/utils"
 )
 
 // PushConfigResult represents the result of a config push operation
@@ -328,26 +328,9 @@ func (gc *GitHubClient) pushBranch(ctx context.Context, branchName string) error
 	return nil
 }
 
-// copyFile copies a file from src to dst
+// copyFile copies a file from src to dst using the consolidated utils.CopyFileSimple
 func copyFile(src, dst string) error {
-	sourceFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer sourceFile.Close()
-
-	destFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer destFile.Close()
-
-	_, err = io.Copy(destFile, sourceFile)
-	if err != nil {
-		return err
-	}
-
-	return destFile.Sync()
+	return utils.CopyFileSimple(src, dst)
 }
 
 // generateTimestampedBranchName generates a branch name with current date and time

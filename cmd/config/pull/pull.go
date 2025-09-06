@@ -29,6 +29,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/github"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/anvil/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -249,45 +250,14 @@ func copyDirectoryToTemp(cfg *config.AnvilConfig, targetDir string) (string, err
 	return destDir, nil
 }
 
-// copyDirRecursive recursively copies a directory
+// copyDirRecursive recursively copies a directory using the consolidated utils.CopyDirectorySimple
 func copyDirRecursive(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Calculate destination path
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		destPath := filepath.Join(dst, relPath)
-
-		if info.IsDir() {
-			// Create directory
-			return os.MkdirAll(destPath, info.Mode())
-		} else {
-			// Copy file
-			return copyFile(path, destPath)
-		}
-	})
+	return utils.CopyDirectorySimple(src, dst)
 }
 
-// copyFile copies a single file
+// copyFile copies a single file using the consolidated utils.CopyFileSimple
 func copyFile(src, dst string) error {
-	// Read source file
-	data, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-
-	// Create destination directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(dst), constants.DirPerm); err != nil {
-		return err
-	}
-
-	// Write destination file
-	return os.WriteFile(dst, data, constants.FilePerm)
+	return utils.CopyFileSimple(src, dst)
 }
 
 // listCopiedFiles lists the files that were copied to the temp directory

@@ -14,13 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package terminal provides legacy terminal output functions that delegate
+// to the modern OutputHandler interface for backward compatibility.
+//
+// DEPRECATED: These functions are deprecated in favor of using the
+// OutputHandler interface directly from pkg/terminal/output.go.
+// They are kept for backward compatibility but will be removed in future versions.
 package terminal
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 )
 
 // Color constants for terminal output
@@ -36,58 +39,70 @@ const (
 	ColorBold   = "\033[1m"
 )
 
+// Legacy functions that delegate to the modern OutputHandler interface
+// for backward compatibility.
+
+// getDefaultOutputHandler returns the global default output handler
+func getDefaultOutputHandler() interfaces.OutputHandler {
+	return GetGlobalOutputHandler()
+}
+
 // PrintHeader prints a formatted header message
+// DEPRECATED: Use OutputHandler.PrintHeader() instead
 func PrintHeader(message string) {
-	fmt.Printf("\n%s%s=== %s ===%s\n\n", ColorBold, ColorCyan, message, ColorReset)
+	getDefaultOutputHandler().PrintHeader(message)
 }
 
 // PrintStage prints a stage message with blue color
+// DEPRECATED: Use OutputHandler.PrintStage() instead
 func PrintStage(message string) {
-	fmt.Printf("%s%s🔧 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+	getDefaultOutputHandler().PrintStage(message)
 }
 
 // PrintSuccess prints a success message with green color
+// DEPRECATED: Use OutputHandler.PrintSuccess() instead
 func PrintSuccess(message string) {
-	fmt.Printf("%s%s✅ %s%s\n", ColorBold, ColorGreen, message, ColorReset)
+	getDefaultOutputHandler().PrintSuccess(message)
 }
 
-// PrintError prints an error message with red color and exits if requested
+// PrintError prints an error message with red color
+// DEPRECATED: Use OutputHandler.PrintError() instead
 func PrintError(format string, args ...interface{}) {
-	fmt.Printf("%s%s❌ %s%s\n", ColorBold, ColorRed, fmt.Sprintf(format, args...), ColorReset)
+	getDefaultOutputHandler().PrintError(format, args...)
 }
 
 // PrintWarning prints a warning message with yellow color
+// DEPRECATED: Use OutputHandler.PrintWarning() instead
 func PrintWarning(format string, args ...interface{}) {
-	fmt.Printf("%s%s⚠️  %s%s\n", ColorBold, ColorYellow, fmt.Sprintf(format, args...), ColorReset)
+	getDefaultOutputHandler().PrintWarning(format, args...)
 }
 
 // PrintInfo prints an info message with normal color
+// DEPRECATED: Use OutputHandler.PrintInfo() instead
 func PrintInfo(format string, args ...interface{}) {
-	fmt.Printf("%s%s\n", fmt.Sprintf(format, args...), ColorReset)
+	getDefaultOutputHandler().PrintInfo(format, args...)
 }
 
-// PrintAlreadyAvailable prints a message indicating something is already available (blue color)
+// PrintAlreadyAvailable prints a message indicating something is already available
+// DEPRECATED: Use OutputHandler.PrintAlreadyAvailable() instead
 func PrintAlreadyAvailable(format string, args ...interface{}) {
-	fmt.Printf("%s%s💙 %s%s\n", ColorBold, ColorBlue, fmt.Sprintf(format, args...), ColorReset)
+	getDefaultOutputHandler().PrintAlreadyAvailable(format, args...)
 }
 
 // PrintProgress prints a progress indicator
+// DEPRECATED: Use OutputHandler.PrintProgress() instead
 func PrintProgress(current, total int, message string) {
-	percentage := float64(current) / float64(total) * 100
-	fmt.Printf("%s%s[%d/%d] %.0f%% - %s%s\n", ColorBold, ColorCyan, current, total, percentage, message, ColorReset)
+	getDefaultOutputHandler().PrintProgress(current, total, message)
 }
 
 // Confirm prompts the user for confirmation
+// DEPRECATED: Use OutputHandler.Confirm() instead
 func Confirm(message string) bool {
-	fmt.Printf("%s%s? %s (y/N): %s", ColorBold, ColorYellow, message, ColorReset)
-
-	var response string
-	fmt.Scanln(&response)
-
-	return response == "y" || response == "Y" || response == "yes" || response == "Yes"
+	return getDefaultOutputHandler().Confirm(message)
 }
 
 // IsTerminalSupported checks if the terminal supports colored output
+// DEPRECATED: Use OutputHandler.IsSupported() instead
 func IsTerminalSupported() bool {
-	return os.Getenv(constants.EnvTerm) != "dumb"
+	return getDefaultOutputHandler().IsSupported()
 }
