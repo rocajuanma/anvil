@@ -22,9 +22,15 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 // Tool represents a macOS system tool
 type Tool struct {
@@ -91,11 +97,11 @@ func ValidateAndInstallTools() error {
 
 	// First, ensure Homebrew is installed
 	if !brew.IsBrewInstalled() {
-		terminal.PrintInfo("Homebrew not found. Installing Homebrew...")
+		getOutputHandler().PrintInfo("Homebrew not found. Installing Homebrew...")
 		if err := brew.InstallBrew(); err != nil {
 			return fmt.Errorf("failed to install Homebrew: %w", err)
 		}
-		terminal.PrintSuccess("Homebrew installed successfully")
+		getOutputHandler().PrintSuccess("Homebrew installed successfully")
 	}
 
 	// Validate required tools
@@ -110,7 +116,7 @@ func ValidateAndInstallTools() error {
 	optionalTools := GetOptionalTools()
 	for _, tool := range optionalTools {
 		if err := validateTool(tool); err != nil {
-			terminal.PrintWarning("Optional tool %s is not available: %v", tool.Name, err)
+			getOutputHandler().PrintWarning("Optional tool %s is not available: %v", tool.Name, err)
 		}
 	}
 
@@ -119,18 +125,19 @@ func ValidateAndInstallTools() error {
 
 // validateTool validates a single tool on macOS
 func validateTool(tool Tool) error {
+	o := getOutputHandler()
 	if system.CommandExists(tool.Command) {
-		terminal.PrintInfo("✓ %s is available", tool.Name)
+		o.PrintInfo("✓ %s is available", tool.Name)
 		return nil
 	}
 
 	if !tool.Required {
-		terminal.PrintWarning("○ %s is not installed (optional)", tool.Name)
+		o.PrintWarning("○ %s is not installed (optional)", tool.Name)
 		return nil
 	}
 
 	// Try to install the tool
-	terminal.PrintInfo("Installing %s...", tool.Name)
+	o.PrintInfo("Installing %s...", tool.Name)
 
 	switch tool.InstallWith {
 	case "brew":
@@ -157,7 +164,7 @@ func validateTool(tool Tool) error {
 		return fmt.Errorf("%s was not successfully installed", tool.Name)
 	}
 
-	terminal.PrintSuccess(fmt.Sprintf("%s installed successfully", tool.Name))
+	o.PrintSuccess(fmt.Sprintf("%s installed successfully", tool.Name))
 	return nil
 }
 
@@ -172,27 +179,6 @@ func GetToolInfo(toolName string) (*Tool, error) {
 	}
 
 	return nil, fmt.Errorf("tool %s not found", toolName)
-}
-
-// ListTools lists all available tools for macOS
-func ListTools() {
-	terminal.PrintHeader("Required Tools for macOS")
-	for _, tool := range GetRequiredTools() {
-		status := "❌ Not installed"
-		if system.CommandExists(tool.Command) {
-			status = "✅ Installed"
-		}
-		terminal.PrintInfo("- %s (%s): %s - %s", tool.Name, tool.Command, tool.Description, status)
-	}
-
-	terminal.PrintHeader("Optional Tools for macOS")
-	for _, tool := range GetOptionalTools() {
-		status := "❌ Not installed"
-		if system.CommandExists(tool.Command) {
-			status = "✅ Installed"
-		}
-		terminal.PrintInfo("- %s (%s): %s - %s", tool.Name, tool.Command, tool.Description, status)
-	}
 }
 
 // CheckToolsStatus checks the status of all tools on macOS

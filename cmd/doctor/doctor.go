@@ -24,10 +24,16 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/rocajuanma/anvil/pkg/validators"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 var DoctorCmd = &cobra.Command{
 	Use:   "doctor [category|check]",
@@ -35,7 +41,7 @@ var DoctorCmd = &cobra.Command{
 	Long:  constants.DOCTOR_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runDoctorCommand(cmd, args); err != nil {
-			terminal.PrintError("Doctor failed: %v", err)
+			getOutputHandler().PrintError("Doctor failed: %v", err)
 			return
 		}
 	},
@@ -87,10 +93,10 @@ func runDoctorCommand(cmd *cobra.Command, args []string) error {
 
 // showAvailableChecks displays all available checks organized by category
 func showAvailableChecks(engine *validators.DoctorEngine) error {
-	terminal.PrintHeader("Available Health Checks")
+	o := getOutputHandler()
+	o.PrintHeader("Available Health Checks")
 
-	terminal.PrintInfo("🏷️  CATEGORIES (run all checks in a group):")
-	terminal.PrintInfo("")
+	o.PrintInfo("🏷️  CATEGORIES (run all checks in a group):\n")
 
 	checks := engine.ListChecks()
 
@@ -104,47 +110,45 @@ func showAvailableChecks(engine *validators.DoctorEngine) error {
 	totalChecks := 0
 	for _, category := range []string{"environment", "dependencies", "configuration", "connectivity"} {
 		if checkNames, exists := checks[category]; exists {
-			terminal.PrintStage(fmt.Sprintf("anvil doctor %s", category))
-			terminal.PrintInfo("    %s", categoryDescriptions[category])
-			terminal.PrintInfo("    Includes: %s", strings.Join(checkNames, ", "))
-			terminal.PrintInfo("    (%d checks)", len(checkNames))
-			terminal.PrintInfo("")
+			o.PrintStage(fmt.Sprintf("anvil doctor %s", category))
+			o.PrintInfo("    %s", categoryDescriptions[category])
+			o.PrintInfo("    Includes: %s", strings.Join(checkNames, ", "))
+			o.PrintInfo("    (%d checks)\n", len(checkNames))
 			totalChecks += len(checkNames)
 		}
 	}
 
-	terminal.PrintInfo("🔍 SPECIFIC CHECKS (run individual validators):")
-	terminal.PrintInfo("")
+	o.PrintInfo("🔍 SPECIFIC CHECKS (run individual validators):\n")
 
 	for _, category := range []string{"environment", "dependencies", "configuration", "connectivity"} {
 		if checkNames, exists := checks[category]; exists {
-			terminal.PrintStage(fmt.Sprintf("%s checks:", strings.Title(category)))
+			o.PrintStage(fmt.Sprintf("%s checks:", strings.Title(category)))
 			for _, checkName := range checkNames {
-				terminal.PrintInfo("  anvil doctor %s", checkName)
+				o.PrintInfo("  anvil doctor %s", checkName)
 			}
-			terminal.PrintInfo("")
+			o.PrintInfo("")
 		}
 	}
 
-	terminal.PrintInfo("💡 USAGE EXAMPLES:")
-	terminal.PrintInfo("")
-	terminal.PrintInfo("  anvil doctor                    # Run all %d checks", totalChecks)
-	terminal.PrintInfo("  anvil doctor environment        # Run 3 environment checks")
-	terminal.PrintInfo("  anvil doctor git-config         # Run only git configuration check")
-	terminal.PrintInfo("  anvil doctor --fix              # Auto-fix detected issues")
-	terminal.PrintInfo("  anvil doctor dependencies --fix # Auto-fix dependency issues")
+	o.PrintInfo("💡 USAGE EXAMPLES:\n")
+	o.PrintInfo("  anvil doctor                    # Run all %d checks", totalChecks)
+	o.PrintInfo("  anvil doctor environment        # Run 3 environment checks")
+	o.PrintInfo("  anvil doctor git-config         # Run only git configuration check")
+	o.PrintInfo("  anvil doctor --fix              # Auto-fix detected issues")
+	o.PrintInfo("  anvil doctor dependencies --fix # Auto-fix dependency issues")
 
 	return nil
 }
 
 // runSingleCheck executes a specific health check
 func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose bool) error {
-	terminal.PrintHeader(fmt.Sprintf("Running Check: %s", checkName))
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Running Check: %s", checkName))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	terminal.PrintStage(fmt.Sprintf("Executing %s check...", checkName))
+	o.PrintStage(fmt.Sprintf("Executing %s check...", checkName))
 
 	result := engine.RunCheckWithProgress(ctx, checkName, verbose)
 	displayResults([]*validators.ValidationResult{result}, verbose)
@@ -158,7 +162,8 @@ func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose b
 
 // runCategoryChecks executes all checks in a specific category
 func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose bool) error {
-	terminal.PrintHeader(fmt.Sprintf("Running %s Health Checks", strings.Title(category)))
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Running %s Health Checks", strings.Title(category)))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -166,11 +171,11 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 	// Get validators for this category to show count
 	categoryValidators := engine.GetValidatorsByCategory(category)
 	if len(categoryValidators) == 0 {
-		terminal.PrintError("Category '%s' not found", category)
+		o.PrintError("Category '%s' not found", category)
 		return errors.NewValidationError(constants.OpDoctor, category, fmt.Errorf("category not found"))
 	}
 
-	terminal.PrintStage(fmt.Sprintf("Executing %d checks in %s category...", len(categoryValidators), category))
+	o.PrintStage(fmt.Sprintf("Executing %d checks in %s category...", len(categoryValidators), category))
 
 	results := engine.RunCategoryWithProgress(ctx, category, verbose)
 	displayResults(results, verbose)
@@ -188,9 +193,9 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 
 // runAllChecks executes all available health checks
 func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
-	terminal.PrintHeader("Running Anvil Health Check")
-	terminal.PrintInfo("🔍 Validating environment, dependencies, configuration, and connectivity...")
-	terminal.PrintInfo("")
+	o := getOutputHandler()
+	o.PrintHeader("Running Anvil Health Check")
+	o.PrintInfo("🔍 Validating environment, dependencies, configuration, and connectivity...\n")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
@@ -199,7 +204,7 @@ func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
 	allValidators := engine.GetAllValidators()
 	totalChecks := len(allValidators)
 
-	terminal.PrintStage(fmt.Sprintf("Executing %d health checks...", totalChecks))
+	o.PrintStage(fmt.Sprintf("Executing %d health checks...", totalChecks))
 
 	results := engine.RunAllWithProgress(ctx, verbose)
 	displayResults(results, verbose)
@@ -210,7 +215,8 @@ func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
 
 // runFixCheck attempts to fix a specific check
 func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
-	terminal.PrintHeader(fmt.Sprintf("Fixing Check: %s", checkName))
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Fixing Check: %s", checkName))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -220,40 +226,40 @@ func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
 	displayResults([]*validators.ValidationResult{result}, false)
 
 	if result.Status == validators.PASS && checkName != "git-config" {
-		terminal.PrintSuccess("Check is already passing, no fix needed")
+		o.PrintSuccess("Check is already passing, no fix needed")
 		return nil
 	}
 
 	if !result.AutoFix {
-		terminal.PrintWarning("This check cannot be automatically fixed")
-		terminal.PrintInfo("Manual fix required: %s", result.FixHint)
+		o.PrintWarning("This check cannot be automatically fixed")
+		o.PrintInfo("Manual fix required: %s", result.FixHint)
 		return nil
 	}
 
 	// Confirm with user
-	if !terminal.Confirm(fmt.Sprintf("Attempt to fix '%s'?", checkName)) {
-		terminal.PrintInfo("Fix cancelled by user")
+	if !o.Confirm(fmt.Sprintf("Attempt to fix '%s'?", checkName)) {
+		o.PrintInfo("Fix cancelled by user")
 		return nil
 	}
 
 	// Attempt fix
-	terminal.PrintInfo("Attempting to fix %s...", checkName)
+	o.PrintInfo("Attempting to fix %s...", checkName)
 	if err := engine.FixCheck(ctx, checkName); err != nil {
-		terminal.PrintError("Fix failed: %v", err)
+		o.PrintError("Fix failed: %v", err)
 		return err
 	}
 
-	terminal.PrintSuccess("Fix completed!")
+	o.PrintSuccess("Fix completed!")
 
 	// Verify fix
-	terminal.PrintInfo("Verifying fix...")
+	o.PrintInfo("Verifying fix...")
 	newResult := engine.RunCheck(ctx, checkName)
 	displayResults([]*validators.ValidationResult{newResult}, false)
 
 	if newResult.Status == validators.PASS {
-		terminal.PrintSuccess("✅ Check is now passing!")
+		o.PrintSuccess("✅ Check is now passing!")
 	} else {
-		terminal.PrintWarning("⚠️  Check still has issues after fix attempt")
+		o.PrintWarning("⚠️  Check still has issues after fix attempt")
 	}
 
 	return nil
@@ -261,7 +267,8 @@ func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
 
 // runFixAll attempts to fix all auto-fixable issues
 func runFixAll(engine *validators.DoctorEngine, category string) error {
-	terminal.PrintHeader("Auto-fixing Issues")
+	o := getOutputHandler()
+	o.PrintHeader("Auto-fixing Issues")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
@@ -277,20 +284,20 @@ func runFixAll(engine *validators.DoctorEngine, category string) error {
 	fixableIssues := validators.GetFixableIssues(results)
 	if len(fixableIssues) == 0 {
 		if category != "" {
-			terminal.PrintSuccess(fmt.Sprintf("No auto-fixable issues found in %s category!", category))
+			o.PrintSuccess(fmt.Sprintf("No auto-fixable issues found in %s category!", category))
 		} else {
-			terminal.PrintSuccess("No auto-fixable issues found!")
+			o.PrintSuccess("No auto-fixable issues found!")
 		}
 		return nil
 	}
 
 	if category != "" {
-		terminal.PrintInfo("Found %d auto-fixable issues in %s category:", len(fixableIssues), category)
+		o.PrintInfo("Found %d auto-fixable issues in %s category:", len(fixableIssues), category)
 	} else {
-		terminal.PrintInfo("Found %d auto-fixable issues:", len(fixableIssues))
+		o.PrintInfo("Found %d auto-fixable issues:", len(fixableIssues))
 	}
 	for _, issue := range fixableIssues {
-		terminal.PrintInfo("  • %s: %s", issue.Name, issue.Message)
+		o.PrintInfo("  • %s: %s", issue.Name, issue.Message)
 	}
 
 	confirmMessage := "Attempt to fix all auto-fixable issues?"
@@ -298,24 +305,24 @@ func runFixAll(engine *validators.DoctorEngine, category string) error {
 		confirmMessage = fmt.Sprintf("Attempt to fix all auto-fixable issues in %s category?", category)
 	}
 
-	if !terminal.Confirm(confirmMessage) {
-		terminal.PrintInfo("Fix cancelled by user")
+	if !o.Confirm(confirmMessage) {
+		o.PrintInfo("Fix cancelled by user")
 		return nil
 	}
 
 	var fixedCount, failedCount int
 	for _, issue := range fixableIssues {
-		terminal.PrintInfo("Fixing %s...", issue.Name)
+		o.PrintInfo("Fixing %s...", issue.Name)
 		if err := engine.FixCheck(ctx, issue.Name); err != nil {
-			terminal.PrintError("Failed to fix %s: %v", issue.Name, err)
+			o.PrintError("Failed to fix %s: %v", issue.Name, err)
 			failedCount++
 		} else {
-			terminal.PrintSuccess(fmt.Sprintf("Fixed %s", issue.Name))
+			o.PrintSuccess(fmt.Sprintf("Fixed %s", issue.Name))
 			fixedCount++
 		}
 	}
 
-	terminal.PrintInfo("Fix complete: %d succeeded, %d failed", fixedCount, failedCount)
+	o.PrintInfo("Fix complete: %d succeeded, %d failed", fixedCount, failedCount)
 	return nil
 }
 
@@ -349,25 +356,25 @@ func displayCategory(category string, results []*validators.ValidationResult, ve
 
 	// Choose category status
 	categoryStatus := getCategoryStatus(passed, warned, failed, skipped)
-
-	terminal.PrintStage(fmt.Sprintf("%s %s", categoryStatus, strings.Title(category)))
+	o := getOutputHandler()
+	o.PrintStage(fmt.Sprintf("%s %s", categoryStatus, strings.Title(category)))
 
 	for _, result := range results {
 		statusEmoji := getStatusEmoji(result.Status)
-		terminal.PrintInfo("  %s %s", statusEmoji, result.Message)
+		o.PrintInfo("  %s %s", statusEmoji, result.Message)
 
 		if verbose && len(result.Details) > 0 {
 			for _, detail := range result.Details {
-				terminal.PrintInfo("      %s", detail)
+				o.PrintInfo("      %s", detail)
 			}
 		}
 
 		if result.Status != validators.PASS && result.FixHint != "" {
-			terminal.PrintInfo("      💡 %s", result.FixHint)
+			o.PrintInfo("      💡 %s", result.FixHint)
 		}
 	}
 
-	terminal.PrintInfo("")
+	o.PrintInfo("")
 }
 
 // printSummary shows overall health check summary
@@ -375,34 +382,34 @@ func printSummary(results []*validators.ValidationResult) {
 	passed, warned, failed, skipped := validators.GetSummary(results)
 	total := len(results)
 
-	terminal.PrintHeader("Health Check Summary")
-	terminal.PrintInfo("Total checks: %d", total)
-	terminal.PrintInfo("✅ Passed: %d", passed)
+	o := getOutputHandler()
+	o.PrintHeader("Health Check Summary")
+	o.PrintInfo("Total checks: %d", total)
+	o.PrintInfo("✅ Passed: %d", passed)
 	if warned > 0 {
-		terminal.PrintInfo("⚠️  Warnings: %d", warned)
+		o.PrintInfo("⚠️  Warnings: %d", warned)
 	}
 	if failed > 0 {
-		terminal.PrintInfo("❌ Failed: %d", failed)
+		o.PrintInfo("❌ Failed: %d", failed)
 	}
 	if skipped > 0 {
-		terminal.PrintInfo("⏭️  Skipped: %d", skipped)
+		o.PrintInfo("⏭️  Skipped: %d", skipped)
 	}
 
 	// Show fixable issues
 	fixableIssues := validators.GetFixableIssues(results)
 	if len(fixableIssues) > 0 {
-		terminal.PrintInfo("")
-		terminal.PrintInfo("🔧 %d issues can be auto-fixed", len(fixableIssues))
-		terminal.PrintInfo("Run 'anvil doctor --fix' to automatically fix them")
+		o.PrintInfo("\n🔧 %d issues can be auto-fixed", len(fixableIssues))
+		o.PrintInfo("Run 'anvil doctor --fix' to automatically fix them")
 	}
 
 	// Overall status
 	if failed > 0 {
-		terminal.PrintWarning("❌ Overall status: Issues found")
+		o.PrintWarning("❌ Overall status: Issues found")
 	} else if warned > 0 {
-		terminal.PrintInfo("⚠️  Overall status: Minor issues")
+		o.PrintInfo("⚠️  Overall status: Minor issues")
 	} else {
-		terminal.PrintSuccess("✅ Overall status: Healthy")
+		o.PrintSuccess("✅ Overall status: Healthy")
 	}
 }
 

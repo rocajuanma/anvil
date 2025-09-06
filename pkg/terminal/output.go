@@ -19,7 +19,6 @@ package terminal
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
@@ -61,31 +60,6 @@ func NewOutputHandler() interfaces.OutputHandler {
 			DisableOutput: false,
 			VerboseMode:   false,
 		},
-	}
-}
-
-// NewOutputHandlerWithConfig creates a new OutputHandler with custom configuration
-func NewOutputHandlerWithConfig(config *OutputConfig) interfaces.OutputHandler {
-	return &DefaultOutputHandler{
-		config: config,
-	}
-}
-
-// GetOutputLevel returns the appropriate output level for a message type
-func GetOutputLevel(messageType string) OutputLevel {
-	switch strings.ToLower(messageType) {
-	case "header":
-		return LevelHeader
-	case "stage":
-		return LevelStage
-	case "success":
-		return LevelSuccess
-	case "error":
-		return LevelError
-	case "warning":
-		return LevelWarning
-	default:
-		return LevelInfo
 	}
 }
 
@@ -288,8 +262,8 @@ func SetGlobalOutputHandler(handler interfaces.OutputHandler) {
 
 // GetGlobalOutputHandler returns the global output handler
 func GetGlobalOutputHandler() interfaces.OutputHandler {
+	if globalOutputHandler == nil {
+		globalOutputHandler = NewOutputHandler()
+	}
 	return globalOutputHandler
 }
-
-// Convenience functions that use the global handler
-// PrintWithLevel is removed to avoid interface conflicts

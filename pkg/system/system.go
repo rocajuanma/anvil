@@ -75,33 +75,6 @@ func RunCommandWithTimeout(ctx context.Context, command string, args ...string) 
 	return result, nil
 }
 
-// RunCommandWithOutput executes a command and prints output in real-time
-func RunCommandWithOutput(command string, args ...string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-	return RunCommandWithOutputTimeout(ctx, command, args...)
-}
-
-// RunCommandWithOutputTimeout executes a command with context and prints output in real-time
-func RunCommandWithOutputTimeout(ctx context.Context, command string, args ...string) error {
-	cmd := exec.CommandContext(ctx, command, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// For git commands, ensure non-interactive mode to prevent credential prompts
-	if command == "git" {
-		// Set environment variables to prevent credential prompts
-		cmd.Env = append(os.Environ(),
-			"GIT_TERMINAL_PROMPT=0",  // Disable terminal prompts
-			"GIT_ASKPASS=/bin/false", // Disable credential prompts
-			"SSH_ASKPASS=/bin/false", // Disable SSH passphrase prompts
-			"GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=no", // Non-interactive SSH
-		)
-	}
-
-	return cmd.Run()
-}
-
 // CommandExists checks if a command exists in the system PATH
 func CommandExists(command string) bool {
 	_, err := exec.LookPath(command)

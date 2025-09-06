@@ -3,7 +3,6 @@ module github.com/rocajuanma/anvil
 go 1.17
 
 require (
-	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/spf13/cobra v1.3.0
 	gopkg.in/yaml.v2 v2.4.0
 )

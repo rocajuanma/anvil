@@ -348,16 +348,17 @@ Use consistent terminal output patterns:
 
 ```go
 // Use terminal package functions
-terminal.PrintHeader("Major Section")
-terminal.PrintStage("Processing step...")
-terminal.PrintSuccess("Operation completed")
-terminal.PrintInfo("General information")
-terminal.PrintWarning("Non-critical issue")
-terminal.PrintError("Error occurred: %v", err)
+output = terminal.GetGlobalOutputHandler()
+output.PrintHeader("Major Section")
+output.PrintStage("Processing step...")
+output.PrintSuccess("Operation completed")
+output.PrintInfo("General information")
+output.PrintWarning("Non-critical issue")
+output.PrintError("Error occurred: %v", err)
 
 // Progress indicators for multi-step operations
 for i, item := range items {
-    terminal.PrintProgress(i+1, len(items), fmt.Sprintf("Processing %s", item))
+    output.PrintProgress(i+1, len(items), fmt.Sprintf("Processing %s", item))
     // Process item
 }
 ```

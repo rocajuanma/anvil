@@ -24,9 +24,15 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 var CleanCmd = &cobra.Command{
 	Use:   "clean",
@@ -34,7 +40,7 @@ var CleanCmd = &cobra.Command{
 	Long:  constants.CLEAN_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runCleanCommand(cmd, args); err != nil {
-			terminal.PrintError("Clean failed: %v", err)
+			getOutputHandler().PrintError("Clean failed: %v", err)
 			return
 		}
 	},
@@ -45,8 +51,8 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 	// Get command flags
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	force, _ := cmd.Flags().GetBool("force")
-
-	terminal.PrintHeader("Cleaning Anvil Directories")
+	output := getOutputHandler()
+	output.PrintHeader("Cleaning Anvil Directories")
 
 	// Get home directory
 	homeDir, err := os.UserHomeDir()
@@ -63,11 +69,11 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 
 	// Check if .anvil directory exists
 	if _, err := os.Stat(anvilDir); os.IsNotExist(err) {
-		terminal.PrintWarning("Directory %s does not exist. Nothing to clean.", anvilDir)
+		output.PrintWarning("Directory %s does not exist. Nothing to clean.", anvilDir)
 		return nil
 	}
 
-	terminal.PrintStage("Scanning .anvil directory for content to clean")
+	output.PrintStage("Scanning .anvil directory for content to clean")
 
 	// Get all items in .anvil directory
 	items, err := os.ReadDir(anvilDir)
@@ -92,13 +98,13 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(itemsToClean) == 0 {
-		terminal.PrintSuccess("No root directories found to clean. Only settings.yaml exists.")
+		output.PrintSuccess("No root directories found to clean. Only settings.yaml exists.")
 		return nil
 	}
 
 	// Display what will be cleaned
-	terminal.PrintInfo("Found %d root directories to clean:", len(itemsToClean))
-	terminal.PrintInfo("Directory structure to be cleaned:")
+	output.PrintInfo("Found %d root directories to clean:", len(itemsToClean))
+	output.PrintInfo("Directory structure to be cleaned:")
 
 	// Build and display tree structure for each directory
 	for _, itemPath := range itemsToClean {
@@ -106,53 +112,53 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 		if info, err := os.Stat(itemPath); err == nil && info.IsDir() {
 			// Count items in directory
 			count, treeOutput := buildDirectoryTree(itemPath, itemName)
-			terminal.PrintInfo("  📁 %s (%d)", itemName, count)
+			output.PrintInfo("  📁 %s (%d)", itemName, count)
 			fmt.Print(treeOutput)
 		} else {
-			terminal.PrintInfo("  📁 %s", itemName)
+			output.PrintInfo("  📁 %s", itemName)
 		}
 	}
 
 	// Confirm deletion unless force flag is used
 	if !force && !dryRun {
 		confirmMsg := fmt.Sprintf("Are you sure you want to clean the contents of these %d root directories? This action cannot be undone", len(itemsToClean))
-		if !terminal.Confirm(confirmMsg) {
-			terminal.PrintInfo("Clean operation cancelled.")
+		if !output.Confirm(confirmMsg) {
+			output.PrintInfo("Clean operation cancelled.")
 			return nil
 		}
 	}
 
 	if dryRun {
-		terminal.PrintInfo("DRY RUN: Would clean contents of %d root directories", len(itemsToClean))
+		output.PrintInfo("DRY RUN: Would clean contents of %d root directories", len(itemsToClean))
 		return nil
 	}
 
-	terminal.PrintStage("Cleaning directories and files")
+	output.PrintStage("Cleaning directories and files")
 
 	// Clean each item
 	cleanedCount := 0
 	for _, itemPath := range itemsToClean {
 		if err := cleanItem(itemPath); err != nil {
-			terminal.PrintWarning("Failed to clean %s: %v", filepath.Base(itemPath), err)
+			output.PrintWarning("Failed to clean %s: %v", filepath.Base(itemPath), err)
 			continue
 		}
 		cleanedCount++
 		itemName := filepath.Base(itemPath)
 		if info, err := os.Stat(itemPath); err == nil && info.IsDir() {
 			if itemName == "dotfiles" {
-				terminal.PrintSuccess("Removed dotfiles directory completely")
+				output.PrintSuccess("Removed dotfiles directory completely")
 			} else {
-				terminal.PrintSuccess("Cleaned contents of directory " + itemName)
+				output.PrintSuccess("Cleaned contents of directory " + itemName)
 			}
 		} else {
-			terminal.PrintSuccess("Cleaned " + itemName)
+			output.PrintSuccess("Cleaned " + itemName)
 		}
 	}
 
-	terminal.PrintInfo("Successfully cleaned contents of %d/%d root directories", cleanedCount, len(itemsToClean))
+	output.PrintInfo("Successfully cleaned contents of %d/%d root directories", cleanedCount, len(itemsToClean))
 
 	if cleanedCount < len(itemsToClean) {
-		terminal.PrintWarning("Some root directories could not be cleaned. Check the warnings above.")
+		output.PrintWarning("Some root directories could not be cleaned. Check the warnings above.")
 	}
 
 	return nil
