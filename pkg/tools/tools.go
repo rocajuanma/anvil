@@ -174,27 +174,6 @@ func GetToolInfo(toolName string) (*Tool, error) {
 	return nil, fmt.Errorf("tool %s not found", toolName)
 }
 
-// ListTools lists all available tools for macOS
-func ListTools() {
-	terminal.PrintHeader("Required Tools for macOS")
-	for _, tool := range GetRequiredTools() {
-		status := "❌ Not installed"
-		if system.CommandExists(tool.Command) {
-			status = "✅ Installed"
-		}
-		terminal.PrintInfo("- %s (%s): %s - %s", tool.Name, tool.Command, tool.Description, status)
-	}
-
-	terminal.PrintHeader("Optional Tools for macOS")
-	for _, tool := range GetOptionalTools() {
-		status := "❌ Not installed"
-		if system.CommandExists(tool.Command) {
-			status = "✅ Installed"
-		}
-		terminal.PrintInfo("- %s (%s): %s - %s", tool.Name, tool.Command, tool.Description, status)
-	}
-}
-
 // CheckToolsStatus checks the status of all tools on macOS
 func CheckToolsStatus() (map[string]bool, error) {
 	if runtime.GOOS != "darwin" {

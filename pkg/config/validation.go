@@ -19,11 +19,9 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
@@ -319,36 +317,6 @@ func (cv *ConfigValidator) validateToolConfig(toolName string, config *ToolInsta
 			return fmt.Errorf("invalid dependency name: %w", err)
 		}
 	}
-
-	return nil
-}
-
-// ValidateDirectoryAccess validates that directories exist and are accessible
-func ValidateDirectoryAccess(dirPath string) error {
-	if dirPath == "" {
-		return fmt.Errorf("directory path cannot be empty")
-	}
-
-	info, err := os.Stat(dirPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("directory does not exist: %s", dirPath)
-		}
-		return fmt.Errorf("cannot access directory %s: %w", dirPath, err)
-	}
-
-	if !info.IsDir() {
-		return fmt.Errorf("path is not a directory: %s", dirPath)
-	}
-
-	// Check if directory is writable
-	testFile := filepath.Join(dirPath, ".anvil_test")
-	if err := os.WriteFile(testFile, []byte("test"), constants.FilePerm); err != nil {
-		return fmt.Errorf("directory is not writable: %s", dirPath)
-	}
-
-	// Clean up test file
-	os.Remove(testFile)
 
 	return nil
 }
