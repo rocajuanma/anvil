@@ -22,9 +22,15 @@ import (
 	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 // BrewPackage represents a brew package
 type BrewPackage struct {
@@ -49,7 +55,7 @@ func InstallBrew() error {
 		return nil
 	}
 
-	terminal.PrintInfo("Installing Homebrew...")
+	getOutputHandler().PrintInfo("Installing Homebrew...")
 
 	// Official Homebrew installation command
 	installCmd := `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
@@ -72,7 +78,7 @@ func UpdateBrew() error {
 		return fmt.Errorf("Homebrew is not installed")
 	}
 
-	terminal.PrintInfo("Updating Homebrew...")
+	getOutputHandler().PrintInfo("Updating Homebrew...")
 
 	result, err := system.RunCommand(constants.BrewCommand, constants.BrewUpdate)
 	if err != nil {
@@ -92,7 +98,7 @@ func InstallPackage(packageName string) error {
 		return fmt.Errorf("Homebrew is not installed")
 	}
 
-	terminal.PrintInfo("Installing %s...", packageName)
+	getOutputHandler().PrintInfo("Installing %s...", packageName)
 
 	result, err := system.RunCommand(constants.BrewCommand, constants.BrewInstall, packageName)
 	if err != nil {
@@ -164,10 +170,10 @@ func InstallPackages(packages []string) error {
 	}
 
 	for i, pkg := range packages {
-		terminal.PrintProgress(i+1, len(packages), fmt.Sprintf("Installing %s", pkg))
+		getOutputHandler().PrintProgress(i+1, len(packages), fmt.Sprintf("Installing %s", pkg))
 
 		if IsPackageInstalled(pkg) {
-			terminal.PrintInfo("%s is already installed", pkg)
+			getOutputHandler().PrintInfo("%s is already installed", pkg)
 			continue
 		}
 
@@ -426,14 +432,14 @@ func InstallPackageWithCheck(packageName string) error {
 
 	// Check if application is already available (via any method)
 	if IsApplicationAvailable(packageName) {
-		terminal.PrintAlreadyAvailable("%s is already available on the system", packageName)
+		getOutputHandler().PrintAlreadyAvailable("%s is already available on the system", packageName)
 		return nil
 	}
 
 	// Dynamically determine if this is a cask (GUI app) or formula (CLI tool)
 	isCask := isCaskPackage(packageName)
 
-	terminal.PrintInfo("Installing %s...", packageName)
+	getOutputHandler().PrintInfo("Installing %s...", packageName)
 
 	var result *system.CommandResult
 	var err error
@@ -453,7 +459,7 @@ func InstallPackageWithCheck(packageName string) error {
 	if !result.Success {
 		// Check if the error is because the app already exists
 		if strings.Contains(result.Error, "already an App at") {
-			terminal.PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
+			getOutputHandler().PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
 			return nil
 		}
 		return fmt.Errorf("failed to install %s: %s", packageName, result.Error)

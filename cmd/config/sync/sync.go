@@ -26,9 +26,16 @@ import (
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/anvil/pkg/utils"
 	"github.com/spf13/cobra"
 )
+
+// getOutputHandler returns the global output handler for terminal operations
+func getOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 var SyncCmd = &cobra.Command{
 	Use:   "sync [app-name]",
@@ -37,7 +44,7 @@ var SyncCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1), // Accept 0 or 1 argument
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runSyncCommand(cmd, args); err != nil {
-			terminal.PrintError("Sync failed: %v", err)
+			getOutputHandler().PrintError("Sync failed: %v", err)
 			return
 		}
 	},
@@ -60,17 +67,17 @@ func runSyncCommand(cmd *cobra.Command, args []string) error {
 
 // syncAnvilSettings syncs the main anvil settings.yaml file
 func syncAnvilSettings(dryRun bool) error {
-	terminal.PrintHeader("Configuration Sync: anvil settings")
+	o := getOutputHandler()
+	o.PrintHeader("Configuration Sync: anvil settings")
 
 	// Check if pulled anvil settings exist
 	tempSettingsPath := filepath.Join(config.GetConfigDirectory(), "temp", "anvil", "settings.yaml")
 	if _, err := os.Stat(tempSettingsPath); os.IsNotExist(err) {
-		terminal.PrintError("Pulled anvil settings not found")
-		terminal.PrintInfo("")
-		terminal.PrintInfo("💡 No pulled settings found at: %s", tempSettingsPath)
-		terminal.PrintInfo("🔧 To fix this:")
-		terminal.PrintInfo("   • Run 'anvil config pull anvil' to download settings")
-		terminal.PrintInfo("   • Ensure your repository has an 'anvil' directory with settings.yaml")
+		o.PrintError("Pulled anvil settings not found\n")
+		o.PrintInfo("💡 No pulled settings found at: %s", tempSettingsPath)
+		o.PrintInfo("🔧 To fix this:")
+		o.PrintInfo("   • Run 'anvil config pull anvil' to download settings")
+		o.PrintInfo("   • Ensure your repository has an 'anvil' directory with settings.yaml")
 		return fmt.Errorf("config not pulled yet")
 	}
 
@@ -78,12 +85,11 @@ func syncAnvilSettings(dryRun bool) error {
 	currentSettingsPath := config.GetConfigPath()
 
 	// Display sync information
-	terminal.PrintInfo("Source: %s", tempSettingsPath)
-	terminal.PrintInfo("Destination: %s", currentSettingsPath)
-	terminal.PrintInfo("")
+	o.PrintInfo("Source: %s", tempSettingsPath)
+	o.PrintInfo("Destination: %s\n", currentSettingsPath)
 
 	if dryRun {
-		terminal.PrintInfo("Dry run - would sync anvil settings")
+		o.PrintInfo("Dry run - would sync anvil settings")
 		return nil
 	}
 
@@ -93,16 +99,15 @@ func syncAnvilSettings(dryRun bool) error {
 		return fmt.Errorf("failed to create archive directory: %w", err)
 	}
 
-	terminal.PrintInfo("Archive: %s", archivePath)
-	terminal.PrintInfo("")
+	o.PrintInfo("Archive: %s\n", archivePath)
 
 	// Ask for confirmation
-	if !terminal.Confirm("Override local settings.yaml? Old copy will be archived.") {
-		terminal.PrintInfo("Sync cancelled")
+	if !o.Confirm("Override local settings.yaml? Old copy will be archived.") {
+		o.PrintInfo("Sync cancelled")
 		return nil
 	}
 
-	terminal.PrintInfo("")
+	o.PrintInfo("")
 
 	// Archive existing settings
 	if err := archiveExistingConfig("anvil-settings", currentSettingsPath, archivePath); err != nil {
@@ -115,16 +120,17 @@ func syncAnvilSettings(dryRun bool) error {
 	}
 
 	// Report success
-	terminal.PrintSuccess("✅ Settings synced successfully")
-	terminal.PrintInfo("📦 Old settings archived to: %s", archivePath)
-	terminal.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
+	o.PrintSuccess("✅ Settings synced successfully")
+	o.PrintInfo("📦 Old settings archived to: %s", archivePath)
+	o.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
 
 	return nil
 }
 
 // syncAppConfig syncs configuration files for a specific app
 func syncAppConfig(appName string, dryRun bool) error {
-	terminal.PrintHeader(fmt.Sprintf("Configuration Sync: %s", appName))
+	output := getOutputHandler()
+	output.PrintHeader(fmt.Sprintf("Configuration Sync: %s", appName))
 
 	// Load current config
 	cfg, err := config.LoadConfig()
@@ -135,12 +141,11 @@ func syncAppConfig(appName string, dryRun bool) error {
 	// Check if pulled app config exists
 	tempAppPath := filepath.Join(config.GetConfigDirectory(), "temp", appName)
 	if _, err := os.Stat(tempAppPath); os.IsNotExist(err) {
-		terminal.PrintError("Pulled %s configuration not found", appName)
-		terminal.PrintInfo("")
-		terminal.PrintInfo("💡 No pulled config found at: %s", tempAppPath)
-		terminal.PrintInfo("🔧 To fix this:")
-		terminal.PrintInfo("   • Run 'anvil config pull %s' to download configuration", appName)
-		terminal.PrintInfo("   • Ensure your repository has a '%s' directory", appName)
+		output.PrintError("Pulled %s configuration not found\n", appName)
+		output.PrintInfo("💡 No pulled config found at: %s", tempAppPath)
+		output.PrintInfo("🔧 To fix this:")
+		output.PrintInfo("   • Run 'anvil config pull %s' to download configuration", appName)
+		output.PrintInfo("   • Ensure your repository has a '%s' directory", appName)
 		return fmt.Errorf("config not pulled yet")
 	}
 
@@ -151,29 +156,25 @@ func syncAppConfig(appName string, dryRun bool) error {
 
 	localConfigPath, exists := cfg.Configs[appName]
 	if !exists {
-		terminal.PrintError("App config path not configured")
-		terminal.PrintInfo("")
-		terminal.PrintInfo("💡 The app '%s' doesn't have a local config path defined", appName)
-		terminal.PrintInfo("🔧 To fix this:")
-		terminal.PrintInfo("   • Edit your settings.yaml file")
-		terminal.PrintInfo("   • Add the following to the 'configs' section:")
-		terminal.PrintInfo("")
-		terminal.PrintInfo("configs:")
-		terminal.PrintInfo("  %s: \"/path/to/%s/config\"", appName, appName)
-		terminal.PrintInfo("")
-		terminal.PrintInfo("Example paths:")
-		terminal.PrintInfo("  • ~/.config/%s", appName)
-		terminal.PrintInfo("  • ~/Library/Application Support/%s", strings.Title(appName))
+		output.PrintError("App config path not configured\n")
+		output.PrintInfo("💡 The app '%s' doesn't have a local config path defined", appName)
+		output.PrintInfo("🔧 To fix this:")
+		output.PrintInfo("   • Edit your settings.yaml file")
+		output.PrintInfo("   • Add the following to the 'configs' section:\n")
+		output.PrintInfo("configs:")
+		output.PrintInfo("  %s: \"/path/to/%s/config\"\n", appName, appName)
+		output.PrintInfo("Example paths:")
+		output.PrintInfo("  • ~/.config/%s", appName)
+		output.PrintInfo("  • ~/Library/Application Support/%s", strings.Title(appName))
 		return fmt.Errorf("app config path not defined")
 	}
 
 	// Display sync information
-	terminal.PrintInfo("Source: %s", tempAppPath)
-	terminal.PrintInfo("Destination: %s", localConfigPath)
-	terminal.PrintInfo("")
+	output.PrintInfo("Source: %s", tempAppPath)
+	output.PrintInfo("Destination: %s\n", localConfigPath)
 
 	if dryRun {
-		terminal.PrintInfo("Dry run - would sync %s configuration", appName)
+		output.PrintInfo("Dry run - would sync %s configuration", appName)
 		return nil
 	}
 
@@ -183,16 +184,15 @@ func syncAppConfig(appName string, dryRun bool) error {
 		return fmt.Errorf("failed to create archive directory: %w", err)
 	}
 
-	terminal.PrintInfo("Archive: %s", archivePath)
-	terminal.PrintInfo("")
+	output.PrintInfo("Archive: %s\n", archivePath)
 
 	// Ask for confirmation
-	if !terminal.Confirm(fmt.Sprintf("Override %s configs? Old copy will be archived.", appName)) {
-		terminal.PrintInfo("Sync cancelled")
+	if !output.Confirm(fmt.Sprintf("Override %s configs? Old copy will be archived.", appName)) {
+		output.PrintInfo("Sync cancelled")
 		return nil
 	}
 
-	terminal.PrintInfo("")
+	output.PrintInfo("")
 
 	// Archive existing config
 	if err := archiveExistingConfig(fmt.Sprintf("%s-configs", appName), localConfigPath, archivePath); err != nil {
@@ -205,9 +205,9 @@ func syncAppConfig(appName string, dryRun bool) error {
 	}
 
 	// Report success
-	terminal.PrintSuccess(fmt.Sprintf("✅ %s configs synced successfully", strings.Title(appName)))
-	terminal.PrintInfo("📦 Old configs archived to: %s", archivePath)
-	terminal.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
+	output.PrintSuccess(fmt.Sprintf("✅ %s configs synced successfully", strings.Title(appName)))
+	output.PrintInfo("📦 Old configs archived to: %s", archivePath)
+	output.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
 
 	return nil
 }
@@ -262,50 +262,14 @@ func archiveExistingConfig(configType, sourcePath, archivePath string) error {
 	}
 }
 
-// copyFile copies a single file
+// copyFile copies a single file using the consolidated utils.CopyFileSimple
 func copyFile(src, dst string) error {
-	// Read source file
-	data, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-
-	// Create destination directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(dst), constants.DirPerm); err != nil {
-		return err
-	}
-
-	// Write destination file
-	return os.WriteFile(dst, data, constants.FilePerm)
+	return utils.CopyFileSimple(src, dst)
 }
 
-// copyDirRecursive recursively copies a directory
+// copyDirRecursive recursively copies a directory using the consolidated utils.CopyDirectorySimple
 func copyDirRecursive(src, dst string) error {
-	// Remove destination if it exists
-	if err := os.RemoveAll(dst); err != nil {
-		return err
-	}
-
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Calculate destination path
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		destPath := filepath.Join(dst, relPath)
-
-		if info.IsDir() {
-			// Create directory
-			return os.MkdirAll(destPath, info.Mode())
-		} else {
-			// Copy file
-			return copyFile(path, destPath)
-		}
-	})
+	return utils.CopyDirectorySimple(src, dst)
 }
 
 func init() {

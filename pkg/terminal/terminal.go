@@ -16,13 +16,6 @@ limitations under the License.
 
 package terminal
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/rocajuanma/anvil/pkg/constants"
-)
-
 // Color constants for terminal output
 const (
 	ColorReset  = "\033[0m"
@@ -35,59 +28,3 @@ const (
 	ColorWhite  = "\033[37m"
 	ColorBold   = "\033[1m"
 )
-
-// PrintHeader prints a formatted header message
-func PrintHeader(message string) {
-	fmt.Printf("\n%s%s=== %s ===%s\n\n", ColorBold, ColorCyan, message, ColorReset)
-}
-
-// PrintStage prints a stage message with blue color
-func PrintStage(message string) {
-	fmt.Printf("%s%s🔧 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
-}
-
-// PrintSuccess prints a success message with green color
-func PrintSuccess(message string) {
-	fmt.Printf("%s%s✅ %s%s\n", ColorBold, ColorGreen, message, ColorReset)
-}
-
-// PrintError prints an error message with red color and exits if requested
-func PrintError(format string, args ...interface{}) {
-	fmt.Printf("%s%s❌ %s%s\n", ColorBold, ColorRed, fmt.Sprintf(format, args...), ColorReset)
-}
-
-// PrintWarning prints a warning message with yellow color
-func PrintWarning(format string, args ...interface{}) {
-	fmt.Printf("%s%s⚠️  %s%s\n", ColorBold, ColorYellow, fmt.Sprintf(format, args...), ColorReset)
-}
-
-// PrintInfo prints an info message with normal color
-func PrintInfo(format string, args ...interface{}) {
-	fmt.Printf("%s%s\n", fmt.Sprintf(format, args...), ColorReset)
-}
-
-// PrintAlreadyAvailable prints a message indicating something is already available (blue color)
-func PrintAlreadyAvailable(format string, args ...interface{}) {
-	fmt.Printf("%s%s💙 %s%s\n", ColorBold, ColorBlue, fmt.Sprintf(format, args...), ColorReset)
-}
-
-// PrintProgress prints a progress indicator
-func PrintProgress(current, total int, message string) {
-	percentage := float64(current) / float64(total) * 100
-	fmt.Printf("%s%s[%d/%d] %.0f%% - %s%s\n", ColorBold, ColorCyan, current, total, percentage, message, ColorReset)
-}
-
-// Confirm prompts the user for confirmation
-func Confirm(message string) bool {
-	fmt.Printf("%s%s? %s (y/N): %s", ColorBold, ColorYellow, message, ColorReset)
-
-	var response string
-	fmt.Scanln(&response)
-
-	return response == "y" || response == "Y" || response == "yes" || response == "Yes"
-}
-
-// IsTerminalSupported checks if the terminal supports colored output
-func IsTerminalSupported() bool {
-	return os.Getenv(constants.EnvTerm) != "dumb"
-}
