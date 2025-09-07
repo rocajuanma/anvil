@@ -342,7 +342,7 @@ Current configuration:
 %s
 
 📝 To fix this issue:
-  1. Edit your settings.yaml file (usually at ~/.anvil/settings.yaml)
+  1. Edit your settings.yaml file (usually at ~/%s/%s)
   2. Update the 'github.branch' field to match an existing branch
   3. Or create the branch '%s' in your repository
   4. Save the file and try the pull command again
@@ -351,11 +351,12 @@ Example settings.yaml section:
   github:
     config_repo: "%s"
     branch: "main"  # ← Update this to an existing branch
-    local_path: "~/.anvil/repo"`,
+    local_path: "~/%s/repo"`,
 		gc.Branch, gc.RepoURL, operation, gitError,
 		gc.RepoURL, gc.Branch,
 		availableBranches,
-		gc.Branch, gc.RepoURL)
+		constants.AnvilConfigDir, constants.ConfigFileName,
+		gc.Branch, gc.RepoURL, constants.AnvilConfigDir)
 
 	return errors.NewConfigurationError(constants.OpPull, "branch-not-found", fmt.Errorf(errorMsg))
 }

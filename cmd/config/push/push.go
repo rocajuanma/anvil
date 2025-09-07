@@ -253,7 +253,8 @@ func pushAnvilConfig() error {
 	// NEW: Add diff output before confirmation
 	output.PrintStage("Analyzing changes...")
 	ctx := context.Background()
-	diffSummary, err := githubClient.GetDiffPreview(ctx, settingsPath, "anvil/settings.yaml")
+	anvilSettingsPath := fmt.Sprintf("%s/%s", constants.AnvilConfigDir, constants.ConfigFileName)
+	diffSummary, err := githubClient.GetDiffPreview(ctx, settingsPath, anvilSettingsPath[1:])
 	if err != nil {
 		output.PrintWarning("Unable to generate diff preview: %v", err)
 	} else {

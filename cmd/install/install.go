@@ -116,7 +116,8 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 
 // installGroup installs all tools in a group
 func installGroup(groupName string, tools []string, dryRun bool, concurrent bool, maxWorkers int, timeout time.Duration) error {
-	getOutputHandler().PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
+	o := getOutputHandler()
+	o.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
 		return errors.NewInstallationError(constants.OpInstall, groupName,
@@ -126,7 +127,7 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 	// Deduplicate tools within the group and update settings if needed
 	deduplicatedTools, err := deduplicateGroupTools(groupName, tools)
 	if err != nil {
-		getOutputHandler().PrintWarning("Failed to deduplicate group tools: %v", err)
+		o.PrintWarning("Failed to deduplicate group tools: %v", err)
 		// Continue with original tools list
 		deduplicatedTools = tools
 	} else {
@@ -134,7 +135,7 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 		tools = deduplicatedTools
 	}
 
-	getOutputHandler().PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
+	o.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
 	// Use concurrent installation if requested
 	if concurrent {
@@ -279,10 +280,11 @@ func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error
 
 // installSingleTool installs a single tool, handling special cases dynamically
 func installSingleTool(toolName string) error {
+	o := getOutputHandler()
 	// Get tool-specific configuration
 	toolConfig, err := config.GetToolConfig(toolName)
 	if err != nil {
-		getOutputHandler().PrintWarning("Failed to get tool config for %s: %v", toolName, err)
+		o.PrintWarning("Failed to get tool config for %s: %v", toolName, err)
 		// Continue with default installation
 	}
 
@@ -293,9 +295,9 @@ func installSingleTool(toolName string) error {
 
 	// Handle post-install script if configured
 	if toolConfig != nil && toolConfig.PostInstallScript != "" {
-		getOutputHandler().PrintInfo("Running post-install script for %s...", toolName)
+		o.PrintInfo("Running post-install script for %s...", toolName)
 		if err := runPostInstallScript(toolConfig.PostInstallScript); err != nil {
-			getOutputHandler().PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
+			o.PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
 			// Don't fail the whole installation for this
 		}
 	}
@@ -303,7 +305,7 @@ func installSingleTool(toolName string) error {
 	// Handle config check if configured
 	if toolConfig != nil && toolConfig.ConfigCheck {
 		if err := checkToolConfiguration(toolName); err != nil {
-			getOutputHandler().PrintWarning("Configuration check failed for %s: %v", toolName, err)
+			o.PrintWarning("Configuration check failed for %s: %v", toolName, err)
 		}
 	}
 
@@ -313,15 +315,16 @@ func installSingleTool(toolName string) error {
 // installSingleToolUnified provides unified installation logic for all installation modes
 // This is the core function that ensures consistent behavior across individual, serial, and concurrent installations
 func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled bool, err error) {
+	o := getOutputHandler()
 	// ALWAYS check availability first using the latest IsApplicationAvailable logic
 	if brew.IsApplicationAvailable(toolName) {
-		getOutputHandler().PrintAlreadyAvailable("%s is already available on the system", toolName)
+		o.PrintAlreadyAvailable("%s is already available on the system", toolName)
 		return false, nil
 	}
 
 	// Handle installation based on mode
 	if dryRun {
-		getOutputHandler().PrintInfo("Would install: %s", toolName)
+		o.PrintInfo("Would install: %s", toolName)
 		return true, nil // Would be newly installed
 	}
 
@@ -330,7 +333,7 @@ func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled b
 		return false, fmt.Errorf("failed to install %s: %w", toolName, err)
 	}
 
-	getOutputHandler().PrintSuccess(fmt.Sprintf("%s installed successfully", toolName))
+	o.PrintSuccess(fmt.Sprintf("%s installed successfully", toolName))
 	return true, nil
 }
 
@@ -442,7 +445,7 @@ func listAvailableGroups() error {
 
 	if !hasCustomGroups {
 		o.PrintInfo("\nNo custom groups defined.")
-		o.PrintInfo("Add custom groups in ~/.anvil/settings.yaml")
+		o.PrintInfo("Add custom groups in ~/%s/%s", constants.AnvilConfigDir, constants.ConfigFileName)
 	}
 
 	// Show individually tracked installed apps
