@@ -229,3 +229,27 @@ Safety features:
 • Force flag available for automated scripts
 
 This command is safe and will never delete your main configuration file. The dotfiles directory will be completely removed to ensure the next pull/push operation works seamlessly.`
+
+// Update command descriptions
+const UPDATE_COMMAND_LONG_DESCRIPTION = `The update command updates Anvil to the latest version by downloading and running
+the official installation script from GitHub releases.
+
+What it does:
+• 🔄 Downloads the latest release version information from GitHub
+• 📥 Fetches the official installation script from the releases
+• 🚀 Executes the script to install the latest Anvil binary
+• ✅ Replaces the current installation with the newest version
+• 🔍 Validates the update process and provides clear feedback
+
+Features:
+• 🛡️ Safe Update Process: Uses the same trusted installation script as initial setup
+• 🧪 Dry-Run Support: Preview the update process without actually updating using --dry-run
+• ✨ Automatic Detection: Detects your system architecture and downloads the appropriate binary
+• 🎯 macOS Optimized: Specifically designed for macOS environments
+• 💡 Clear Feedback: Provides step-by-step progress and helpful instructions
+
+Usage:
+• anvil update           - Update to the latest version
+• anvil update --dry-run - Preview what would be updated
+
+Perfect for keeping your Anvil installation up-to-date with the latest features and bug fixes.`
