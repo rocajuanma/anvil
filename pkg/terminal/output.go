@@ -180,11 +180,11 @@ func (oh *DefaultOutputHandler) PrintAlreadyAvailable(format string, args ...int
 	message := fmt.Sprintf(format, args...)
 
 	if oh.config.UseColors && oh.config.UseEmojis && oh.config.UseFormatting {
-		fmt.Printf("%s%s💙 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+		fmt.Printf("\n%s%s💙 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
 	} else if oh.config.UseColors {
-		fmt.Printf("%s%s[AVAILABLE] %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+		fmt.Printf("\n%s%s[AVAILABLE] %s%s\n", ColorBold, ColorBlue, message, ColorReset)
 	} else {
-		fmt.Printf("[AVAILABLE] %s\n", message)
+		fmt.Printf("\n[AVAILABLE] %s\n", message)
 	}
 }
 
