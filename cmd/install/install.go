@@ -220,7 +220,7 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	var installErrors []string
 
 	for i, tool := range tools {
-		getOutputHandler().PrintProgress(i+1, len(tools), fmt.Sprintf("Installing %s", tool))
+		getOutputHandler().PrintProgress(i+1, len(tools), fmt.Sprintf("\nInstalling %s", tool))
 
 		// Use unified installation logic - this ensures consistent behavior with availability checking
 		_, err := installSingleToolUnified(tool, dryRun)
@@ -325,7 +325,7 @@ func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled b
 	// Handle installation based on mode
 	if dryRun {
 		o.PrintInfo("Would install: %s", toolName)
-		return true, nil // Would be newly installed
+		return true, nil
 	}
 
 	// Perform real installation using existing logic
