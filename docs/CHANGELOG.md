@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Update Command** 🔄 - New `anvil update` command for seamless version updates
+  - **One-Command Updates** - Update to the latest Anvil version with `anvil update`
+  - **Safe Update Process** - Uses the same trusted installation script as initial setup
+  - **Dry-Run Preview** - Preview updates with `--dry-run` flag without making changes
+  - **macOS Optimized** - Specifically designed for macOS environments
+  - **Comprehensive Documentation** - Complete usage guide with troubleshooting
+  - **Usage**: `anvil update`, `anvil update --dry-run`
+
+## [1.1.2] - 2025-09-03
+
+### Added
+
 - **Group Assignment for Individual App Installation** 📦 - New `--group-name` flag for the `anvil install` command
   - **Seamless Group Organization** - Install apps and automatically add them to existing or new groups
   - **Dynamic Group Creation** - Creates new groups automatically if they don't exist

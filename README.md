@@ -242,6 +242,7 @@ github:
 | `install [app]`     | Install application    | `anvil install terraform`   |
 | `install [group]`   | Install tool group     | `anvil install dev`         |
 | `install --list`    | List available groups  | `anvil install --list`      |
+| `update`            | Update to latest version| `anvil update`             |
 | `config pull [app]` | Pull configurations    | `anvil config pull neovim`  |
 | `config show [app]` | Show configurations    | `anvil config show neovim`  |
 | `config sync [app]` | Apply pulled configs   | `anvil config sync cursor`  |
@@ -270,6 +271,7 @@ github:
 | **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and first workflows       |
 | **[Installation Guide](docs/INSTALLATION.md)** | Platform-specific installation           |
 | **[Install Command](docs/install.md)**         | Deep-dive on tool installation           |
+| **[Update Command](docs/update.md)**           | Keep Anvil up-to-date with latest features |
 | **[Configuration Management](docs/config.md)** | Complete config sync setup and workflows |
 | **[Clean Command](docs/clean.md)**             | Directory cleanup and maintenance        |
 | **[Doctor Command](docs/doctor.md)**           | Health checks and environment validation |

@@ -24,6 +24,7 @@ import (
 	"github.com/rocajuanma/anvil/cmd/doctor"
 	"github.com/rocajuanma/anvil/cmd/initcmd"
 	"github.com/rocajuanma/anvil/cmd/install"
+	"github.com/rocajuanma/anvil/cmd/update"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/spf13/cobra"
 )
@@ -71,6 +72,7 @@ func init() {
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(doctor.DoctorCmd)
 	rootCmd.AddCommand(clean.CleanCmd)
+	rootCmd.AddCommand(update.UpdateCmd)
 
 	// Add version flag
 	rootCmd.Flags().BoolP("version", "v", false, "Show version information")

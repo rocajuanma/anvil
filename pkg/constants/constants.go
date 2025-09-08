@@ -27,6 +27,7 @@ const (
 	OpSync    = "sync"
 	OpDoctor  = "doctor"
 	OpClean   = "clean"
+	OpUpdate  = "update"
 )
 
 // System command constants
