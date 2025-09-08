@@ -457,6 +457,20 @@ After successful installation:
 3. **[Install Tools](install.md)** - Start installing development tools
 4. **[View Examples](EXAMPLES.md)** - See real-world usage examples
 
+## Keeping Anvil Updated
+
+Once you have Anvil v1.2.0 or later installed, you can easily update to newer versions:
+
+```bash
+# Update to the latest version
+anvil update
+
+# Preview what would be updated
+anvil update --dry-run
+```
+
+For versions prior to v1.2.0, use the curl installation method above to upgrade to the latest version.
+
 ---
 
 **Need help?** Check our [troubleshooting guide](GETTING_STARTED.md#troubleshooting) or [open an issue](https://github.com/rocajuanma/anvil/issues).

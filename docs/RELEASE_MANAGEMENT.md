@@ -16,10 +16,10 @@ This guide covers how to create releases for Anvil, manage GitHub Actions workfl
 2. **Create and push a version tag:**
    ```bash
    # Create a new tag (increment version appropriately)
-   git tag v1.1.2
+   git tag v1.2.0
    
    # Push the tag to trigger GitHub Actions
-   git push origin v1.1.2
+   git push origin v1.2.0
    ```
 
 3. **Monitor the GitHub Actions workflow:**
