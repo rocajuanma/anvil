@@ -13,13 +13,19 @@
 
 </div>
 
-**Anvil** is the complete macOS development automation tool. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
+**Anvil** is the complete macOS development automation tool. Setting up and maintaining a consistent macOS dev env can be painful, error-prone and derail attention. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config batch tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
 
 ## What Anvil Does
 
 - **🚀 Batch App Installation** - Install development tools in groups or individually via Homebrew
 - **🔄 Configuration Sync** - Sync dotfiles across machines using private GitHub repositories  
 - **🩺 Health Checks** - Auto-diagnose and fix common setup issues
+
+## Why Choose Anvil?
+- **⏱️ Fast, Automated Setup—Focus on Coding, Not Configuration** – Anvil handles all tool installations and configuration sync automatically, letting you get started in minutes instead of hours.
+- **🧑‍💻 Effortless Onboarding & Consistency** – Onboard new machines or teammates with a single command, ensuring everyone has the same reliable, ready-to-code environment—every time, on every Mac.
+- **🛡️ Built-in Safety** – Dry-run mode, automatic backups, and smart deduplication protect your system and your work.
+- **👥 Seamless Team Collaboration** – Instantly sync dotfiles and configs from private GitHub repositories, making team onboarding and environment sharing simple and secure.
 
 ## Quick Start
 
