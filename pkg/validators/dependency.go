@@ -23,11 +23,18 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/config"
+	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/pkg/terminal"
 )
 
 // BrewValidator checks if Homebrew is installed and functional
 type BrewValidator struct{}
+
+// getOutputHandler returns the global output handler for terminal operations
+func getBrewOutputHandler() interfaces.OutputHandler {
+	return terminal.GetGlobalOutputHandler()
+}
 
 func (v *BrewValidator) Name() string        { return "homebrew" }
 func (v *BrewValidator) Category() string    { return "dependencies" }
@@ -71,7 +78,7 @@ func (v *BrewValidator) Validate(ctx context.Context, cfg *config.AnvilConfig) *
 			Status:   WARN,
 			Message:  "Homebrew has available updates",
 			Details:  []string{"Run 'brew update && brew upgrade' to update"},
-			FixHint:  "Homebrew will be updated",
+			FixHint:  "Homebrew formulae database will be updated and package list displayed",
 			AutoFix:  true,
 		}
 	}
@@ -87,21 +94,59 @@ func (v *BrewValidator) Validate(ctx context.Context, cfg *config.AnvilConfig) *
 }
 
 func (v *BrewValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error {
+	o := getBrewOutputHandler()
+
 	if !brew.IsBrewInstalled() {
 		// Install Homebrew
 		if err := brew.InstallBrew(); err != nil {
 			return fmt.Errorf("failed to install Homebrew: %w", err)
 		}
-	} else {
-		// Update Homebrew
-		result, err := system.RunCommand("brew", "update")
-		if err != nil {
-			return fmt.Errorf("failed to update Homebrew: %w", err)
-		}
-		if !result.Success {
-			return fmt.Errorf("brew update failed")
+		o.PrintSuccess("Homebrew installed successfully")
+		return nil
+	}
+
+	// Update Homebrew formulae database
+	o.PrintInfo("Updating Homebrew formulae database...")
+	result, err := system.RunCommand("brew", "update")
+	if err != nil {
+		return fmt.Errorf("failed to update Homebrew: %w", err)
+	}
+	if !result.Success {
+		return fmt.Errorf("brew update failed")
+	}
+	o.PrintSuccess("Homebrew formulae database updated")
+
+	// Check for outdated packages and provide detailed information
+	outdatedResult, err := system.RunCommand("brew", "outdated", "--quiet")
+	if err != nil {
+		o.PrintWarning("Could not check for outdated packages: %v", err)
+		return nil
+	}
+
+	outdatedPackages := strings.TrimSpace(outdatedResult.Output)
+	if outdatedPackages == "" {
+		o.PrintSuccess("All Homebrew packages are up to date!")
+		return nil
+	}
+
+	// Parse and display outdated packages
+	packages := strings.Split(outdatedPackages, "\n")
+	packageCount := len(packages)
+
+	o.PrintInfo("")
+	o.PrintWarning("Found %d outdated Homebrew package(s):", packageCount)
+	for i, pkg := range packages {
+		if strings.TrimSpace(pkg) != "" {
+			o.PrintInfo("  %d. %s", i+1, strings.TrimSpace(pkg))
 		}
 	}
+
+	o.PrintInfo("\n💡 To upgrade these packages manually, run:")
+	o.PrintInfo("   brew upgrade                    # Upgrade all packages")
+	o.PrintInfo("   brew upgrade <package-name>     # Upgrade specific package")
+	o.PrintInfo("\nℹ️  Anvil does not automatically upgrade packages to prevent")
+	o.PrintInfo("   potential compatibility issues with your existing projects.")
+
 	return nil
 }
 
