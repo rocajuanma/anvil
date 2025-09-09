@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Homebrew Update Loop** 🔧 - Fixed infinite warning cycle in `anvil doctor --fix`
+  - **Conservative Approach** - Only updates formulae database, doesn't auto-upgrade packages
+  - **Enhanced User Experience** - Detailed outdated package listing with numbered format
+  - **Manual Upgrade Instructions** - Clear guidance to respect user control over package versions
+  - **Safety Explanation** - Explains why auto-upgrades are avoided to prevent compatibility issues
+  - **Issue Resolution** - Resolves cycle where doctor detected updates but fix didn't resolve them
+
 ### Added
 
 - **Update Command** 🔄 - New `anvil update` command for seamless version updates
