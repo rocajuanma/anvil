@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20only-blue.svg)](#macos-focus)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](docs/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0+-blue.svg)](docs/CHANGELOG.md)
 
 </div>
 
@@ -28,14 +28,21 @@
 
 ### Installation
 
-Choose your preferred installation method:
+#### **📦 First-Time Installation (Recommended)**
 
-#### **📦 Pre-built Binary (Recommended)**
-
-**Quick Install (Fresh install or update):**
+**For new installations or upgrading from versions prior to v1.2.0:**
 ```bash
 curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
 ```
+
+#### **🔄 Updating Existing Installation**
+
+**For versions v1.2.0 and later, use the built-in update command:**
+```bash
+anvil update
+```
+
+> **Note**: The `anvil update` command was introduced in v1.2.0. If you have an older version, use the curl installation method above to get the latest version.
 
 
 #### **🍺 Homebrew** (coming soon!)

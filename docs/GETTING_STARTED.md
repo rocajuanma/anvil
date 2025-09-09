@@ -759,6 +759,7 @@ Now that you're familiar with the basics:
 
 ### Stay Updated
 
+- **Use `anvil update`** for automatic updates (v1.2.0+)
 - **Watch the repository** for updates
 - **Read the [changelog](CHANGELOG.md)** for new features
 - **Join discussions** for community support
