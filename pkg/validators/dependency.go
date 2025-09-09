@@ -23,18 +23,11 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/config"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
-	"github.com/rocajuanma/anvil/pkg/terminal"
 )
 
 // BrewValidator checks if Homebrew is installed and functional
 type BrewValidator struct{}
-
-// getOutputHandler returns the global output handler for terminal operations
-func getBrewOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
-}
 
 func (v *BrewValidator) Name() string        { return "homebrew" }
 func (v *BrewValidator) Category() string    { return "dependencies" }
@@ -94,7 +87,7 @@ func (v *BrewValidator) Validate(ctx context.Context, cfg *config.AnvilConfig) *
 }
 
 func (v *BrewValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error {
-	o := getBrewOutputHandler()
+	o := getOutputHandler()
 
 	if !brew.IsBrewInstalled() {
 		// Install Homebrew
