@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Group Import from Files/URLs** 📥 - New `anvil config import` command for importing tool groups
+  - **Flexible Sources** - Import from local files or remote URLs
+  - **Security-First Design** - Extracts only group definitions, ignores sensitive data
+  - **Comprehensive Validation** - Validates group names, structure, and detects conflicts
+  - **Interactive Confirmation** - Shows preview and requires user approval before import
+  - **Usage**: `anvil config import ./groups.yaml`, `anvil config import https://example.com/groups.yaml`
 
 ### Changed
 

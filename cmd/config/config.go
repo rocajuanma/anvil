@@ -17,6 +17,7 @@ limitations under the License.
 package config
 
 import (
+	importcmd "github.com/rocajuanma/anvil/cmd/config/import"
 	"github.com/rocajuanma/anvil/cmd/config/pull"
 	"github.com/rocajuanma/anvil/cmd/config/push"
 	"github.com/rocajuanma/anvil/cmd/config/show"
@@ -35,9 +36,10 @@ var ConfigCmd = &cobra.Command{
 }
 
 func init() {
-	// Add pull, push, show, and sync as sub-commands of config
+	// Add pull, push, show, sync, and import as sub-commands of config
 	ConfigCmd.AddCommand(pull.PullCmd)
 	ConfigCmd.AddCommand(push.PushCmd)
 	ConfigCmd.AddCommand(show.ShowCmd)
 	ConfigCmd.AddCommand(sync.SyncCmd)
+	ConfigCmd.AddCommand(importcmd.ImportCmd)
 }

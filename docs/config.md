@@ -39,6 +39,7 @@ The `config` command provides centralized management of configuration files and 
 - ✅ **Show**: View configurations and settings
 - ✅ **Sync**: Reconcile configuration state with system reality
 - ✅ **Push**: Upload configurations to GitHub repository
+- ✅ **Import**: Import group definitions from local files or URLs
 
 ## Commands
 
@@ -257,6 +258,110 @@ For now, use 'anvil config push' to push anvil settings only by default.
 - 🔒 **Security Validation**: Verifies repository privacy before any push operations
 - 📁 **App-Specific Pushing**: Supports both anvil settings and individual app configurations
 
+### anvil config import [file-or-url]
+
+Import group definitions from local files or URLs with comprehensive validation and conflict detection.
+
+```bash
+# Import from local file
+anvil config import ./team-groups.yaml
+
+# Import from URL
+anvil config import https://raw.githubusercontent.com/company/shared-configs/main/groups.yaml
+```
+
+**How it works:**
+
+- **🔗 Flexible Sources**: Supports both local file paths and publicly accessible URLs
+- **🛡️ Security-First**: Extracts only group definitions, ignores all other configuration data
+- **✅ Comprehensive Validation**: Validates group names, application names, and structure
+- **🚫 Conflict Detection**: Prevents overwriting existing groups with clear error messages
+- **🌳 Tree Display**: Shows visual preview of groups and applications before import
+- **📋 Interactive Confirmation**: Requires user approval before making changes
+
+**Example workflow:**
+
+```bash
+$ anvil config import https://example.com/team-groups.yaml
+
+=== Import Groups from File ===
+🔧 Fetching source file...
+✅ Source file fetched successfully
+🔧 Parsing import file...
+✅ Import file parsed successfully
+🔧 Validating group structure...
+✅ Group structure validation passed
+🔧 Checking for conflicts...
+✅ No conflicts detected
+🔧 Preparing import summary...
+
+📋 Import Summary:
+═══════════════════
+├── 📁 web-dev (5 tools)
+│   ├── 🔧 git
+│   ├── 🔧 nodejs
+│   ├── 🔧 npm
+│   ├── 🔧 vscode
+│   └── 🔧 chrome
+│
+├── 📁 data-science (4 tools)
+│   ├── 🔧 python
+│   ├── 🔧 jupyter
+│   ├── 🔧 pandas
+│   └── 🔧 numpy
+│
+📊 Total: 2 groups, 9 applications
+
+? Proceed with importing these groups? (y/N): y
+🔧 Importing groups...
+✅ Groups imported successfully
+
+✨ Import completed! 2 groups have been added to your configuration.
+```
+
+**Security Features:**
+
+- **Groups Only**: Extracts only the `groups` section from source files
+- **No PII Extraction**: Completely ignores personal information, API keys, or sensitive data
+- **Input Validation**: Validates group names (alphanumeric, underscore, dash only)
+- **App Name Validation**: Validates application names (alphanumeric, underscore, dot, dash only)
+- **Conflict Prevention**: Will not overwrite existing groups
+- **Safe Operation**: Multiple imports of the same file are safely handled
+
+**Supported File Formats:**
+
+Any valid YAML file with a `groups` section:
+
+```yaml
+# Other sections are ignored for security
+version: "1.0.0"
+tools: 
+  # This section is ignored during import
+  
+groups:
+  # Only this section is extracted
+  web-dev:
+    - git
+    - nodejs
+    - vscode
+  devops:
+    - docker
+    - kubernetes
+    
+# Other sections are also ignored
+configs:
+  # This section is ignored during import
+```
+
+**Error Handling:**
+
+- **File Not Found**: Clear error for missing local files
+- **Network Errors**: Proper HTTP error handling for URLs
+- **Invalid YAML**: Helpful parsing error messages
+- **Invalid Names**: Specific validation errors with allowed character sets
+- **Conflicts**: Lists all conflicting group names
+- **Empty Groups**: Prevents import of empty group definitions
+
 ## Setup
 
 ### 1. Initialize Anvil
@@ -358,7 +463,14 @@ anvil config sync
 # Team member sets up their environment
 anvil init
 
-# Configure team repository
+# Import shared team groups from URL or local file
+anvil config import https://raw.githubusercontent.com/team/shared-configs/main/groups.yaml
+
+# Install team-standard tools
+anvil install team-backend
+anvil install team-frontend
+
+# Configure team repository for config sync
 # Edit ~/.anvil/settings.yaml:
 #   github.config_repo: "team/dev-configs"
 

@@ -1,0 +1,20 @@
+groups:
+  essentials:
+    - git
+    - chrome
+    - iterm2
+    - zsh
+    - 1password
+  design-core:
+    - figma
+    - sketch
+    - adobe-creative-suite
+    - principle
+  prototyping:
+    - framer
+    - invision
+    - marvel
+  productivity:
+    - slack
+    - notion
+    - dropbox

@@ -53,6 +53,12 @@ anvil init
 anvil install dev        # git, zsh, iterm2, visual-studio-code
 anvil install terraform  # Individual apps
 
+# Import tool groups from shared configs
+anvil config import https://example.com/team-groups.yaml
+
+# Or start with example configurations
+anvil config import import-examples/frontend-developer.yaml
+
 # Check environment health
 anvil doctor
 
@@ -65,6 +71,7 @@ anvil config sync neovim
 
 - **🎯 Smart Installation** - Install individual apps or predefined groups (`dev`, `new-laptop`)
 - **📝 Auto-tracking** - Automatically tracks installed apps and prevents duplicates
+- **📥 Group Import** - Import groups from local files or URLs with validation and conflict detection
 - **🔒 Secure Config Sync** - Uses private GitHub repositories with automatic backups
 - **🩺 Health Diagnostics** - `anvil doctor` detects and auto-fixes common issues
 - **🧹 Environment Cleanup** - Smart cleanup tools that preserve essential configs
@@ -76,6 +83,7 @@ anvil config sync neovim
 |-------|-------------|
 | **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and workflows |
 | **[Configuration Management](docs/config.md)** | Config sync setup and workflows |
+| **[Import Groups](docs/import.md)** | Import tool groups from files/URLs |
 | **[Install Command](docs/install.md)** | Tool installation guide |
 | **[Doctor Command](docs/doctor.md)** | Health checks and validation |
 | **[Examples & Tutorials](docs/EXAMPLES.md)** | Real-world usage scenarios |
