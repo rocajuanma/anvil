@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [1.3.0] - 2025-10-09
+
+### Added
 - **Group Import from Files/URLs** 📥 - New `anvil config import` command for importing tool groups
   - **Flexible Sources** - Import from local files or remote URLs
   - **Security-First Design** - Extracts only group definitions, ignores sensitive data
@@ -296,95 +304,3 @@ When contributing changes, please:
 - **Issues**: [GitHub Issues](https://github.com/rocajuanma/anvil/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/rocajuanma/anvil/discussions)
 
----
-
-## Release Notes
-
-### Version 1.0.0 - Major Release
-
-This is the first major release of Anvil CLI, representing a complete development environment automation solution. The release includes:
-
-**🚀 Core Features**
-
-- Complete environment initialization with the `init` command
-- Powerful group-based tool installation with the `setup` command
-- Comprehensive configuration management
-- Beautiful terminal output with progress indicators
-
-**🛠️ Tool Support**
-
-- Essential development tools (Git, Zsh, VS Code, iTerm2)
-- Team collaboration tools (Slack, Chrome, 1Password)
-- Custom tool group definitions
-- Individual tool installation flags
-
-**📚 Documentation**
-
-- Complete user guides and tutorials
-- API documentation for developers
-- Platform-specific installation instructions
-- Contributing guidelines and development standards
-
-**🌍 Platform Coverage**
-
-- Full macOS support with Homebrew integration
-- Linux support for command-line tools
-- Windows compatibility with WSL recommendations
-
-### Breaking Changes
-
-None - this is the initial major release.
-
-### Migration Guide
-
-This is the first major release, so no migration is needed. Follow the [Getting Started Guide](GETTING_STARTED.md) for initial setup.
-
-### Deprecations
-
-None in this release.
-
----
-
-## Contributing to Changelog
-
-When contributing changes, please:
-
-1. **Add entries to [Unreleased]** section
-2. **Use appropriate categories**: Added, Changed, Deprecated, Removed, Fixed, Security
-3. **Write clear descriptions** of changes
-4. **Include relevant links** to issues or PRs
-5. **Follow semantic versioning** principles
-
-### Categories
-
-- **Added** - New features
-- **Changed** - Changes in existing functionality
-- **Deprecated** - Soon-to-be removed features
-- **Removed** - Now removed features
-- **Fixed** - Any bug fixes
-- **Security** - Vulnerability fixes
-
-### Example Entry Format
-
-```markdown
-### Added
-
-- New feature description (#123)
-- Another feature with more details (#456)
-
-### Changed
-
-- Modified behavior description (#789)
-
-### Fixed
-
-- Bug fix description (#101)
-```
-
----
-
-## Support
-
-- **Documentation**: [docs/](.)
-- **Issues**: [GitHub Issues](https://github.com/rocajuanma/anvil/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/rocajuanma/anvil/discussions)
