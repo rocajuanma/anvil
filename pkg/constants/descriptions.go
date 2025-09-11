@@ -75,10 +75,12 @@ Subcommands:
 • anvil config push [directory]    - Push configuration files to remote repository  
 • anvil config show [directory]    - Show configuration files from anvil settings or pulled directories
 • anvil config sync [directory]    - Sync configuration state with system reality
+• anvil config import <path>      - Import groups from a local file or URL
 
 Key Features:
 • 📁 Directory-specific operations for granular configuration management
 • 🔄 Version-controlled dotfiles and settings via GitHub repositories
+• 📥 Group import from local files or public URLs with conflict detection
 • 🛡️ Automated backup and recovery of development environments
 • 👥 Team configuration sharing and collaboration
 • 🔍 Smart change detection with pre-push diff analysis

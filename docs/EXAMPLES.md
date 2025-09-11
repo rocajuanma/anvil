@@ -355,11 +355,193 @@ $ anvil install chrome
 
 ## Team Scenarios
 
-### Example 7: Team Onboarding Script
+### Example 7: Team Group Import and Sharing
 
-**Scenario**: Create a script for onboarding new team members.
+**Scenario**: Share standardized tool groups across your team using import functionality.
+
+**Key Points:**
+- **📥 Group Import** - Import predefined groups from shared repositories
+- **🛡️ Security-First** - Only extracts group definitions, ignores sensitive data
+- **🚫 Conflict Detection** - Prevents overwriting existing groups
+- **👥 Team Standardization** - Ensures consistent tool sets across team members
+
+**Step 1: Create shared groups file (`team-groups.yaml`)**:
+
+```yaml
+# company/shared-configs repository
+version: "1.0.0"
+groups:
+  backend-dev:
+    - git
+    - docker
+    - postgresql
+    - redis
+    - postman
+    - visual-studio-code
+  
+  frontend-dev:
+    - git
+    - nodejs
+    - npm
+    - yarn
+    - visual-studio-code
+    - google-chrome
+    - figma
+  
+  devops:
+    - git
+    - docker
+    - kubernetes
+    - terraform
+    - ansible
+    - aws-cli
+  
+  data-science:
+    - python
+    - jupyter
+    - pandas
+    - numpy
+    - anaconda
+    - visual-studio-code
+```
+
+**Step 2: Team members import groups**:
+
+```bash
+# Import from company repository (public URL)
+$ anvil config import https://raw.githubusercontent.com/company/shared-configs/main/team-groups.yaml
+
+=== Import Groups from File ===
+🔧 Fetching source file...
+✅ Source file fetched successfully
+🔧 Parsing import file...
+✅ Import file parsed successfully
+🔧 Validating group structure...
+✅ Group structure validation passed
+🔧 Checking for conflicts...
+✅ No conflicts detected
+🔧 Preparing import summary...
+
+📋 Import Summary:
+═══════════════════
+├── 📁 backend-dev (6 tools)
+│   ├── 🔧 git
+│   ├── 🔧 docker
+│   ├── 🔧 postgresql
+│   ├── 🔧 redis
+│   ├── 🔧 postman
+│   └── 🔧 visual-studio-code
+│
+├── 📁 frontend-dev (7 tools)
+│   ├── 🔧 git
+│   ├── 🔧 nodejs
+│   ├── 🔧 npm
+│   ├── 🔧 yarn
+│   ├── 🔧 visual-studio-code
+│   ├── 🔧 google-chrome
+│   └── 🔧 figma
+│
+├── 📁 devops (6 tools)
+│   ├── 🔧 git
+│   ├── 🔧 docker
+│   ├── 🔧 kubernetes
+│   ├── 🔧 terraform
+│   ├── 🔧 ansible
+│   └── 🔧 aws-cli
+│
+├── 📁 data-science (6 tools)
+│   ├── 🔧 python
+│   ├── 🔧 jupyter
+│   ├── 🔧 pandas
+│   ├── 🔧 numpy
+│   ├── 🔧 anaconda
+│   └── 🔧 visual-studio-code
+│
+📊 Total: 4 groups, 25 applications
+
+? Proceed with importing these groups? (y/N): y
+🔧 Importing groups...
+✅ Groups imported successfully
+
+✨ Import completed! 4 groups have been added to your configuration.
+
+# Now team members can install role-specific tools
+$ anvil install backend-dev     # For backend developers
+$ anvil install frontend-dev    # For frontend developers
+$ anvil install devops          # For DevOps engineers
+$ anvil install data-science    # For data scientists
+```
+
+**Step 3: Team onboarding script with import**:
 
 **File**: `team-setup.sh`
+
+```bash
+#!/bin/bash
+echo "🚀 Welcome to the team! Setting up your development environment..."
+
+# Initialize Anvil
+echo "📋 Initializing Anvil..."
+anvil init
+
+# Import company standard groups
+echo "📥 Importing company tool groups..."
+anvil config import https://raw.githubusercontent.com/company/shared-configs/main/team-groups.yaml
+
+# Install core development tools
+echo "🔧 Installing core development tools..."
+anvil install dev
+
+# Prompt for role-specific tools
+echo "👨‍💻 Which role best describes you?"
+echo "1) Backend Developer"
+echo "2) Frontend Developer" 
+echo "3) DevOps Engineer"
+echo "4) Data Scientist"
+echo "5) Full-Stack (Backend + Frontend)"
+read -p "Enter choice (1-5): " role_choice
+
+case $role_choice in
+    1) anvil install backend-dev ;;
+    2) anvil install frontend-dev ;;
+    3) anvil install devops ;;
+    4) anvil install data-science ;;
+    5) anvil install backend-dev && anvil install frontend-dev ;;
+    *) echo "Invalid choice, skipping role-specific tools" ;;
+esac
+
+# Install communication tools
+echo "💬 Installing communication tools..."
+anvil install slack
+
+echo "✅ Setup complete! Welcome to the team!"
+echo "📚 Next steps:"
+echo "  1. Configure your Git credentials: git config --global user.name 'Your Name'"
+echo "  2. Set up SSH keys for GitHub"
+echo "  3. Join our Slack workspace"
+echo "  4. Clone team repositories"
+```
+
+**Alternative: Import from local file**:
+
+```bash
+# If you have the groups file locally
+anvil config import ./downloads/team-groups.yaml
+```
+
+**Security Benefits:**
+
+- ✅ **Groups Only**: Import extracts only group definitions, ignoring sensitive data
+- ✅ **Validation**: All group and application names are validated
+- ✅ **Conflict Prevention**: Won't overwrite existing groups
+- ✅ **Safe Sources**: Works with public URLs and local files
+- ✅ **Interactive**: Requires confirmation before making changes
+
+### Example 8: Team Onboarding Script (Legacy)
+
+**Scenario**: Simple script for onboarding new team members without group import.
+
+**File**: `simple-team-setup.sh`
 
 ```bash
 #!/bin/bash
@@ -377,30 +559,22 @@ anvil install dev
 echo "💬 Installing communication tools..."
 anvil install slack
 
-# Install additional tools through custom groups
-echo "🔧 Installing additional tools..."
-# (Define custom groups in settings.yaml for additional tools)
-
 # Custom team tools
 echo "🛠️  Installing team-specific tools..."
-anvil install --figma --postman
+anvil install figma
+anvil install postman
 
 echo "✅ Setup complete! Welcome to the team!"
-echo "📚 Next steps:"
-echo "  1. Configure your Git credentials: git config --global user.name 'Your Name'"
-echo "  2. Set up SSH keys for GitHub"
-echo "  3. Join our Slack workspace"
-echo "  4. Clone team repositories"
 ```
 
 **Usage**:
 
 ```bash
-chmod +x team-setup.sh
-./team-setup.sh
+chmod +x simple-team-setup.sh
+./simple-team-setup.sh
 ```
 
-### Example 8: Team Configuration Sharing
+### Example 9: Team Configuration Sharing
 
 **Scenario**: Share a standard configuration across team members.
 
@@ -458,7 +632,7 @@ curl -o ~/.anvil/settings.yaml https://company.com/anvil/team-settings.yaml
 anvil install frontend  # or backend, qa
 ```
 
-### Example 9: Multi-Platform Team Setup
+### Example 10: Multi-Platform Team Setup
 
 **Scenario**: Team with members on different platforms.
 

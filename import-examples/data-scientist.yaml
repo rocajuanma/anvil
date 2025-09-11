@@ -1,0 +1,21 @@
+groups:
+  essentials:
+    - git
+    - vscode
+    - iterm2
+    - zsh
+    - python
+  data-analysis:
+    - jupyter
+    - pandas
+    - numpy
+    - matplotlib
+  ml-ops:
+    - docker
+    - kubernetes
+    - tensorflow
+    - pytorch
+  productivity:
+    - slack
+    - notion
+    - 1password

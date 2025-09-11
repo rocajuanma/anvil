@@ -1,0 +1,21 @@
+groups:
+  essentials:
+    - git
+    - vscode
+    - iterm2
+    - zsh
+    - docker
+  backend-core:
+    - nodejs
+    - python
+    - postgresql
+    - redis
+  devops:
+    - kubernetes
+    - terraform
+    - aws-cli
+    - helm
+  productivity:
+    - slack
+    - postman
+    - 1password

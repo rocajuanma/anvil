@@ -1,0 +1,34 @@
+groups:
+  team-essentials:
+    - git
+    - vscode
+    - chrome
+    - iterm2
+    - zsh
+    - slack
+    - notion
+    - 1password
+  frontend-team:
+    - nodejs
+    - npm
+    - typescript
+    - figma
+    - sketch
+  backend-team:
+    - python
+    - nodejs
+    - postgresql
+    - redis
+    - docker
+  devops-team:
+    - kubernetes
+    - terraform
+    - aws-cli
+    - helm
+    - prometheus
+  design-team:
+    - figma
+    - sketch
+    - adobe-creative-suite
+    - principle
+    - framer

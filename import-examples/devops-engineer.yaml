@@ -1,0 +1,20 @@
+groups:
+  essentials:
+    - git
+    - vscode
+    - iterm2
+    - zsh
+    - docker
+  infrastructure:
+    - kubernetes
+    - terraform
+    - ansible
+    - helm
+  cloud-tools:
+    - aws-cli
+    - azure-cli
+    - gcloud
+  monitoring:
+    - prometheus
+    - grafana
+    - elasticsearch

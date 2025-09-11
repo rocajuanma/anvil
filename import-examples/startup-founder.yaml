@@ -1,0 +1,21 @@
+groups:
+  essentials:
+    - git
+    - vscode
+    - chrome
+    - iterm2
+    - zsh
+  development:
+    - nodejs
+    - python
+    - docker
+    - postgresql
+  business-tools:
+    - slack
+    - notion
+    - zoom
+    - 1password
+  analytics:
+    - google-analytics
+    - mixpanel
+    - hotjar

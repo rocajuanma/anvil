@@ -21,6 +21,7 @@ const (
 	OpInit    = "init"
 	OpInstall = "install"
 	OpConfig  = "config"
+	OpImport  = "import"
 	OpPull    = "pull"
 	OpPush    = "push"
 	OpShow    = "show"
