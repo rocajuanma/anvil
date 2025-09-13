@@ -224,6 +224,11 @@ func (gc *GitHubClient) ensureRepositoryReady(ctx context.Context) error {
 		return fmt.Errorf("failed to pull latest changes: %w", err)
 	}
 
+	// Ensure repository is in a clean state before starting push operations
+	if err := gc.ensureCleanState(ctx); err != nil {
+		return fmt.Errorf("failed to ensure clean repository state: %w", err)
+	}
+
 	return nil
 }
 
@@ -777,4 +782,72 @@ func (gc *GitHubClient) extractFileCount(statOutput string) int {
 	}
 
 	return 0
+}
+
+// ensureCleanState ensures the repository is in a clean state before push operations
+func (gc *GitHubClient) ensureCleanState(ctx context.Context) error {
+	originalDir, err := os.Getwd()
+	if err != nil {
+		return errors.NewFileSystemError(constants.OpPush, "getwd", err)
+	}
+	defer os.Chdir(originalDir)
+
+	if err := os.Chdir(gc.LocalPath); err != nil {
+		return errors.NewFileSystemError(constants.OpPush, "chdir", err)
+	}
+
+	// Check if there are any staged changes
+	stagedResult, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "diff", "--cached", "--exit-code")
+	if err != nil && stagedResult.ExitCode != 0 {
+		// There are staged changes, reset them
+		if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "reset", "HEAD"); err != nil {
+			return errors.NewInstallationError(constants.OpPush, "git-reset", err)
+		}
+	}
+
+	// Check if there are any untracked files
+	statusResult, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "status", "--porcelain")
+	if err != nil {
+		return errors.NewInstallationError(constants.OpPush, "git-status", err)
+	}
+
+	// If there are untracked files, clean them
+	if strings.TrimSpace(statusResult.Output) != "" {
+		if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "clean", "-fd"); err != nil {
+			return errors.NewInstallationError(constants.OpPush, "git-clean", err)
+		}
+	}
+
+	return nil
+}
+
+// CleanupStagedChanges removes any staged changes from the repository
+// This is called when a push operation is cancelled to ensure clean state
+func (gc *GitHubClient) CleanupStagedChanges(ctx context.Context) error {
+	originalDir, err := os.Getwd()
+	if err != nil {
+		return errors.NewFileSystemError(constants.OpPush, "getwd", err)
+	}
+	defer os.Chdir(originalDir)
+
+	if err := os.Chdir(gc.LocalPath); err != nil {
+		return errors.NewFileSystemError(constants.OpPush, "chdir", err)
+	}
+
+	// Reset any staged changes
+	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "reset", "HEAD"); err != nil {
+		return errors.NewInstallationError(constants.OpPush, "git-reset", err)
+	}
+
+	// Clean any untracked files that might have been created during diff preview
+	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "clean", "-fd"); err != nil {
+		return errors.NewInstallationError(constants.OpPush, "git-clean", err)
+	}
+
+	// Switch back to main branch to ensure we're in a clean state
+	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "checkout", gc.Branch); err != nil {
+		return errors.NewInstallationError(constants.OpPush, "git-checkout-main", err)
+	}
+
+	return nil
 }
