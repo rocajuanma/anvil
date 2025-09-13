@@ -195,6 +195,13 @@ func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetP
 	// Always reset staging area
 	system.RunCommandWithTimeout(ctx, constants.GitCommand, "reset", "HEAD")
 
+	// Revert any changes we made to the working directory during diff generation
+	// This safely reverts only the changes we made, without removing existing files
+	system.RunCommandWithTimeout(ctx, constants.GitCommand, "checkout", "--", targetPath)
+
+	// Clean up any untracked files that were created during diff generation
+	system.RunCommandWithTimeout(ctx, constants.GitCommand, "clean", "-fd", targetPath)
+
 	return &DiffSummary{
 		GitStatOutput: statResult.Output,
 		FullDiff:      fullDiff,

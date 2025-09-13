@@ -670,6 +670,11 @@ func (gc *GitHubClient) CleanupStagedChanges(ctx context.Context) error {
 		return errors.NewInstallationError(constants.OpPush, "git-clean", err)
 	}
 
+	// Also reset any working directory changes that might have been left behind
+	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "checkout", "--", "."); err != nil {
+		return errors.NewInstallationError(constants.OpPush, "git-checkout", err)
+	}
+
 	// Switch back to main branch to ensure we're in a clean state
 	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "checkout", gc.Branch); err != nil {
 		return errors.NewInstallationError(constants.OpPush, "git-checkout-main", err)
