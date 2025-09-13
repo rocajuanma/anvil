@@ -176,6 +176,10 @@ func pushAppConfig(appName string) error {
 	output.PrintStage("Requesting user confirmation...")
 	if !output.Confirm(fmt.Sprintf("Do you want to push your %s configurations to the repository?", appName)) {
 		output.PrintInfo("Push cancelled by user")
+		// Clean up any staged changes from the diff preview
+		if cleanupErr := githubClient.CleanupStagedChanges(ctx); cleanupErr != nil {
+			output.PrintWarning("Failed to cleanup staged changes: %v", cleanupErr)
+		}
 		return nil
 	}
 
@@ -183,6 +187,10 @@ func pushAppConfig(appName string) error {
 	output.PrintStage(fmt.Sprintf("Pushing %s configuration to repository...", appName))
 	result, err := githubClient.PushAppConfig(ctx, appName, configPath)
 	if err != nil {
+		// Clean up any staged changes in case of error
+		if cleanupErr := githubClient.CleanupStagedChanges(ctx); cleanupErr != nil {
+			output.PrintWarning("Failed to cleanup staged changes after error: %v", cleanupErr)
+		}
 		return errors.NewInstallationError(constants.OpPush, "push-app-config", err)
 	}
 
@@ -265,6 +273,10 @@ func pushAnvilConfig() error {
 	output.PrintStage("Requesting user confirmation...")
 	if !output.Confirm("Do you want to push your anvil settings to the repository?") {
 		output.PrintInfo("Push cancelled by user")
+		// Clean up any staged changes from the diff preview
+		if cleanupErr := githubClient.CleanupStagedChanges(ctx); cleanupErr != nil {
+			output.PrintWarning("Failed to cleanup staged changes: %v", cleanupErr)
+		}
 		return nil
 	}
 
@@ -272,6 +284,10 @@ func pushAnvilConfig() error {
 	output.PrintStage("Pushing configuration to repository...")
 	result, err := githubClient.PushAnvilConfig(ctx, settingsPath)
 	if err != nil {
+		// Clean up any staged changes in case of error
+		if cleanupErr := githubClient.CleanupStagedChanges(ctx); cleanupErr != nil {
+			output.PrintWarning("Failed to cleanup staged changes after error: %v", cleanupErr)
+		}
 		return errors.NewInstallationError(constants.OpPush, "push-config", err)
 	}
 

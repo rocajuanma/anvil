@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Push Command Independence** 🔧 - Fixed bug where cancelled push commands left staged changes affecting subsequent pushes
+  - Ensures each push operation starts from clean repository state
+  - Automatically cleans up staged changes when push is cancelled or fails
+  - Prevents stale changes from previous operations appearing in new push commits
+  - **Issue**: Running `anvil config push app-one`, cancelling, then running `anvil config push app-two` would include changes from both apps
 
 ## [1.3.0] - 2025-10-09
 
