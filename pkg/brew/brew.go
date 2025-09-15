@@ -106,7 +106,14 @@ func InstallPackage(packageName string) error {
 	}
 
 	if !result.Success {
-		return fmt.Errorf("failed to install %s: %s", packageName, result.Error)
+		// Include actual brew output for better diagnostics
+		var errorDetails string
+		if result.Output != "" {
+			errorDetails = fmt.Sprintf("brew output: %s", strings.TrimSpace(result.Output))
+		} else {
+			errorDetails = fmt.Sprintf("system error: %s", result.Error)
+		}
+		return fmt.Errorf("failed to install %s: %s", packageName, errorDetails)
 	}
 
 	return nil
@@ -258,7 +265,7 @@ func IsApplicationAvailable(packageName string) bool {
 
 // isBrewCaskInstalled checks if package is in brew's installed cask list
 func isBrewCaskInstalled(packageName string) bool {
-	result, err := system.RunCommand("brew", "list", "--cask")
+	result, err := system.RunCommand(constants.BrewCommand, "list", "--cask")
 	if err != nil {
 		return false
 	}
@@ -270,7 +277,7 @@ func isBrewCaskInstalled(packageName string) bool {
 // checkBrewCaskAvailable searches for cask and checks if it's installed at the location brew expects
 func checkBrewCaskAvailable(packageName string) bool {
 	// Search for the cask to get its actual name
-	result, err := system.RunCommand("brew", "search", "--cask", packageName)
+	result, err := system.RunCommand(constants.BrewCommand, "search", "--cask", packageName)
 	if err != nil {
 		return false
 	}
@@ -286,7 +293,7 @@ func checkBrewCaskAvailable(packageName string) bool {
 		// Found exact match or close match
 		if line == packageName || strings.Contains(line, packageName) {
 			// Get cask info to find install location
-			infoResult, infoErr := system.RunCommand("brew", "info", "--cask", line)
+			infoResult, infoErr := system.RunCommand(constants.BrewCommand, "info", "--cask", line)
 			if infoErr == nil && strings.Contains(infoResult.Output, "/Applications/") {
 				// Extract app path from brew info output
 				if appPath := extractAppPath(infoResult.Output); appPath != "" {
@@ -387,40 +394,23 @@ func extractAppPath(brewOutput string) string {
 // isCaskPackage dynamically determines if a package is a Homebrew cask
 func isCaskPackage(packageName string) bool {
 	// First check if it exists as a cask
-	result, err := system.RunCommand("brew", "search", "--cask", packageName)
-	if err == nil {
+	result, err := system.RunCommand(constants.BrewCommand, "search", "--cask", packageName)
+	if err == nil && result.Success {
 		lines := strings.Split(strings.TrimSpace(result.Output), "\n")
 		for _, line := range lines {
 			line = strings.TrimSpace(line)
-			// Skip headers and empty lines
-			if line == "" || strings.Contains(line, "==>") {
+			// Skip headers, empty lines, and error messages
+			if line == "" || strings.Contains(line, "==>") || strings.Contains(line, "Error:") || strings.Contains(line, "Warning:") {
 				continue
 			}
-			// If we find an exact match or the package name is contained, it's likely a cask
-			if line == packageName || strings.Contains(line, packageName) {
+			// Only consider exact matches for casks to avoid false positives
+			if line == packageName {
 				return true
 			}
 		}
 	}
 
-	// Check if it exists as a formula to confirm it's not a cask
-	result, err = system.RunCommand("brew", "search", "--formula", packageName)
-	if err == nil {
-		lines := strings.Split(strings.TrimSpace(result.Output), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			// Skip headers and empty lines
-			if line == "" || strings.Contains(line, "==>") {
-				continue
-			}
-			// If we find an exact match as a formula, it's not a cask
-			if line == packageName {
-				return false
-			}
-		}
-	}
-
-	// Default to false (formula) if we can't determine
+	// Default to false (formula) if not a cask
 	return false
 }
 
@@ -462,7 +452,15 @@ func InstallPackageWithCheck(packageName string) error {
 			getOutputHandler().PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
 			return nil
 		}
-		return fmt.Errorf("failed to install %s: %s", packageName, result.Error)
+
+		// Include both the error and the actual brew output for better diagnostics
+		var errorDetails string
+		if result.Output != "" {
+			errorDetails = fmt.Sprintf("brew output: %s", strings.TrimSpace(result.Output))
+		} else {
+			errorDetails = fmt.Sprintf("system error: %s", result.Error)
+		}
+		return fmt.Errorf("failed to install %s: %s", packageName, errorDetails)
 	}
 
 	return nil

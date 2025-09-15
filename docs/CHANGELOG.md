@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Brew Cask Detection** 🔧 - Fixed incorrect cask detection causing installation failures
+  - Fix string matching that treated error messages as valid cask names
+  - Add success checks and error message filtering
+  - Improve error reporting to show actual brew output
+  - Remove redundant formula search logic
+  - **Issue**: Resolves installation failures for formula packages incorrectly detected as casks
+
 - **Push Command Independence** 🔧 - Fixed bug where cancelled push commands left staged changes affecting subsequent pushes
   - Ensures each push operation starts from clean repository state
   - Automatically cleans up staged changes when push is cancelled or fails
