@@ -43,7 +43,7 @@ var PullCmd = &cobra.Command{
 	Use:   "pull [directory]",
 	Short: "Pull configuration files from a specific directory in GitHub repository",
 	Long:  constants.PULL_COMMAND_LONG_DESCRIPTION,
-	Args:  cobra.ExactArgs(1), // Require exactly one argument (directory name)
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runPullCommand(cmd, args); err != nil {
 			getOutputHandler().PrintError("Pull failed: %v", err)
@@ -54,8 +54,11 @@ var PullCmd = &cobra.Command{
 
 // runPullCommand executes the configuration pull process for a specific directory
 func runPullCommand(cmd *cobra.Command, args []string) error {
-	// Get the directory to pull
-	targetDir := args[0]
+	// Default to "anvil" if no argument provided
+	targetDir := "anvil"
+	if len(args) > 0 {
+		targetDir = args[0]
+	}
 
 	// Load configuration
 	cfg, err := config.LoadConfig()
