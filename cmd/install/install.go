@@ -242,16 +242,14 @@ func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error
 	o := getOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
 
-	// Validate app name
+	// Validate app name is not empty
 	if appName == "" {
 		return errors.NewInstallationError(constants.OpInstall, appName,
 			fmt.Errorf("application name cannot be empty"))
 	}
 
-	// Use unified installation logic
 	wasNewlyInstalled, err := installSingleToolUnified(appName, dryRun)
 	if err != nil {
-		// Provide helpful error message with suggestions
 		return errors.NewInstallationError(constants.OpInstall, appName,
 			fmt.Errorf("failed to install '%s'. Please verify the name is correct. You can search for packages using 'brew search %s'", appName, appName))
 	}
