@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="assets/anvil-logo.png" alt="Anvil Logo" width="200" style="border-radius: 50%;">
-  <h1>Anvil</h1>
+  <img src="assets/anvil-2.0.png" alt="Anvil Logo" width="200" style="border-radius: 50%;">
+  <h1>Anvil CLI</h1>
 </div>
 
 <div align="center">
@@ -13,7 +13,7 @@
 
 </div>
 
-**Anvil** is the complete macOS development automation tool. Setting up and maintaining a consistent macOS dev env can be painful, error-prone and derail attention. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config batch tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
+**Anvil CLI** is the complete macOS development automation tool. Setting up and maintaining a consistent macOS dev env can be painful, error-prone and derail attention. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config batch tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
 
 ## What Anvil Does
 
