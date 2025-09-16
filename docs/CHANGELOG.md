@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [1.3.2] - 2025-09-16
+
+### Added
+
+### Changed
 - **Filesystem Utilities Consolidation** 🔧 - Consolidated duplicate file operations across codebase
   - Unified multiple `copyFile` and `copyDirRecursive` implementations into single utilities
   - Added configurable options for copy behavior while maintaining backward compatibility
