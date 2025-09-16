@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-## [1.3.2] - 2025-09-16
+## [1.3.2] - 2025-09-15
 
 ### Added
 
@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated command help text to reflect the optional argument behavior
   - **Issue**: Previously required a directory argument while other config commands made it optional
 
-## [1.3.1] - 2025-14-09
+## [1.3.1] - 2025-09-14
 
 ### Added
 
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents stale changes from previous operations appearing in new push commits
   - **Issue**: Running `anvil config push app-one`, cancelling, then running `anvil config push app-two` would include changes from both apps
 
-## [1.3.0] - 2025-10-09
+## [1.3.0] - 2025-09-10
 
 ### Added
 - **Group Import from Files/URLs** 📥 - New `anvil config import` command for importing tool groups
