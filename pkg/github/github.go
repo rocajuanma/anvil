@@ -28,6 +28,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/pkg/utils"
 )
 
 // GitHubClient handles GitHub operations for config management
@@ -67,7 +68,7 @@ func (gc *GitHubClient) CloneRepository(ctx context.Context) error {
 	}
 
 	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(gc.LocalPath), constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(filepath.Dir(gc.LocalPath)); err != nil {
 		return errors.NewFileSystemError(constants.OpPull, "mkdir-parent", err)
 	}
 

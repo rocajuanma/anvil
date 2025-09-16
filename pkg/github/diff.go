@@ -154,7 +154,7 @@ func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetP
 	if strings.HasSuffix(targetPath, ".yaml") || strings.HasSuffix(targetPath, ".yml") {
 		// Single file (anvil settings)
 		repoFilePath := filepath.Join(gc.LocalPath, targetPath)
-		if err := os.MkdirAll(filepath.Dir(repoFilePath), constants.DirPerm); err != nil {
+		if err := utils.EnsureDirectory(filepath.Dir(repoFilePath)); err != nil {
 			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
 		}
 		if err := utils.CopyFileSimple(sourcePath, repoFilePath); err != nil {
@@ -163,7 +163,7 @@ func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetP
 	} else {
 		// Directory (app configs)
 		targetDir := filepath.Join(gc.LocalPath, targetPath)
-		if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+		if err := utils.EnsureDirectory(targetDir); err != nil {
 			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
 		}
 		if err := gc.copyConfigToRepo(sourcePath, targetDir); err != nil {

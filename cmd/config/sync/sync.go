@@ -221,7 +221,7 @@ func createArchiveDirectory(prefix string) (string, error) {
 	archivePath := filepath.Join(config.GetConfigDirectory(), "archive", archiveName)
 
 	// Create archive directory
-	if err := os.MkdirAll(archivePath, constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(archivePath); err != nil {
 		return "", err
 	}
 
@@ -255,7 +255,7 @@ func archiveExistingConfig(configType, sourcePath, archivePath string) error {
 		return copyDirRecursive(sourcePath, destPath)
 	} else {
 		// Ensure parent directory exists
-		if err := os.MkdirAll(filepath.Dir(destPath), constants.DirPerm); err != nil {
+		if err := utils.EnsureDirectory(filepath.Dir(destPath)); err != nil {
 			return err
 		}
 		return utils.CopyFileSimple(sourcePath, destPath)

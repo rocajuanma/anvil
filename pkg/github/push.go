@@ -162,7 +162,7 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 
 	// Copy configs to repo
 	targetDir := filepath.Join(gc.LocalPath, appName)
-	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(targetDir); err != nil {
 		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
 	}
 

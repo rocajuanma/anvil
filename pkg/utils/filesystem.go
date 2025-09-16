@@ -67,7 +67,7 @@ func CopyFile(src, dst string, options CopyFileOptions) error {
 
 	// Create destination directory if needed
 	if options.CreateDirs {
-		if err := os.MkdirAll(filepath.Dir(dst), constants.DirPerm); err != nil {
+		if err := EnsureDirectory(filepath.Dir(dst)); err != nil {
 			return fmt.Errorf("failed to create destination directory: %w", err)
 		}
 	}

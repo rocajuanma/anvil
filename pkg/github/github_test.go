@@ -233,7 +233,7 @@ func TestGitHubClient_isValidGitRepository(t *testing.T) {
 
 	// Test with a directory that has .git but invalid repo
 	gitDir := filepath.Join(tempDir, ".git")
-	err := os.MkdirAll(gitDir, 0755)
+	err := utils.EnsureDirectory(gitDir)
 	if err != nil {
 		t.Fatalf("Failed to create .git directory: %v", err)
 	}
@@ -280,7 +280,7 @@ func TestGitHubClient_hasAppConfigChanges(t *testing.T) {
 			name:         "different files",
 			localContent: "local content",
 			setupRemote: func() error {
-				if err := os.MkdirAll(remoteDir, 0755); err != nil {
+				if err := utils.EnsureDirectory(remoteDir); err != nil {
 					return err
 				}
 				return os.WriteFile(remoteFile, []byte("remote content"), 0644)
@@ -301,7 +301,7 @@ func TestGitHubClient_hasAppConfigChanges(t *testing.T) {
 			name:         "remote directory exists but file doesn't",
 			localContent: "local content",
 			setupRemote: func() error {
-				if err := os.MkdirAll(remoteDir, 0755); err != nil {
+				if err := utils.EnsureDirectory(remoteDir); err != nil {
 					return err
 				}
 				// Don't create the file
