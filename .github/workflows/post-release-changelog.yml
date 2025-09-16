@@ -30,8 +30,8 @@ jobs:
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
         echo "VERSION_NUMBER=$VERSION_NUMBER" >> $GITHUB_OUTPUT
         
-        # Get current date
-        RELEASE_DATE=$(date +"%Y-%m-%d")
+        # Get the date when the tag was created (not workflow run date)
+        RELEASE_DATE=$(git log -1 --format=%cd --date=format:'%Y-%m-%d' $VERSION)
         echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_OUTPUT
         
         echo "Processing release: $VERSION (version: $VERSION_NUMBER, date: $RELEASE_DATE)"
@@ -60,7 +60,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         base: master
-        commit-message: "docs: update changelog for release ${{ steps.release_info.outputs.VERSION }}"
+        commit-message: "docs[changelog]: updates after release ${{ steps.release_info.outputs.VERSION }}"
         title: "📝 Update changelog for release ${{ steps.release_info.outputs.VERSION }}"
         body: |
           ## 📝 Changelog Update for Release ${{ steps.release_info.outputs.VERSION }}
