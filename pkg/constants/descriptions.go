@@ -114,6 +114,8 @@ from a specific directory in your GitHub repository to your local machine.
 
 Usage: anvil config pull [directory]
 
+If no directory is specified, it defaults to pulling the "anvil" directory.
+
 How it works:
 • 📥 Automatically fetches the latest changes from your repository (git fetch/pull)  
 • 📁 Copies all files from the specified directory to a temporary location (~/.anvil/temp/[directory])

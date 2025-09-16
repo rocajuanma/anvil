@@ -12,6 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Pull Command Argument Consistency** 🔧 - Made directory argument optional for `anvil config pull` command
+  - Now matches `anvil config show` and `anvil config push` commands which accept optional arguments
+  - When no directory is specified, defaults to pulling from "anvil" directory
+  - `anvil config pull` is now equivalent to `anvil config pull anvil`
+  - Updated command help text to reflect the optional argument behavior
+  - **Issue**: Previously required a directory argument while other config commands made it optional
+
+## [1.3.1] - 2025-14-09
+
+### Added
+
+### Changed
+
+### Fixed
 - **Brew Cask Detection** 🔧 - Fixed incorrect cask detection causing installation failures
   - Fix string matching that treated error messages as valid cask names
   - Add success checks and error message filtering
