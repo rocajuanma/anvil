@@ -93,12 +93,6 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 	if err := brew.EnsureBrewIsInstalled(); err != nil {
 		return fmt.Errorf("install: %w", err)
 	}
-	// Update Homebrew before installations
-	o.PrintStage("Updating Homebrew...")
-	if err := brew.UpdateBrew(); err != nil {
-		o.PrintWarning("Failed to update Homebrew: %v", err)
-		// Continue anyway, update failure shouldn't stop installation
-	}
 
 	// Try to get group tools first
 	if tools, err := config.GetGroupTools(target); err == nil {
