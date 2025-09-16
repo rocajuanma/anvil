@@ -90,14 +90,9 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 	timeout, _ := cmd.Flags().GetDuration("timeout")
 
 	// Ensure Homebrew is installed
-	if !brew.IsBrewInstalled() {
-		o.PrintInfo("Homebrew not found. Installing Homebrew...")
-		if err := brew.InstallBrew(); err != nil {
-			return errors.NewInstallationError(constants.OpInstall, "homebrew", err)
-		}
-		o.PrintSuccess("Homebrew installed successfully")
+	if err := brew.EnsureBrewIsInstalled(); err != nil {
+		return fmt.Errorf("install: %w", err)
 	}
-
 	// Update Homebrew before installations
 	o.PrintStage("Updating Homebrew...")
 	if err := brew.UpdateBrew(); err != nil {

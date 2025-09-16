@@ -42,6 +42,7 @@ type Tool struct {
 }
 
 // GetRequiredTools returns the list of required tools for anvil on macOS
+// Note: Homebrew is handled separately as a prerequisite in ValidateAndInstallTools()
 func GetRequiredTools() []Tool {
 	return []Tool{
 		{
@@ -57,13 +58,6 @@ func GetRequiredTools() []Tool {
 			Required:    true,
 			InstallWith: "system",
 			Description: "Command line tool for transferring data",
-		},
-		{
-			Name:        "Homebrew",
-			Command:     constants.BrewCommand,
-			Required:    true,
-			InstallWith: "script",
-			Description: "Package manager for macOS",
 		},
 	}
 }
@@ -95,16 +89,12 @@ func ValidateAndInstallTools() error {
 		return fmt.Errorf("Anvil only supports macOS")
 	}
 
-	// First, ensure Homebrew is installed
-	if !brew.IsBrewInstalled() {
-		getOutputHandler().PrintInfo("Homebrew not found. Installing Homebrew...")
-		if err := brew.InstallBrew(); err != nil {
-			return fmt.Errorf("failed to install Homebrew: %w", err)
-		}
-		getOutputHandler().PrintSuccess("Homebrew installed successfully")
+	// Phase 1: Install Homebrew as a prerequisite (required for other tool installations)
+	if err := brew.EnsureBrewIsInstalled(); err != nil {
+		return fmt.Errorf("tools: %w", err)
 	}
 
-	// Validate required tools
+	// Phase 2: Validate and install other required tools (using Homebrew when needed)
 	requiredTools := GetRequiredTools()
 	for _, tool := range requiredTools {
 		if err := validateTool(tool); err != nil {
@@ -143,14 +133,6 @@ func validateTool(tool Tool) error {
 	case "brew":
 		if err := brew.InstallPackage(tool.Command); err != nil {
 			return fmt.Errorf("failed to install %s with brew: %w", tool.Name, err)
-		}
-	case "script":
-		if tool.Command == constants.BrewCommand {
-			if err := brew.InstallBrew(); err != nil {
-				return fmt.Errorf("failed to install %s: %w", tool.Name, err)
-			}
-		} else {
-			return fmt.Errorf("unsupported script installation for %s", tool.Name)
 		}
 	case "system":
 		// cURL should be available by default on macOS
