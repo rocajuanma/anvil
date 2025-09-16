@@ -26,6 +26,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/pkg/utils"
 )
 
 // DiffSummary contains diff information using Git's native output
@@ -156,7 +157,7 @@ func (gc *GitHubClient) generateGitDiff(ctx context.Context, sourcePath, targetP
 		if err := os.MkdirAll(filepath.Dir(repoFilePath), constants.DirPerm); err != nil {
 			return nil, errors.NewFileSystemError(constants.OpPush, "mkdir", err)
 		}
-		if err := copyFile(sourcePath, repoFilePath); err != nil {
+		if err := utils.CopyFileSimple(sourcePath, repoFilePath); err != nil {
 			return nil, errors.NewFileSystemError(constants.OpPush, "copy-file", err)
 		}
 	} else {

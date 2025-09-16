@@ -25,6 +25,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/rocajuanma/anvil/pkg/utils"
 )
 
 // captureOutput captures stdout during function execution for github tests
@@ -437,8 +439,7 @@ func TestCopyFile(t *testing.T) {
 		t.Fatalf("Failed to create source file: %v", err)
 	}
 
-	// Copy file
-	err = copyFile(srcFile, dstFile)
+	err = utils.CopyFileSimple(srcFile, dstFile)
 	if err != nil {
 		t.Fatalf("copyFile failed: %v", err)
 	}
@@ -484,7 +485,7 @@ func TestCopyFileErrors(t *testing.T) {
 				tt.setupFunc()
 			}
 
-			err := copyFile(tt.srcFile, tt.dstFile)
+			err := utils.CopyFileSimple(tt.srcFile, tt.dstFile)
 			if err == nil {
 				t.Error("Expected copyFile to return an error, but it didn't")
 			}
