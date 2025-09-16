@@ -60,7 +60,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         base: master
-        commit-message: "docs: update changelog for release ${{ steps.release_info.outputs.VERSION }}"
+        commit-message: "docs[changelog]: updates after release ${{ steps.release_info.outputs.VERSION }}"
         title: "📝 Update changelog for release ${{ steps.release_info.outputs.VERSION }}"
         body: |
           ## 📝 Changelog Update for Release ${{ steps.release_info.outputs.VERSION }}
