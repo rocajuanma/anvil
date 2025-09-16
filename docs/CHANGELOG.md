@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Filesystem Utilities Consolidation** 🔧 - Consolidated duplicate file operations across codebase
+  - Unified multiple `copyFile` and `copyDirRecursive` implementations into single utilities
+  - Added configurable options for copy behavior while maintaining backward compatibility
+  - **Benefit**: Follows DRY principle and provides consistent filesystem operations
 
 ### Fixed
 - **Pull Command Argument Consistency** 🔧 - Made directory argument optional for `anvil config pull` command

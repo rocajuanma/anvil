@@ -115,7 +115,7 @@ func syncAnvilSettings(dryRun bool) error {
 	}
 
 	// Copy new settings
-	if err := copyFile(tempSettingsPath, currentSettingsPath); err != nil {
+	if err := utils.CopyFileSimple(tempSettingsPath, currentSettingsPath); err != nil {
 		return fmt.Errorf("failed to copy new settings: %w", err)
 	}
 
@@ -221,7 +221,7 @@ func createArchiveDirectory(prefix string) (string, error) {
 	archivePath := filepath.Join(config.GetConfigDirectory(), "archive", archiveName)
 
 	// Create archive directory
-	if err := os.MkdirAll(archivePath, constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(archivePath); err != nil {
 		return "", err
 	}
 
@@ -255,16 +255,11 @@ func archiveExistingConfig(configType, sourcePath, archivePath string) error {
 		return copyDirRecursive(sourcePath, destPath)
 	} else {
 		// Ensure parent directory exists
-		if err := os.MkdirAll(filepath.Dir(destPath), constants.DirPerm); err != nil {
+		if err := utils.EnsureDirectory(filepath.Dir(destPath)); err != nil {
 			return err
 		}
-		return copyFile(sourcePath, destPath)
+		return utils.CopyFileSimple(sourcePath, destPath)
 	}
-}
-
-// copyFile copies a single file using the consolidated utils.CopyFileSimple
-func copyFile(src, dst string) error {
-	return utils.CopyFileSimple(src, dst)
 }
 
 // copyDirRecursive recursively copies a directory using the consolidated utils.CopyDirectorySimple

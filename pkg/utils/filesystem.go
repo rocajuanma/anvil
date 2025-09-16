@@ -31,9 +31,9 @@ import (
 
 // CopyFileOptions holds options for file copying operations
 type CopyFileOptions struct {
-	CreateDirs   bool      // Create destination directory if it doesn't exist
-	Overwrite    bool      // Overwrite destination file if it exists
-	PreservePerm bool      // Preserve source file permissions
+	CreateDirs   bool        // Create destination directory if it doesn't exist
+	Overwrite    bool        // Overwrite destination file if it exists
+	PreservePerm bool        // Preserve source file permissions
 	FileMode     os.FileMode // File mode to use if not preserving permissions
 }
 
@@ -67,7 +67,7 @@ func CopyFile(src, dst string, options CopyFileOptions) error {
 
 	// Create destination directory if needed
 	if options.CreateDirs {
-		if err := os.MkdirAll(filepath.Dir(dst), constants.DirPerm); err != nil {
+		if err := EnsureDirectory(filepath.Dir(dst)); err != nil {
 			return fmt.Errorf("failed to create destination directory: %w", err)
 		}
 	}
@@ -108,11 +108,11 @@ func CopyFileSimple(src, dst string) error {
 
 // CopyDirectoryOptions holds options for directory copying operations
 type CopyDirectoryOptions struct {
-	Overwrite       bool // Remove destination directory before copying
-	PreservePerms   bool // Preserve source permissions
-	IncludeHidden   bool // Include hidden files and directories
-	FileMode        os.FileMode // Default file mode if not preserving permissions
-	DirMode         os.FileMode // Default directory mode if not preserving permissions
+	Overwrite     bool        // Remove destination directory before copying
+	PreservePerms bool        // Preserve source permissions
+	IncludeHidden bool        // Include hidden files and directories
+	FileMode      os.FileMode // Default file mode if not preserving permissions
+	DirMode       os.FileMode // Default directory mode if not preserving permissions
 }
 
 // DefaultCopyDirectoryOptions returns sensible default options for directory copying

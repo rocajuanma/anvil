@@ -162,7 +162,7 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 
 	// Copy configs to repo
 	targetDir := filepath.Join(gc.LocalPath, appName)
-	if err := os.MkdirAll(targetDir, constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(targetDir); err != nil {
 		return nil, errors.NewFileSystemError(constants.OpPush, "mkdir-app", err)
 	}
 
@@ -343,11 +343,6 @@ func (gc *GitHubClient) pushBranch(ctx context.Context, branchName string) error
 	return nil
 }
 
-// copyFile copies a file from src to dst using the consolidated utils.CopyFileSimple
-func copyFile(src, dst string) error {
-	return utils.CopyFileSimple(src, dst)
-}
-
 // generateTimestampedBranchName generates a branch name with current date and time
 func generateTimestampedBranchName(prefix string) string {
 	now := time.Now()
@@ -518,7 +513,7 @@ func (gc *GitHubClient) copyConfigToRepo(sourcePath, targetDir string) error {
 		// Copy single file to target directory
 		fileName := filepath.Base(sourcePath)
 		targetFile := filepath.Join(targetDir, fileName)
-		return copyFile(sourcePath, targetFile)
+		return utils.CopyFileSimple(sourcePath, targetFile)
 	}
 }
 
@@ -538,11 +533,9 @@ func (gc *GitHubClient) copyDirectoryContents(sourceDir, targetDir string) error
 		targetPath := filepath.Join(targetDir, relPath)
 
 		if info.IsDir() {
-			// Create directory
 			return os.MkdirAll(targetPath, info.Mode())
 		} else {
-			// Copy file
-			return copyFile(path, targetPath)
+			return utils.CopyFileSimple(path, targetPath)
 		}
 	})
 }

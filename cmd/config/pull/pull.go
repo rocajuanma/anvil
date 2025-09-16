@@ -240,7 +240,7 @@ func copyDirectoryToTemp(cfg *config.AnvilConfig, targetDir string) (string, err
 
 	// Create temp directory inside anvil config
 	tempBasedir := filepath.Join(config.GetConfigDirectory(), "temp")
-	if err := os.MkdirAll(tempBasedir, constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(tempBasedir); err != nil {
 		return "", errors.NewFileSystemError(constants.OpPull, "create-temp-dir", err)
 	}
 
@@ -263,11 +263,6 @@ func copyDirectoryToTemp(cfg *config.AnvilConfig, targetDir string) (string, err
 // copyDirRecursive recursively copies a directory using the consolidated utils.CopyDirectorySimple
 func copyDirRecursive(src, dst string) error {
 	return utils.CopyDirectorySimple(src, dst)
-}
-
-// copyFile copies a single file using the consolidated utils.CopyFileSimple
-func copyFile(src, dst string) error {
-	return utils.CopyFileSimple(src, dst)
 }
 
 // listCopiedFiles lists the files that were copied to the temp directory

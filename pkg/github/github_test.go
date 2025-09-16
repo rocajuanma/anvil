@@ -25,6 +25,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/rocajuanma/anvil/pkg/utils"
 )
 
 // captureOutput captures stdout during function execution for github tests
@@ -231,7 +233,7 @@ func TestGitHubClient_isValidGitRepository(t *testing.T) {
 
 	// Test with a directory that has .git but invalid repo
 	gitDir := filepath.Join(tempDir, ".git")
-	err := os.MkdirAll(gitDir, 0755)
+	err := utils.EnsureDirectory(gitDir)
 	if err != nil {
 		t.Fatalf("Failed to create .git directory: %v", err)
 	}
@@ -278,7 +280,7 @@ func TestGitHubClient_hasAppConfigChanges(t *testing.T) {
 			name:         "different files",
 			localContent: "local content",
 			setupRemote: func() error {
-				if err := os.MkdirAll(remoteDir, 0755); err != nil {
+				if err := utils.EnsureDirectory(remoteDir); err != nil {
 					return err
 				}
 				return os.WriteFile(remoteFile, []byte("remote content"), 0644)
@@ -299,7 +301,7 @@ func TestGitHubClient_hasAppConfigChanges(t *testing.T) {
 			name:         "remote directory exists but file doesn't",
 			localContent: "local content",
 			setupRemote: func() error {
-				if err := os.MkdirAll(remoteDir, 0755); err != nil {
+				if err := utils.EnsureDirectory(remoteDir); err != nil {
 					return err
 				}
 				// Don't create the file
@@ -437,8 +439,7 @@ func TestCopyFile(t *testing.T) {
 		t.Fatalf("Failed to create source file: %v", err)
 	}
 
-	// Copy file
-	err = copyFile(srcFile, dstFile)
+	err = utils.CopyFileSimple(srcFile, dstFile)
 	if err != nil {
 		t.Fatalf("copyFile failed: %v", err)
 	}
@@ -484,7 +485,7 @@ func TestCopyFileErrors(t *testing.T) {
 				tt.setupFunc()
 			}
 
-			err := copyFile(tt.srcFile, tt.dstFile)
+			err := utils.CopyFileSimple(tt.srcFile, tt.dstFile)
 			if err == nil {
 				t.Error("Expected copyFile to return an error, but it didn't")
 			}

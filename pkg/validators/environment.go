@@ -24,6 +24,7 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/pkg/utils"
 )
 
 // InitRunValidator checks if anvil init has been run successfully
@@ -232,7 +233,7 @@ func (v *DirectoryStructureValidator) Fix(ctx context.Context, cfg *config.Anvil
 	}
 
 	for _, dir := range requiredDirs {
-		if err := os.MkdirAll(dir, constants.DirPerm); err != nil {
+		if err := utils.EnsureDirectory(dir); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}

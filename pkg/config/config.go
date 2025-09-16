@@ -25,6 +25,7 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/pkg/utils"
 	"gopkg.in/yaml.v2"
 )
 
@@ -209,7 +210,7 @@ func CreateDirectories() error {
 	configDir := GetConfigDirectory()
 
 	// Only create the main config directory
-	if err := os.MkdirAll(configDir, constants.DirPerm); err != nil {
+	if err := utils.EnsureDirectory(configDir); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", configDir, err)
 	}
 
