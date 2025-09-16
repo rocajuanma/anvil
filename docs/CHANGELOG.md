@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Duplicate Homebrew Installation** 🔧 - Fixed `anvil init` attempting to install Homebrew twice causing exit status 1 failures
+  - Removed Homebrew from regular tools validation loop, now handled only as prerequisite  
+  - **Issue**: Users without Homebrew pre-installed experienced initialization failures due to duplicate installation attempts
 
 ## [1.3.2] - 2025-09-15
 
