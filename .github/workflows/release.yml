@@ -82,7 +82,7 @@ jobs:
         echo '```' >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md
         echo "### 💬 Join the Community" >> formatted_release_notes.md
-        echo "- 🎯 [Check out our docs](https://github.com/rocajuanma/anvil/blob/main/docs/GETTING_STARTED.md)" >> formatted_release_notes.md
+        echo "- 🎯 [Check out our docs](https://github.com/rocajuanma/anvil/blob/master/docs/GETTING_STARTED.md)" >> formatted_release_notes.md
         echo "- 🐛 [Report issues](https://github.com/rocajuanma/anvil/issues)" >> formatted_release_notes.md
         echo "- 💡 [Request features](https://github.com/rocajuanma/anvil/discussions)" >> formatted_release_notes.md
         echo "- ⭐ Star us if Anvil saves you time!" >> formatted_release_notes.md
