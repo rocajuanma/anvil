@@ -209,14 +209,14 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	var installErrors []string
 
 	for i, tool := range tools {
-		getOutputHandler().PrintProgress(i+1, len(tools), fmt.Sprintf("\nInstalling %s", tool))
+		getOutputHandler().PrintProgress(i+1, len(tools), fmt.Sprintf("Processing %s", tool))
 
 		// Use unified installation logic - this ensures consistent behavior with availability checking
 		_, err := installSingleToolUnified(tool, dryRun)
 		if err != nil {
 			errorMsg := fmt.Sprintf("%s: %v", tool, err)
 			installErrors = append(installErrors, errorMsg)
-			getOutputHandler().PrintError("Failed to install %s: %v", tool, err)
+			getOutputHandler().PrintError("%s: %v", tool, err)
 		} else {
 			successCount++
 		}
@@ -277,7 +277,7 @@ func installSingleTool(toolName string) error {
 
 	// Install the tool via brew
 	if err := brew.InstallPackageWithCheck(toolName); err != nil {
-		return fmt.Errorf("failed to install %s: %w", toolName, err)
+		return err
 	}
 
 	// Handle post-install script if configured
@@ -317,7 +317,7 @@ func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled b
 
 	// Perform real installation using existing logic
 	if err := installSingleTool(toolName); err != nil {
-		return false, fmt.Errorf("failed to install %s: %w", toolName, err)
+		return false, err // Pass through the error without additional wrapping
 	}
 
 	o.PrintSuccess(fmt.Sprintf("%s installed successfully", toolName))
