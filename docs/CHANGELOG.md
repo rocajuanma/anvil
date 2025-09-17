@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [1.3.3] - 2025-09-16
+
+### Added
+
+### Changed
 - **Terminal Output Formatting** 🎨 - Improved error message clarity and fixed redundant output formatting
   - Eliminated cascading "failed to install" error wrapping for cleaner messages
   - Fixed duplicate emoji display in error outputs
