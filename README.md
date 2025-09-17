@@ -13,7 +13,11 @@
 
 </div>
 
-**Anvil CLI** is the complete macOS development automation tool. Setting up and maintaining a consistent macOS dev env can be painful, error-prone and derail attention. Stop manually setting up machines, hunting for configs, and dealing with inconsistent environments. With Anvil, you get zero-config batch tool installation, cross-machine configuration sync, and team-wide environment standardization—all in one powerful CLI.
+ Tired of wasting time setting up your Mac for development? Anvil automates tool installs, syncs configs, and keeps your environment consistent—no hassle, no manual steps, just one powerful CLI.
+
+<div align="center">
+  <img src="assets/anvil.gif" alt="Anvil Demo" width="600">
+<div align="center">
 
 ## What Anvil Does
 
