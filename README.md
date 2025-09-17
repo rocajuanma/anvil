@@ -17,7 +17,7 @@
 
 <div align="center">
   <img src="assets/anvil.gif" alt="Anvil Demo" width="600">
-<div align="center">
+</div>
 
 ## What Anvil Does
 
