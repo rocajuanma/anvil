@@ -40,6 +40,19 @@ type BrewPackage struct {
 	Installed   bool
 }
 
+// EnsureBrewIsInstalled ensures Homebrew is installed
+func EnsureBrewIsInstalled() error {
+	if !IsBrewInstalled() {
+		getOutputHandler().PrintInfo("Homebrew not found. Installing Homebrew...")
+		if err := InstallBrew(); err != nil {
+			return fmt.Errorf("failed to install Homebrew: %w", err)
+		}
+		getOutputHandler().PrintSuccess("Homebrew installed successfully")
+	}
+
+	return nil
+}
+
 // IsBrewInstalled checks if Homebrew is installed
 func IsBrewInstalled() bool {
 	return system.CommandExists(constants.BrewCommand)
@@ -453,14 +466,12 @@ func InstallPackageWithCheck(packageName string) error {
 			return nil
 		}
 
-		// Include both the error and the actual brew output for better diagnostics
-		var errorDetails string
+		// Return the actual brew output for clearer error messages
 		if result.Output != "" {
-			errorDetails = fmt.Sprintf("brew output: %s", strings.TrimSpace(result.Output))
+			return fmt.Errorf("brew: %s", strings.TrimSpace(result.Output))
 		} else {
-			errorDetails = fmt.Sprintf("system error: %s", result.Error)
+			return fmt.Errorf("installation failed: %s", result.Error)
 		}
-		return fmt.Errorf("failed to install %s: %s", packageName, errorDetails)
 	}
 
 	return nil

@@ -180,11 +180,11 @@ func (oh *DefaultOutputHandler) PrintAlreadyAvailable(format string, args ...int
 	message := fmt.Sprintf(format, args...)
 
 	if oh.config.UseColors && oh.config.UseEmojis && oh.config.UseFormatting {
-		fmt.Printf("\n%s%s💙 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+		fmt.Printf("%s%s💙 %s%s\n", ColorBold, ColorBlue, message, ColorReset)
 	} else if oh.config.UseColors {
-		fmt.Printf("\n%s%s[AVAILABLE] %s%s\n", ColorBold, ColorBlue, message, ColorReset)
+		fmt.Printf("%s%s[AVAILABLE] %s%s\n", ColorBold, ColorBlue, message, ColorReset)
 	} else {
-		fmt.Printf("\n[AVAILABLE] %s\n", message)
+		fmt.Printf("[AVAILABLE] %s\n", message)
 	}
 }
 
@@ -196,13 +196,9 @@ func (oh *DefaultOutputHandler) PrintProgress(current, total int, message string
 	percentage := float64(current) / float64(total) * 100
 
 	if oh.config.UseColors && oh.config.UseFormatting {
-		fmt.Printf("\r%s%s[%d/%d] %.0f%% - %s%s", ColorBold, ColorCyan, current, total, percentage, message, ColorReset)
+		fmt.Printf("\r%s%s[%d/%d] %.0f%% - %s%s\n", ColorBold, ColorCyan, current, total, percentage, message, ColorReset)
 	} else {
-		fmt.Printf("\r[%d/%d] %.0f%% - %s", current, total, percentage, message)
-	}
-
-	if current == total {
-		fmt.Println()
+		fmt.Printf("\r[%d/%d] %.0f%% - %s\n", current, total, percentage, message)
 	}
 }
 
