@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Terminal Output Formatting** 🎨 - Improved error message clarity and fixed redundant output formatting
+  - Eliminated cascading "failed to install" error wrapping for cleaner messages
+  - Fixed duplicate emoji display in error outputs
+  - Enhanced progress display formatting to prevent line concatenation issues
 
 ### Fixed
 - **Duplicate Homebrew Installation** 🔧 - Fixed `anvil init` attempting to install Homebrew twice causing exit status 1 failures
