@@ -95,7 +95,11 @@ func InstallBrew() error {
 	}
 
 	if !result.Success {
-		return fmt.Errorf("brew installation failed: %s", result.Error)
+		errorDetails := result.Error
+		if result.Output != "" {
+			errorDetails = fmt.Sprintf("%s\nOutput: %s", result.Error, strings.TrimSpace(result.Output))
+		}
+		return fmt.Errorf("brew installation failed: %s", errorDetails)
 	}
 
 	if !IsBrewInstalledAtPath() {
