@@ -85,6 +85,11 @@ func InstallBrew() error {
 		return nil
 	}
 
+	xcodeResult, err := system.RunCommand("xcode-select", "-p")
+	if err != nil || !xcodeResult.Success {
+		return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
+	}
+
 	getOutputHandler().PrintInfo("Installing Homebrew...")
 
 	installCmd := `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
