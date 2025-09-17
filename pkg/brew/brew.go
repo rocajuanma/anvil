@@ -58,6 +58,23 @@ func IsBrewInstalled() bool {
 	return system.CommandExists(constants.BrewCommand)
 }
 
+// IsBrewInstalledAtPath checks if Homebrew is installed at known paths
+func IsBrewInstalledAtPath() bool {
+	brewPaths := []string{
+		"/opt/homebrew/bin/brew", // Apple Silicon
+		"/usr/local/bin/brew",    // Intel
+	}
+
+	for _, path := range brewPaths {
+		result, err := system.RunCommand("test", "-x", path)
+		if err == nil && result.Success {
+			return true
+		}
+	}
+
+	return system.CommandExists("brew")
+}
+
 // InstallBrew installs Homebrew if not already installed
 func InstallBrew() error {
 	if runtime.GOOS != "darwin" {
@@ -68,9 +85,13 @@ func InstallBrew() error {
 		return nil
 	}
 
+	xcodeResult, err := system.RunCommand("xcode-select", "-p")
+	if err != nil || !xcodeResult.Success {
+		return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
+	}
+
 	getOutputHandler().PrintInfo("Installing Homebrew...")
 
-	// Official Homebrew installation command
 	installCmd := `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 	result, err := system.RunCommand("/bin/bash", "-c", installCmd)
@@ -79,7 +100,15 @@ func InstallBrew() error {
 	}
 
 	if !result.Success {
-		return fmt.Errorf("brew installation failed: %s", result.Error)
+		errorDetails := result.Error
+		if result.Output != "" {
+			errorDetails = fmt.Sprintf("%s\nOutput: %s", result.Error, strings.TrimSpace(result.Output))
+		}
+		return fmt.Errorf("brew installation failed: %s", errorDetails)
+	}
+
+	if !IsBrewInstalledAtPath() {
+		return fmt.Errorf("Homebrew installation completed but brew command not accessible")
 	}
 
 	return nil
