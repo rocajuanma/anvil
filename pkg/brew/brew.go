@@ -440,64 +440,6 @@ func generateOptimizedAppNames(packageName string) []string {
 	return names
 }
 
-// isBrewCaskInstalled checks if package is in brew's installed cask list
-func isBrewCaskInstalled(packageName string) bool {
-	result, err := system.RunCommand(constants.BrewCommand, "list", "--cask")
-	if err != nil {
-		return false
-	}
-
-	// Check if packageName is in the output
-	return strings.Contains(result.Output, packageName)
-}
-
-// checkBrewCaskAvailable searches for cask and checks if it's installed at the location brew expects
-func checkBrewCaskAvailable(packageName string) bool {
-	// Search for the cask to get its actual name
-	result, err := system.RunCommand(constants.BrewCommand, "search", "--cask", packageName)
-	if err != nil {
-		return false
-	}
-
-	lines := strings.Split(strings.TrimSpace(result.Output), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		// Skip headers and empty lines
-		if line == "" || strings.Contains(line, "==>") {
-			continue
-		}
-
-		// Found exact match or close match
-		if line == packageName || strings.Contains(line, packageName) {
-			// Get cask info to find install location
-			infoResult, infoErr := system.RunCommand(constants.BrewCommand, "info", "--cask", line)
-			if infoErr == nil && strings.Contains(infoResult.Output, "/Applications/") {
-				// Extract app path from brew info output
-				if appPath := extractAppPath(infoResult.Output); appPath != "" {
-					result, err := system.RunCommand("test", "-d", appPath)
-					return err == nil && result.Success
-				}
-			}
-		}
-	}
-	return false
-}
-
-// searchApplicationsDirectory performs intelligent search in /Applications
-func searchApplicationsDirectory(packageName string) bool {
-	// Transform package name to likely app names
-	possibleNames := generateAppNames(packageName)
-
-	for _, appName := range possibleNames {
-		appPath := "/Applications/" + appName
-		result, err := system.RunCommand("test", "-d", appPath)
-		if err == nil && result.Success {
-			return true
-		}
-	}
-	return false
-}
-
 // spotlightSearch uses macOS Spotlight to find applications system-wide
 func spotlightSearch(packageName string) bool {
 	// Use mdfind to search for applications containing the package name
@@ -510,62 +452,6 @@ func spotlightSearch(packageName string) bool {
 
 	// If mdfind returns any results, the app exists somewhere
 	return strings.TrimSpace(result.Output) != ""
-}
-
-// generateAppNames creates possible application names from package name
-func generateAppNames(packageName string) []string {
-	var names []string
-
-	// Direct name with .app
-	names = append(names, packageName+".app")
-	names = append(names, strings.Title(packageName)+".app")
-
-	// Handle hyphenated names
-	if strings.Contains(packageName, "-") {
-		// Convert hyphens to spaces and title case
-		spacedName := strings.ReplaceAll(packageName, "-", " ")
-		names = append(names, strings.Title(spacedName)+".app")
-
-		// Remove hyphens entirely
-		noDashName := strings.ReplaceAll(packageName, "-", "")
-		names = append(names, strings.Title(noDashName)+".app")
-	}
-
-	// Handle common specific cases
-	specialCases := map[string][]string{
-		"visual-studio-code": {"Visual Studio Code.app"},
-		"google-chrome":      {"Google Chrome.app"},
-		"1password":          {"1Password 7 - Password Manager.app", "1Password.app"},
-		"iterm2":             {"iTerm.app"},
-	}
-
-	if special, exists := specialCases[packageName]; exists {
-		names = append(names, special...)
-	}
-
-	return names
-}
-
-// extractAppPath extracts the application path from brew info output
-func extractAppPath(brewOutput string) string {
-	lines := strings.Split(brewOutput, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "/Applications/") && strings.Contains(line, ".app") {
-			// Extract path - look for pattern like "/Applications/AppName.app"
-			start := strings.Index(line, "/Applications/")
-			if start == -1 {
-				continue
-			}
-
-			end := strings.Index(line[start:], ".app")
-			if end == -1 {
-				continue
-			}
-
-			return line[start : start+end+4] // +4 for ".app"
-		}
-	}
-	return ""
 }
 
 // isCaskPackage determines if a package is a Homebrew cask using optimized lookup
