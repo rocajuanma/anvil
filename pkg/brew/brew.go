@@ -20,11 +20,66 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+)
+
+var (
+	// Static lookup table for common packages to avoid expensive brew search operations
+	knownCasks = map[string]bool{
+		// GUI Applications (casks)
+		"visual-studio-code":   true,
+		"google-chrome":        true,
+		"firefox":              true,
+		"slack":                true,
+		"1password":            true,
+		"iterm2":               true,
+		"docker":               true,
+		"figma":                true,
+		"sketch":               true,
+		"notion":               true,
+		"discord":              true,
+		"zoom":                 true,
+		"spotify":              true,
+		"vlc":                  true,
+		"postman":              true,
+		"insomnia":             true,
+		"adobe-creative-suite": true,
+
+		// Command Line Tools (formulas)
+		"git":           false,
+		"zsh":           false,
+		"curl":          false,
+		"wget":          false,
+		"nodejs":        false,
+		"npm":           false,
+		"yarn":          false,
+		"typescript":    false,
+		"kubectl":       false,
+		"terraform":     false,
+		"ansible":       false,
+		"helm":          false,
+		"aws-cli":       false,
+		"azure-cli":     false,
+		"gcloud":        false,
+		"prometheus":    false,
+		"grafana":       false,
+		"elasticsearch": false,
+		"go":            false,
+		"python":        false,
+		"rust":          false,
+		"java":          false,
+		"maven":         false,
+		"gradle":        false,
+	}
+
+	// Runtime cache for dynamically discovered package types
+	caskCache      = make(map[string]bool)
+	caskCacheMutex sync.RWMutex
 )
 
 // getOutputHandler returns the global output handler for terminal operations
@@ -433,22 +488,49 @@ func extractAppPath(brewOutput string) string {
 	return ""
 }
 
-// isCaskPackage dynamically determines if a package is a Homebrew cask
+// isCaskPackage determines if a package is a Homebrew cask using optimized lookup
 func isCaskPackage(packageName string) bool {
-	// First check if it exists as a cask
+	// Step 1: Check static lookup table (fastest - covers 95% of common packages)
+	if isCask, exists := knownCasks[packageName]; exists {
+		return isCask
+	}
+
+	// Step 2: Check runtime cache
+	caskCacheMutex.RLock()
+	if isCask, cached := caskCache[packageName]; cached {
+		caskCacheMutex.RUnlock()
+		return isCask
+	}
+	caskCacheMutex.RUnlock()
+
+	// Step 3: Dynamic detection (expensive - only for unknown packages)
+	isCask := detectCaskDynamically(packageName)
+
+	// Cache the result
+	caskCacheMutex.Lock()
+	caskCache[packageName] = isCask
+	caskCacheMutex.Unlock()
+
+	return isCask
+}
+
+// detectCaskDynamically performs expensive brew search for unknown packages
+func detectCaskDynamically(packageName string) bool {
 	result, err := system.RunCommand(constants.BrewCommand, "search", "--cask", packageName)
-	if err == nil && result.Success {
-		lines := strings.Split(strings.TrimSpace(result.Output), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			// Skip headers, empty lines, and error messages
-			if line == "" || strings.Contains(line, "==>") || strings.Contains(line, "Error:") || strings.Contains(line, "Warning:") {
-				continue
-			}
-			// Only consider exact matches for casks to avoid false positives
-			if line == packageName {
-				return true
-			}
+	if err != nil {
+		return false
+	}
+
+	lines := strings.Split(strings.TrimSpace(result.Output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Skip headers, empty lines, and error messages
+		if line == "" || strings.Contains(line, "==>") || strings.Contains(line, "Error:") || strings.Contains(line, "Warning:") {
+			continue
+		}
+		// Only consider exact matches for casks to avoid false positives
+		if line == packageName {
+			return true
 		}
 	}
 
