@@ -19,8 +19,8 @@ package brew
 import "sync"
 
 var (
-	// Static lookup table for common packages to avoid expensive brew search operations
-	knownCasks = map[string]bool{
+	// Static map for popular Homebrew packages(https://formulae.brew.sh/analytics) to avoid expensive brew search operations
+	knownBrewPackages = map[string]bool{
 		// GUI Applications (casks)
 		"powershell":                    true,
 		"git-credential-manager":        true,

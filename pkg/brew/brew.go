@@ -355,7 +355,7 @@ func searchApplication(appName string) bool {
 
 // isKnownCask checks if a package is a known cask from our lookup table
 func isKnownCask(packageName string) bool {
-	if isCask, exists := knownCasks[packageName]; exists {
+	if isCask, exists := knownBrewPackages[packageName]; exists {
 		return isCask
 	}
 	return false
@@ -363,7 +363,7 @@ func isKnownCask(packageName string) bool {
 
 // isKnownFormula checks if a package is a known formula from our lookup table
 func isKnownFormula(packageName string) bool {
-	if isCask, exists := knownCasks[packageName]; exists {
+	if isCask, exists := knownBrewPackages[packageName]; exists {
 		return !isCask // If it exists and is not a cask, it's a formula
 	}
 	return false
@@ -457,7 +457,7 @@ func spotlightSearch(packageName string) bool {
 // isCaskPackage determines if a package is a Homebrew cask using optimized lookup
 func isCaskPackage(packageName string) bool {
 	// Step 1: Check static lookup table (fastest - covers 95% of common packages)
-	if isCask, exists := knownCasks[packageName]; exists {
+	if isCask, exists := knownBrewPackages[packageName]; exists {
 		return isCask
 	}
 
