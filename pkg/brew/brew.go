@@ -20,11 +20,18 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+)
+
+var (
+	// Cache brew installation status to avoid repeated checks
+	brewInstalledCache *bool
+	brewCacheMutex     sync.RWMutex
 )
 
 // getOutputHandler returns the global output handler for terminal operations
@@ -53,9 +60,29 @@ func EnsureBrewIsInstalled() error {
 	return nil
 }
 
-// IsBrewInstalled checks if Homebrew is installed
+// IsBrewInstalled checks if Homebrew is installed (with caching)
 func IsBrewInstalled() bool {
-	return system.CommandExists(constants.BrewCommand)
+	// Check cache first
+	brewCacheMutex.RLock()
+	if brewInstalledCache != nil {
+		result := *brewInstalledCache
+		brewCacheMutex.RUnlock()
+		return result
+	}
+	brewCacheMutex.RUnlock()
+
+	// Not in cache, check and cache the result
+	brewCacheMutex.Lock()
+	defer brewCacheMutex.Unlock()
+
+	// Double-check after acquiring write lock
+	if brewInstalledCache != nil {
+		return *brewInstalledCache
+	}
+
+	result := system.CommandExists(constants.BrewCommand)
+	brewInstalledCache = &result
+	return result
 }
 
 // IsBrewInstalledAtPath checks if Homebrew is installed at known paths
@@ -167,14 +194,8 @@ func IsPackageInstalled(packageName string) bool {
 		return false
 	}
 
-	// First try to check if it's installed as a formula
-	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, "--formula", packageName)
-	if err == nil && result.Success {
-		return true
-	}
-
-	// If not found as formula, check if it's installed as a cask
-	result, err = system.RunCommand(constants.BrewCommand, constants.BrewList, "--cask", packageName)
+	// Use single brew list command to check both formulas and casks
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, packageName)
 	if err == nil && result.Success {
 		return true
 	}
@@ -273,94 +294,150 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 }
 
 // IsApplicationAvailable checks if an application is available on the system
-// Uses a hybrid approach: Homebrew detection -> intelligent search -> system-wide fallback
+// Optimized approach: Fastest operations first, slowest operations last
 func IsApplicationAvailable(packageName string) bool {
-	// Step 1: Quick Homebrew check (fastest)
-	if IsPackageInstalled(packageName) {
-		return true
-	}
-
-	// Step 2: Check if it's an installed Homebrew cask
-	if isBrewCaskInstalled(packageName) {
-		return true
-	}
-
-	// Step 3: Search for the cask and get actual install location
-	if checkBrewCaskAvailable(packageName) {
-		return true
-	}
-
-	// Step 4: Intelligent /Applications directory search
-	if searchApplicationsDirectory(packageName) {
-		return true
-	}
-
-	// Step 5: System-wide Spotlight search fallback
-	if spotlightSearch(packageName) {
-		return true
-	}
-
-	// Step 6: Final check - command-line tools in PATH
-	result, err := system.RunCommand("which", packageName)
-	return err == nil && result.Success
-}
-
-// isBrewCaskInstalled checks if package is in brew's installed cask list
-func isBrewCaskInstalled(packageName string) bool {
-	result, err := system.RunCommand(constants.BrewCommand, "list", "--cask")
-	if err != nil {
-		return false
-	}
-
-	// Check if packageName is in the output
-	return strings.Contains(result.Output, packageName)
-}
-
-// checkBrewCaskAvailable searches for cask and checks if it's installed at the location brew expects
-func checkBrewCaskAvailable(packageName string) bool {
-	// Search for the cask to get its actual name
-	result, err := system.RunCommand(constants.BrewCommand, "search", "--cask", packageName)
-	if err != nil {
-		return false
-	}
-
-	lines := strings.Split(strings.TrimSpace(result.Output), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		// Skip headers and empty lines
-		if line == "" || strings.Contains(line, "==>") {
-			continue
-		}
-
-		// Found exact match or close match
-		if line == packageName || strings.Contains(line, packageName) {
-			// Get cask info to find install location
-			infoResult, infoErr := system.RunCommand(constants.BrewCommand, "info", "--cask", line)
-			if infoErr == nil && strings.Contains(infoResult.Output, "/Applications/") {
-				// Extract app path from brew info output
-				if appPath := extractAppPath(infoResult.Output); appPath != "" {
-					result, err := system.RunCommand("test", "-d", appPath)
-					return err == nil && result.Success
-				}
-			}
+	// Step 1: For known casks, check if app exists in /Applications (fastest - no system calls)
+	if isKnownCask(packageName) {
+		if checkKnownCaskInApplications(packageName) {
+			return true
 		}
 	}
-	return false
-}
 
-// searchApplicationsDirectory performs intelligent search in /Applications
-func searchApplicationsDirectory(packageName string) bool {
-	// Transform package name to likely app names
-	possibleNames := generateAppNames(packageName)
-
-	for _, appName := range possibleNames {
-		appPath := "/Applications/" + appName
-		result, err := system.RunCommand("test", "-d", appPath)
+	// Step 2: For known formulas, check PATH (fast - single system call)
+	if isKnownFormula(packageName) {
+		result, err := system.RunCommand("which", packageName)
 		if err == nil && result.Success {
 			return true
 		}
 	}
+
+	// Step 3: For unknown packages, check most likely /Applications path first (fast - single filesystem check)
+	if searchApplication(fmt.Sprintf("%s.app", packageName)) {
+		return true
+	}
+
+	// Step 4: For unknown packages, check PATH (fast - single system call)
+	result, err := system.RunCommand("which", packageName)
+	if err == nil && result.Success {
+		return true
+	}
+
+	// Step 5: Check if installed via Homebrew (slower - brew command)
+	if IsPackageInstalled(packageName) {
+		return true
+	}
+
+	// Step 6: Fallback - Spotlight search (slowest - system-wide search)
+	return spotlightSearch(packageName)
+}
+
+// checkKnownCaskInApplications checks if a known cask app exists in /Applications
+func checkKnownCaskInApplications(packageName string) bool {
+	// Use optimized app name generation for known casks
+	appNames := generateOptimizedAppNames(packageName)
+	for _, appName := range appNames {
+		if searchApplication(appName) {
+			return true
+		}
+	}
 	return false
+}
+
+// searchApplication checks if an app exists in /Applications
+func searchApplication(appName string) bool {
+	result, err := system.RunCommand("test", "-d", fmt.Sprintf("/Applications/%s", appName))
+	if err == nil && result.Success {
+		return true
+	}
+
+	return false
+}
+
+// isKnownCask checks if a package is a known cask from our lookup table
+func isKnownCask(packageName string) bool {
+	if isCask, exists := knownBrewPackages[packageName]; exists {
+		return isCask
+	}
+	return false
+}
+
+// isKnownFormula checks if a package is a known formula from our lookup table
+func isKnownFormula(packageName string) bool {
+	if isCask, exists := knownBrewPackages[packageName]; exists {
+		return !isCask // If it exists and is not a cask, it's a formula
+	}
+	return false
+}
+
+// generateOptimizedAppNames creates optimized app names for known packages
+func generateOptimizedAppNames(packageName string) []string {
+	// Use special cases first (most common)
+	specialCases := map[string][]string{
+		"visual-studio-code":    {"Visual Studio Code.app"},
+		"google-chrome":         {"Google Chrome.app"},
+		"1password":             {"1Password.app", "1Password 7 - Password Manager.app"},
+		"iterm2":                {"iTerm.app"},
+		"firefox":               {"Firefox.app"},
+		"slack":                 {"Slack.app"},
+		"docker-desktop":        {"Docker.app"},
+		"postman":               {"Postman.app"},
+		"vlc":                   {"VLC.app"},
+		"spotify":               {"Spotify.app"},
+		"discord":               {"Discord.app"},
+		"zoom":                  {"zoom.us.app"},
+		"notion":                {"Notion.app"},
+		"cursor":                {"Cursor.app"},
+		"raycast":               {"Raycast.app"},
+		"alfred":                {"Alfred 5.app", "Alfred 4.app"},
+		"obsidian":              {"Obsidian.app"},
+		"rectangle":             {"Rectangle.app"},
+		"brave-browser":         {"Brave Browser.app"},
+		"microsoft-edge":        {"Microsoft Edge.app"},
+		"arc":                   {"Arc.app"},
+		"steam":                 {"Steam.app"},
+		"telegram":              {"Telegram.app"},
+		"signal":                {"Signal.app"},
+		"whatsapp":              {"WhatsApp.app"},
+		"obs":                   {"OBS.app"},
+		"gimp":                  {"GIMP.app"},
+		"inkscape":              {"Inkscape.app"},
+		"mongodb-compass":       {"MongoDB Compass.app"},
+		"dbeaver-community":     {"DBeaver.app"},
+		"pgadmin4":              {"pgAdmin 4.app"},
+		"db-browser-for-sqlite": {"DB Browser for SQLite.app"},
+		"kitty":                 {"kitty.app"},
+		"alacritty":             {"Alacritty.app"},
+		"wezterm":               {"WezTerm.app"},
+		"iina":                  {"IINA.app"},
+		"stats":                 {"Stats.app"},
+		"betterdisplay":         {"BetterDisplay.app"},
+		"alt-tab":               {"AltTab.app"},
+		"karabiner-elements":    {"Karabiner-Elements.app"},
+		"bitwarden":             {"Bitwarden.app"},
+		"claude":                {"Claude.app"},
+		"utm":                   {"UTM.app"},
+		"adobe-acrobat-reader":  {"Adobe Acrobat Reader DC.app"},
+		"appcleaner":            {"AppCleaner.app"},
+		"vscodium":              {"VSCodium.app"},
+		"insomnia":              {"Insomnia.app"},
+		"claude-code":           {"Claude Code.app"},
+	}
+
+	if special, exists := specialCases[packageName]; exists {
+		return special
+	}
+
+	// Fallback to generic generation
+	var names []string
+	names = append(names, packageName+".app")
+
+	// Handle hyphenated names
+	if strings.Contains(packageName, "-") {
+		spacedName := strings.ReplaceAll(packageName, "-", " ")
+		names = append(names, strings.Title(spacedName)+".app")
+	}
+
+	return names
 }
 
 // spotlightSearch uses macOS Spotlight to find applications system-wide
@@ -377,78 +454,49 @@ func spotlightSearch(packageName string) bool {
 	return strings.TrimSpace(result.Output) != ""
 }
 
-// generateAppNames creates possible application names from package name
-func generateAppNames(packageName string) []string {
-	var names []string
-
-	// Direct name with .app
-	names = append(names, packageName+".app")
-	names = append(names, strings.Title(packageName)+".app")
-
-	// Handle hyphenated names
-	if strings.Contains(packageName, "-") {
-		// Convert hyphens to spaces and title case
-		spacedName := strings.ReplaceAll(packageName, "-", " ")
-		names = append(names, strings.Title(spacedName)+".app")
-
-		// Remove hyphens entirely
-		noDashName := strings.ReplaceAll(packageName, "-", "")
-		names = append(names, strings.Title(noDashName)+".app")
-	}
-
-	// Handle common specific cases
-	specialCases := map[string][]string{
-		"visual-studio-code": {"Visual Studio Code.app"},
-		"google-chrome":      {"Google Chrome.app"},
-		"1password":          {"1Password 7 - Password Manager.app", "1Password.app"},
-		"iterm2":             {"iTerm.app"},
-	}
-
-	if special, exists := specialCases[packageName]; exists {
-		names = append(names, special...)
-	}
-
-	return names
-}
-
-// extractAppPath extracts the application path from brew info output
-func extractAppPath(brewOutput string) string {
-	lines := strings.Split(brewOutput, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "/Applications/") && strings.Contains(line, ".app") {
-			// Extract path - look for pattern like "/Applications/AppName.app"
-			start := strings.Index(line, "/Applications/")
-			if start == -1 {
-				continue
-			}
-
-			end := strings.Index(line[start:], ".app")
-			if end == -1 {
-				continue
-			}
-
-			return line[start : start+end+4] // +4 for ".app"
-		}
-	}
-	return ""
-}
-
-// isCaskPackage dynamically determines if a package is a Homebrew cask
+// isCaskPackage determines if a package is a Homebrew cask using optimized lookup
 func isCaskPackage(packageName string) bool {
-	// First check if it exists as a cask
+	// Step 1: Check static lookup table (fastest - covers 95% of common packages)
+	if isCask, exists := knownBrewPackages[packageName]; exists {
+		return isCask
+	}
+
+	// Step 2: Check runtime cache
+	caskCacheMutex.RLock()
+	if isCask, cached := caskCache[packageName]; cached {
+		caskCacheMutex.RUnlock()
+		return isCask
+	}
+	caskCacheMutex.RUnlock()
+
+	// Step 3: Dynamic detection (expensive - only for unknown packages)
+	isCask := detectCaskDynamically(packageName)
+
+	// Cache the result
+	caskCacheMutex.Lock()
+	caskCache[packageName] = isCask
+	caskCacheMutex.Unlock()
+
+	return isCask
+}
+
+// detectCaskDynamically performs expensive brew search for unknown packages
+func detectCaskDynamically(packageName string) bool {
 	result, err := system.RunCommand(constants.BrewCommand, "search", "--cask", packageName)
-	if err == nil && result.Success {
-		lines := strings.Split(strings.TrimSpace(result.Output), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			// Skip headers, empty lines, and error messages
-			if line == "" || strings.Contains(line, "==>") || strings.Contains(line, "Error:") || strings.Contains(line, "Warning:") {
-				continue
-			}
-			// Only consider exact matches for casks to avoid false positives
-			if line == packageName {
-				return true
-			}
+	if err != nil {
+		return false
+	}
+
+	lines := strings.Split(strings.TrimSpace(result.Output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Skip headers, empty lines, and error messages
+		if line == "" || strings.Contains(line, "==>") || strings.Contains(line, "Error:") || strings.Contains(line, "Warning:") {
+			continue
+		}
+		// Only consider exact matches for casks to avoid false positives
+		if line == packageName {
+			return true
 		}
 	}
 
@@ -462,25 +510,30 @@ func InstallPackageWithCheck(packageName string) error {
 		return fmt.Errorf("Homebrew is not installed")
 	}
 
-	// Check if application is already available (via any method)
 	if IsApplicationAvailable(packageName) {
 		getOutputHandler().PrintAlreadyAvailable("%s is already available on the system", packageName)
 		return nil
 	}
 
-	// Dynamically determine if this is a cask (GUI app) or formula (CLI tool)
-	isCask := isCaskPackage(packageName)
+	return InstallPackageDirectly(packageName)
+}
 
+// InstallPackageDirectly installs a package without checking availability first
+// Used when availability has already been verified by the caller
+func InstallPackageDirectly(packageName string) error {
+	if !IsBrewInstalled() {
+		return fmt.Errorf("Homebrew is not installed")
+	}
+
+	isCask := isCaskPackage(packageName)
 	getOutputHandler().PrintInfo("Installing %s...", packageName)
 
 	var result *system.CommandResult
 	var err error
 
 	if isCask {
-		// Install as cask
 		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, "--cask", packageName)
 	} else {
-		// Install as formula
 		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, packageName)
 	}
 
@@ -489,13 +542,11 @@ func InstallPackageWithCheck(packageName string) error {
 	}
 
 	if !result.Success {
-		// Check if the error is because the app already exists
 		if strings.Contains(result.Error, "already an App at") {
 			getOutputHandler().PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
 			return nil
 		}
 
-		// Return the actual brew output for clearer error messages
 		if result.Output != "" {
 			return fmt.Errorf("brew: %s", strings.TrimSpace(result.Output))
 		} else {

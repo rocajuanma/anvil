@@ -63,6 +63,7 @@ type ConcurrentInstaller struct {
 	dryRun        bool
 	timeout       time.Duration
 	retryAttempts int
+	toolConfigs   map[string]*config.ToolInstallConfig
 }
 
 // NewConcurrentInstaller creates a new concurrent installer
@@ -244,29 +245,35 @@ func (ci *ConcurrentInstaller) installWithTimeout(ctx context.Context, tool stri
 
 // installSingleTool installs a single tool (similar to the original logic)
 func (ci *ConcurrentInstaller) installSingleTool(ctx context.Context, tool string, workerID int) error {
-	// Get tool-specific configuration
-	toolConfig, err := config.GetToolConfig(tool)
-	if err != nil {
-		ci.output.PrintWarning("Worker %d: Failed to get tool config for %s: %v", workerID, tool, err)
-		// Continue with default installation
+	// Get tool-specific configuration (pre-loaded or individual)
+	var toolConfig *config.ToolInstallConfig
+	var err error
+
+	if ci.toolConfigs != nil {
+		toolConfig = ci.toolConfigs[tool]
+	} else {
+		toolConfig, err = config.GetToolConfig(tool)
+		if err != nil {
+			ci.output.PrintWarning("Worker %d: Failed to get tool config for %s: %v", workerID, tool, err)
+			toolConfig = &config.ToolInstallConfig{} // Use empty config
+		}
 	}
 
-	// Install the tool via brew
-	if err := brew.InstallPackageWithCheck(tool); err != nil {
+	// Install the tool via brew (availability already checked by caller)
+	if err := brew.InstallPackageDirectly(tool); err != nil {
 		return errors.NewInstallationError(constants.OpInstall, tool, err)
 	}
 
 	// Handle post-install script if configured
-	if toolConfig != nil && toolConfig.PostInstallScript != "" {
+	if toolConfig.PostInstallScript != "" {
 		ci.output.PrintInfo("Worker %d: Running post-install script for %s...", workerID, tool)
 		if err := ci.runPostInstallScript(toolConfig.PostInstallScript); err != nil {
 			ci.output.PrintWarning("Worker %d: Failed to run post-install script for %s: %v", workerID, tool, err)
-			// Don't fail the whole installation for this
 		}
 	}
 
 	// Handle config check if configured
-	if toolConfig != nil && toolConfig.ConfigCheck {
+	if toolConfig.ConfigCheck {
 		if err := ci.checkToolConfiguration(tool); err != nil {
 			ci.output.PrintWarning("Worker %d: Configuration check failed for %s: %v", workerID, tool, err)
 		}
@@ -393,4 +400,9 @@ func (ci *ConcurrentInstaller) SetTimeout(timeout time.Duration) {
 // SetRetryAttempts sets the number of retry attempts for failed installations
 func (ci *ConcurrentInstaller) SetRetryAttempts(attempts int) {
 	ci.retryAttempts = attempts
+}
+
+// SetToolConfigs sets pre-loaded tool configurations to avoid repeated config loading
+func (ci *ConcurrentInstaller) SetToolConfigs(configs map[string]*config.ToolInstallConfig) {
+	ci.toolConfigs = configs
 }

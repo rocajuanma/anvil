@@ -463,13 +463,36 @@ func GetToolConfig(toolName string) (*ToolInstallConfig, error) {
 		return &toolConfig, nil
 	}
 
-	// Return default config if not found
+	return getDefaultToolConfig(), nil
+}
+
+// GetToolConfigs returns configurations for multiple tools in a single operation
+func GetToolConfigs(toolNames []string) (map[string]*ToolInstallConfig, error) {
+	config, err := getCachedConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	configs := make(map[string]*ToolInstallConfig, len(toolNames))
+	for _, toolName := range toolNames {
+		if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
+			configs[toolName] = &toolConfig
+		} else {
+			configs[toolName] = getDefaultToolConfig()
+		}
+	}
+
+	return configs, nil
+}
+
+// getDefaultToolConfig returns a default tool configuration
+func getDefaultToolConfig() *ToolInstallConfig {
 	return &ToolInstallConfig{
 		PostInstallScript: "",
 		EnvironmentSetup:  make(map[string]string),
 		ConfigCheck:       false,
 		Dependencies:      []string{},
-	}, nil
+	}
 }
 
 // SetToolConfig sets the configuration for a specific tool
