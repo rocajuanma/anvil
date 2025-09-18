@@ -251,8 +251,8 @@ func (ci *ConcurrentInstaller) installSingleTool(ctx context.Context, tool strin
 		// Continue with default installation
 	}
 
-	// Install the tool via brew
-	if err := brew.InstallPackageWithCheck(tool); err != nil {
+	// Install the tool via brew (availability already checked by caller)
+	if err := brew.InstallPackageDirectly(tool); err != nil {
 		return errors.NewInstallationError(constants.OpInstall, tool, err)
 	}
 

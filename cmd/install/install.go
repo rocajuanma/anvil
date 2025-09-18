@@ -275,8 +275,8 @@ func installSingleTool(toolName string) error {
 		// Continue with default installation
 	}
 
-	// Install the tool via brew
-	if err := brew.InstallPackageWithCheck(toolName); err != nil {
+	// Install the tool via brew (availability already checked by caller)
+	if err := brew.InstallPackageDirectly(toolName); err != nil {
 		return err
 	}
 

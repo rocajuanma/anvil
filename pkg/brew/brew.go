@@ -462,25 +462,30 @@ func InstallPackageWithCheck(packageName string) error {
 		return fmt.Errorf("Homebrew is not installed")
 	}
 
-	// Check if application is already available (via any method)
 	if IsApplicationAvailable(packageName) {
 		getOutputHandler().PrintAlreadyAvailable("%s is already available on the system", packageName)
 		return nil
 	}
 
-	// Dynamically determine if this is a cask (GUI app) or formula (CLI tool)
-	isCask := isCaskPackage(packageName)
+	return InstallPackageDirectly(packageName)
+}
 
+// InstallPackageDirectly installs a package without checking availability first
+// Used when availability has already been verified by the caller
+func InstallPackageDirectly(packageName string) error {
+	if !IsBrewInstalled() {
+		return fmt.Errorf("Homebrew is not installed")
+	}
+
+	isCask := isCaskPackage(packageName)
 	getOutputHandler().PrintInfo("Installing %s...", packageName)
 
 	var result *system.CommandResult
 	var err error
 
 	if isCask {
-		// Install as cask
 		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, "--cask", packageName)
 	} else {
-		// Install as formula
 		result, err = system.RunCommand(constants.BrewCommand, constants.BrewInstall, packageName)
 	}
 
@@ -489,13 +494,11 @@ func InstallPackageWithCheck(packageName string) error {
 	}
 
 	if !result.Success {
-		// Check if the error is because the app already exists
 		if strings.Contains(result.Error, "already an App at") {
 			getOutputHandler().PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
 			return nil
 		}
 
-		// Return the actual brew output for clearer error messages
 		if result.Output != "" {
 			return fmt.Errorf("brew: %s", strings.TrimSpace(result.Output))
 		} else {
