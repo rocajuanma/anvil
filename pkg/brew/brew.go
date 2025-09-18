@@ -20,11 +20,18 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
+)
+
+var (
+	// Cache brew installation status to avoid repeated checks
+	brewInstalledCache *bool
+	brewCacheMutex     sync.RWMutex
 )
 
 // getOutputHandler returns the global output handler for terminal operations
@@ -53,9 +60,29 @@ func EnsureBrewIsInstalled() error {
 	return nil
 }
 
-// IsBrewInstalled checks if Homebrew is installed
+// IsBrewInstalled checks if Homebrew is installed (with caching)
 func IsBrewInstalled() bool {
-	return system.CommandExists(constants.BrewCommand)
+	// Check cache first
+	brewCacheMutex.RLock()
+	if brewInstalledCache != nil {
+		result := *brewInstalledCache
+		brewCacheMutex.RUnlock()
+		return result
+	}
+	brewCacheMutex.RUnlock()
+
+	// Not in cache, check and cache the result
+	brewCacheMutex.Lock()
+	defer brewCacheMutex.Unlock()
+
+	// Double-check after acquiring write lock
+	if brewInstalledCache != nil {
+		return *brewInstalledCache
+	}
+
+	result := system.CommandExists(constants.BrewCommand)
+	brewInstalledCache = &result
+	return result
 }
 
 // IsBrewInstalledAtPath checks if Homebrew is installed at known paths
@@ -267,26 +294,63 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 }
 
 // IsApplicationAvailable checks if an application is available on the system
-// Optimized approach: Homebrew check -> smart filesystem search -> PATH check
+// Optimized approach: Fastest operations first, slowest operations last
 func IsApplicationAvailable(packageName string) bool {
-	// Step 1: Quick Homebrew check (fastest - single command)
+	// Step 1: For known casks, check if app exists in /Applications (fastest - no system calls)
+	if isKnownCask(packageName) {
+		if checkKnownCaskInApplications(packageName) {
+			return true
+		}
+	}
+
+	// Step 2: For known formulas, check PATH (fast - single system call)
+	if isKnownFormula(packageName) {
+		result, err := system.RunCommand("which", packageName)
+		if err == nil && result.Success {
+			return true
+		}
+	}
+
+	// Step 3: For unknown packages, check most likely /Applications path first (fast - single filesystem check)
+	if searchApplication(fmt.Sprintf("%s.app", packageName)) {
+		return true
+	}
+
+	// Step 4: For unknown packages, check PATH (fast - single system call)
+	result, err := system.RunCommand("which", packageName)
+	if err == nil && result.Success {
+		return true
+	}
+
+	// Step 5: Check if installed via Homebrew (slower - brew command)
 	if IsPackageInstalled(packageName) {
 		return true
 	}
 
-	// Step 2: For known casks, check if app exists in /Applications (fast)
-	if isKnownCask(packageName) {
-		return checkKnownCaskInApplications(packageName)
+	// Step 6: Fallback - Spotlight search (slowest - system-wide search)
+	return spotlightSearch(packageName)
+}
+
+// checkKnownCaskInApplications checks if a known cask app exists in /Applications
+func checkKnownCaskInApplications(packageName string) bool {
+	// Use optimized app name generation for known casks
+	appNames := generateOptimizedAppNames(packageName)
+	for _, appName := range appNames {
+		if searchApplication(appName) {
+			return true
+		}
+	}
+	return false
+}
+
+// searchApplication checks if an app exists in /Applications
+func searchApplication(appName string) bool {
+	result, err := system.RunCommand("test", "-d", fmt.Sprintf("/Applications/%s", appName))
+	if err == nil && result.Success {
+		return true
 	}
 
-	// Step 3: For command-line tools, check PATH (fast)
-	if isKnownFormula(packageName) {
-		result, err := system.RunCommand("which", packageName)
-		return err == nil && result.Success
-	}
-
-	// Step 4: Fallback - check if it's a manually installed app (slower but comprehensive)
-	return checkManuallyInstalledApp(packageName)
+	return false
 }
 
 // isKnownCask checks if a package is a known cask from our lookup table
@@ -303,43 +367,6 @@ func isKnownFormula(packageName string) bool {
 		return !isCask // If it exists and is not a cask, it's a formula
 	}
 	return false
-}
-
-// checkKnownCaskInApplications checks if a known cask app exists in /Applications
-func checkKnownCaskInApplications(packageName string) bool {
-	// Use optimized app name generation for known casks
-	appNames := generateOptimizedAppNames(packageName)
-
-	for _, appName := range appNames {
-		appPath := "/Applications/" + appName
-		result, err := system.RunCommand("test", "-d", appPath)
-		if err == nil && result.Success {
-			return true
-		}
-	}
-	return false
-}
-
-// checkManuallyInstalledApp performs comprehensive check for unknown packages
-func checkManuallyInstalledApp(packageName string) bool {
-	// Check PATH first (fastest)
-	result, err := system.RunCommand("which", packageName)
-	if err == nil && result.Success {
-		return true
-	}
-
-	// Check /Applications directory (medium speed)
-	appNames := generateOptimizedAppNames(packageName)
-	for _, appName := range appNames {
-		appPath := "/Applications/" + appName
-		result, err := system.RunCommand("test", "-d", appPath)
-		if err == nil && result.Success {
-			return true
-		}
-	}
-
-	// Only use expensive operations as last resort
-	return spotlightSearch(packageName)
 }
 
 // generateOptimizedAppNames creates optimized app names for known packages
