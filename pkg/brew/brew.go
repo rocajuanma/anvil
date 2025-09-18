@@ -20,66 +20,11 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
 	"github.com/rocajuanma/anvil/pkg/terminal"
-)
-
-var (
-	// Static lookup table for common packages to avoid expensive brew search operations
-	knownCasks = map[string]bool{
-		// GUI Applications (casks)
-		"visual-studio-code":   true,
-		"google-chrome":        true,
-		"firefox":              true,
-		"slack":                true,
-		"1password":            true,
-		"iterm2":               true,
-		"docker":               true,
-		"figma":                true,
-		"sketch":               true,
-		"notion":               true,
-		"discord":              true,
-		"zoom":                 true,
-		"spotify":              true,
-		"vlc":                  true,
-		"postman":              true,
-		"insomnia":             true,
-		"adobe-creative-suite": true,
-
-		// Command Line Tools (formulas)
-		"git":           false,
-		"zsh":           false,
-		"curl":          false,
-		"wget":          false,
-		"nodejs":        false,
-		"npm":           false,
-		"yarn":          false,
-		"typescript":    false,
-		"kubectl":       false,
-		"terraform":     false,
-		"ansible":       false,
-		"helm":          false,
-		"aws-cli":       false,
-		"azure-cli":     false,
-		"gcloud":        false,
-		"prometheus":    false,
-		"grafana":       false,
-		"elasticsearch": false,
-		"go":            false,
-		"python":        false,
-		"rust":          false,
-		"java":          false,
-		"maven":         false,
-		"gradle":        false,
-	}
-
-	// Runtime cache for dynamically discovered package types
-	caskCache      = make(map[string]bool)
-	caskCacheMutex sync.RWMutex
 )
 
 // getOutputHandler returns the global output handler for terminal operations
