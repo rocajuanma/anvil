@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [1.4.0] - 2025-09-18
+
+### Added
 - **Installation Performance Optimizations** ⚡ - Major speed improvements across the installation pipeline
   - Eliminated redundant availability checks by checking tool availability only once per installation
   - Optimized cask detection with 3-tier lookup (static table → runtime cache → dynamic search) reducing network calls by 90%+
