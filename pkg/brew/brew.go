@@ -167,14 +167,8 @@ func IsPackageInstalled(packageName string) bool {
 		return false
 	}
 
-	// First try to check if it's installed as a formula
-	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, "--formula", packageName)
-	if err == nil && result.Success {
-		return true
-	}
-
-	// If not found as formula, check if it's installed as a cask
-	result, err = system.RunCommand(constants.BrewCommand, constants.BrewList, "--cask", packageName)
+	// Use single brew list command to check both formulas and casks
+	result, err := system.RunCommand(constants.BrewCommand, constants.BrewList, packageName)
 	if err == nil && result.Success {
 		return true
 	}
@@ -273,36 +267,150 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 }
 
 // IsApplicationAvailable checks if an application is available on the system
-// Uses a hybrid approach: Homebrew detection -> intelligent search -> system-wide fallback
+// Optimized approach: Homebrew check -> smart filesystem search -> PATH check
 func IsApplicationAvailable(packageName string) bool {
-	// Step 1: Quick Homebrew check (fastest)
+	// Step 1: Quick Homebrew check (fastest - single command)
 	if IsPackageInstalled(packageName) {
 		return true
 	}
 
-	// Step 2: Check if it's an installed Homebrew cask
-	if isBrewCaskInstalled(packageName) {
-		return true
+	// Step 2: For known casks, check if app exists in /Applications (fast)
+	if isKnownCask(packageName) {
+		return checkKnownCaskInApplications(packageName)
 	}
 
-	// Step 3: Search for the cask and get actual install location
-	if checkBrewCaskAvailable(packageName) {
-		return true
+	// Step 3: For command-line tools, check PATH (fast)
+	if isKnownFormula(packageName) {
+		result, err := system.RunCommand("which", packageName)
+		return err == nil && result.Success
 	}
 
-	// Step 4: Intelligent /Applications directory search
-	if searchApplicationsDirectory(packageName) {
-		return true
-	}
+	// Step 4: Fallback - check if it's a manually installed app (slower but comprehensive)
+	return checkManuallyInstalledApp(packageName)
+}
 
-	// Step 5: System-wide Spotlight search fallback
-	if spotlightSearch(packageName) {
-		return true
+// isKnownCask checks if a package is a known cask from our lookup table
+func isKnownCask(packageName string) bool {
+	if isCask, exists := knownCasks[packageName]; exists {
+		return isCask
 	}
+	return false
+}
 
-	// Step 6: Final check - command-line tools in PATH
+// isKnownFormula checks if a package is a known formula from our lookup table
+func isKnownFormula(packageName string) bool {
+	if isCask, exists := knownCasks[packageName]; exists {
+		return !isCask // If it exists and is not a cask, it's a formula
+	}
+	return false
+}
+
+// checkKnownCaskInApplications checks if a known cask app exists in /Applications
+func checkKnownCaskInApplications(packageName string) bool {
+	// Use optimized app name generation for known casks
+	appNames := generateOptimizedAppNames(packageName)
+
+	for _, appName := range appNames {
+		appPath := "/Applications/" + appName
+		result, err := system.RunCommand("test", "-d", appPath)
+		if err == nil && result.Success {
+			return true
+		}
+	}
+	return false
+}
+
+// checkManuallyInstalledApp performs comprehensive check for unknown packages
+func checkManuallyInstalledApp(packageName string) bool {
+	// Check PATH first (fastest)
 	result, err := system.RunCommand("which", packageName)
-	return err == nil && result.Success
+	if err == nil && result.Success {
+		return true
+	}
+
+	// Check /Applications directory (medium speed)
+	appNames := generateOptimizedAppNames(packageName)
+	for _, appName := range appNames {
+		appPath := "/Applications/" + appName
+		result, err := system.RunCommand("test", "-d", appPath)
+		if err == nil && result.Success {
+			return true
+		}
+	}
+
+	// Only use expensive operations as last resort
+	return spotlightSearch(packageName)
+}
+
+// generateOptimizedAppNames creates optimized app names for known packages
+func generateOptimizedAppNames(packageName string) []string {
+	// Use special cases first (most common)
+	specialCases := map[string][]string{
+		"visual-studio-code":    {"Visual Studio Code.app"},
+		"google-chrome":         {"Google Chrome.app"},
+		"1password":             {"1Password.app", "1Password 7 - Password Manager.app"},
+		"iterm2":                {"iTerm.app"},
+		"firefox":               {"Firefox.app"},
+		"slack":                 {"Slack.app"},
+		"docker-desktop":        {"Docker.app"},
+		"postman":               {"Postman.app"},
+		"vlc":                   {"VLC.app"},
+		"spotify":               {"Spotify.app"},
+		"discord":               {"Discord.app"},
+		"zoom":                  {"zoom.us.app"},
+		"notion":                {"Notion.app"},
+		"cursor":                {"Cursor.app"},
+		"raycast":               {"Raycast.app"},
+		"alfred":                {"Alfred 5.app", "Alfred 4.app"},
+		"obsidian":              {"Obsidian.app"},
+		"rectangle":             {"Rectangle.app"},
+		"brave-browser":         {"Brave Browser.app"},
+		"microsoft-edge":        {"Microsoft Edge.app"},
+		"arc":                   {"Arc.app"},
+		"steam":                 {"Steam.app"},
+		"telegram":              {"Telegram.app"},
+		"signal":                {"Signal.app"},
+		"whatsapp":              {"WhatsApp.app"},
+		"obs":                   {"OBS.app"},
+		"gimp":                  {"GIMP.app"},
+		"inkscape":              {"Inkscape.app"},
+		"mongodb-compass":       {"MongoDB Compass.app"},
+		"dbeaver-community":     {"DBeaver.app"},
+		"pgadmin4":              {"pgAdmin 4.app"},
+		"db-browser-for-sqlite": {"DB Browser for SQLite.app"},
+		"kitty":                 {"kitty.app"},
+		"alacritty":             {"Alacritty.app"},
+		"wezterm":               {"WezTerm.app"},
+		"iina":                  {"IINA.app"},
+		"stats":                 {"Stats.app"},
+		"betterdisplay":         {"BetterDisplay.app"},
+		"alt-tab":               {"AltTab.app"},
+		"karabiner-elements":    {"Karabiner-Elements.app"},
+		"bitwarden":             {"Bitwarden.app"},
+		"claude":                {"Claude.app"},
+		"utm":                   {"UTM.app"},
+		"adobe-acrobat-reader":  {"Adobe Acrobat Reader DC.app"},
+		"appcleaner":            {"AppCleaner.app"},
+		"vscodium":              {"VSCodium.app"},
+		"insomnia":              {"Insomnia.app"},
+		"claude-code":           {"Claude Code.app"},
+	}
+
+	if special, exists := specialCases[packageName]; exists {
+		return special
+	}
+
+	// Fallback to generic generation
+	var names []string
+	names = append(names, packageName+".app")
+
+	// Handle hyphenated names
+	if strings.Contains(packageName, "-") {
+		spacedName := strings.ReplaceAll(packageName, "-", " ")
+		names = append(names, strings.Title(spacedName)+".app")
+	}
+
+	return names
 }
 
 // isBrewCaskInstalled checks if package is in brew's installed cask list
