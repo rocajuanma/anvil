@@ -9,8 +9,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20only-blue.svg)](#installation)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Version](https://img.shields.io/badge/version-1.2.0+-blue.svg)](docs/CHANGELOG.md)
-
+[![Version](https://img.shields.io/github/v/release/rocajuanma/anvil?style=flat&label=Release)](docs/CHANGELOG.md)
 </div>
 
  Tired of wasting time setting up your Mac for development? Anvil automates tool installs, syncs configs, and keeps your environment consistent—no hassle, no manual steps, just one powerful CLI.
