@@ -127,27 +127,26 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 		return installGroupConcurrent(groupName, tools, dryRun, maxWorkers, timeout)
 	}
 
-	// Use existing serial installation
 	return installGroupSerial(groupName, tools, dryRun)
 }
 
 // deduplicateGroupTools removes duplicate tools within a group and updates the settings file
 func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
-	seen := make(map[string]bool)
-	var deduplicatedTools []string
+	seen := make(map[string]struct{}, len(tools))
+	deduplicatedTools := make([]string, 0, len(tools))
 	var duplicatesFound []string
 
 	// Deduplicate
 	for _, tool := range tools {
-		if !seen[tool] {
-			seen[tool] = true
+		if _, exists := seen[tool]; !exists {
+			seen[tool] = struct{}{}
 			deduplicatedTools = append(deduplicatedTools, tool)
 		} else {
 			duplicatesFound = append(duplicatesFound, tool)
 		}
 	}
 
-	// If no duplicates found, return original list
+	// Return original list if no duplicates found
 	if len(duplicatesFound) == 0 {
 		return tools, nil
 	}
