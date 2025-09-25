@@ -117,16 +117,12 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 	deduplicatedTools, err := deduplicateGroupTools(groupName, tools)
 	if err != nil {
 		o.PrintWarning("Failed to deduplicate group tools: %v", err)
-		// Continue with original tools list
-		deduplicatedTools = tools
 	} else {
-		// Use the deduplicated tools list for installation
 		tools = deduplicatedTools
 	}
 
 	o.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
-	// Use concurrent installation if requested
 	if concurrent {
 		return installGroupConcurrent(groupName, tools, dryRun, maxWorkers, timeout)
 	}
@@ -137,12 +133,11 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 
 // deduplicateGroupTools removes duplicate tools within a group and updates the settings file
 func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
-	// Track which tools we've seen
 	seen := make(map[string]bool)
 	var deduplicatedTools []string
 	var duplicatesFound []string
 
-	// Build deduplicated list
+	// Deduplicate
 	for _, tool := range tools {
 		if !seen[tool] {
 			seen[tool] = true
@@ -157,7 +152,6 @@ func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
 		return tools, nil
 	}
 
-	// Report found duplicates
 	o := getOutputHandler()
 	o.PrintWarning("Found duplicates in group '%s': %s", groupName, strings.Join(duplicatesFound, ", "))
 	o.PrintInfo("Removing duplicates from settings file...")

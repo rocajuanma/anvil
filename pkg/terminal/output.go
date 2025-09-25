@@ -78,7 +78,7 @@ func (oh *DefaultOutputHandler) FormatMessage(level OutputLevel, message string)
 	if oh.config.UseColors && oh.config.UseEmojis && oh.config.UseFormatting {
 		switch level {
 		case LevelHeader:
-			prefix, color = "", ColorCyan
+			color = ColorCyan
 			return fmt.Sprintf("\n%s%s=== %s ===%s\n", ColorBold, color, message, ColorReset)
 		case LevelStage:
 			prefix, color = "🔧 ", ColorBlue
@@ -94,7 +94,7 @@ func (oh *DefaultOutputHandler) FormatMessage(level OutputLevel, message string)
 	} else if oh.config.UseColors {
 		switch level {
 		case LevelHeader:
-			prefix, color = "", ColorCyan
+			color = ColorCyan
 			return fmt.Sprintf("\n%s%s=== %s ===%s\n", ColorBold, color, message, ColorReset)
 		case LevelStage:
 			prefix, color = "[STAGE] ", ColorBlue
