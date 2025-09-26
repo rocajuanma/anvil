@@ -78,21 +78,72 @@ func pushAppConfig(appName string) error {
 	output.PrintHeader(fmt.Sprintf("Push '%s' Configuration", appName))
 
 	// Stage 1: Load and validate configuration
+	anvilConfig, err := loadAndValidateConfig()
+	if err != nil {
+		return err
+	}
+
+	// Stage 2: Resolve app location
+	configPath, err := resolveAppLocation(appName, anvilConfig)
+	if err != nil {
+		return err
+	}
+
+	// Show new app information if this is a new addition
+	if isNewAppAddition(appName, anvilConfig) {
+		showNewAppInfo(appName, configPath)
+	}
+
+	// Stage 3: 🚨 SECURITY WARNING
+	showSecurityWarning(anvilConfig.GitHub.ConfigRepo)
+
+	// Stage 4: Authentication setup
+	githubClient, err := setupAuthentication(anvilConfig)
+	if err != nil {
+		return err
+	}
+
+	// Stage 5: Prepare and show diff
+	ctx := context.Background()
+	diffSummary, err := prepareDiffPreview(githubClient, appName, configPath, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Stage 6: User confirmation
+	if !handleUserConfirmation(output, appName, githubClient, ctx) {
+		return nil
+	}
+
+	// Stage 7: Push configuration
+	return performPushOperation(githubClient, appName, configPath, diffSummary, anvilConfig, ctx)
+}
+
+// loadAndValidateConfig loads and validates the anvil configuration
+func loadAndValidateConfig() (*config.AnvilConfig, error) {
+	output := getOutputHandler()
 	output.PrintStage("Loading anvil configuration...")
+
 	anvilConfig, err := config.LoadConfig()
 	if err != nil {
-		return errors.NewConfigurationError(constants.OpPush, "load-config", err)
+		return nil, errors.NewConfigurationError(constants.OpPush, "load-config", err)
 	}
 
 	// Validate GitHub configuration
 	if anvilConfig.GitHub.ConfigRepo == "" {
-		return errors.NewConfigurationError(constants.OpPush, "missing-repo",
+		return nil, errors.NewConfigurationError(constants.OpPush, "missing-repo",
 			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your settings.yaml"))
 	}
-	output.PrintSuccess("Configuration loaded successfully")
 
-	// Stage 2: Resolve app location
+	output.PrintSuccess("Configuration loaded successfully")
+	return anvilConfig, nil
+}
+
+// resolveAppLocation resolves the app configuration location
+func resolveAppLocation(appName string, anvilConfig *config.AnvilConfig) (string, error) {
+	output := getOutputHandler()
 	output.PrintStage("Resolving app configuration location...")
+
 	configPath, locationSource, err := config.ResolveAppLocation(appName)
 	if err != nil {
 		// Check if this is a new app addition
@@ -102,10 +153,10 @@ func pushAppConfig(appName string) error {
 			if localPath, exists := anvilConfig.Configs[appName]; exists {
 				configPath = localPath
 			} else {
-				return handleAppLocationError(appName, err)
+				return "", handleAppLocationError(appName, err)
 			}
 		} else {
-			return handleAppLocationError(appName, err)
+			return "", handleAppLocationError(appName, err)
 		}
 	}
 
@@ -117,22 +168,19 @@ func pushAppConfig(appName string) error {
 		output.PrintInfo("  %s: /path/to/your/%s/configs\n", appName, appName)
 		output.PrintInfo("This ensures anvil knows where to find your local configurations.")
 		output.PrintInfo("The temp directory (%s) contains pulled configs for review only.", configPath)
-		return fmt.Errorf("app config path not configured in settings")
+		return "", fmt.Errorf("app config path not configured in settings")
 	}
 
 	output.PrintSuccess("App configuration location resolved")
 	output.PrintInfo("Config path: %s", configPath)
+	return configPath, nil
+}
 
-	// Show new app information if this is a new addition
-	if isNewAppAddition(appName, anvilConfig) {
-		showNewAppInfo(appName, configPath)
-	}
-
-	// Stage 3: 🚨 SECURITY WARNING
-	showSecurityWarning(anvilConfig.GitHub.ConfigRepo)
-
-	// Stage 4: Authentication setup
+// setupAuthentication sets up GitHub authentication
+func setupAuthentication(anvilConfig *config.AnvilConfig) (*github.GitHubClient, error) {
+	output := getOutputHandler()
 	output.PrintStage("Setting up authentication...")
+
 	var token string
 	if anvilConfig.GitHub.TokenEnvVar != "" {
 		token = os.Getenv(anvilConfig.GitHub.TokenEnvVar)
@@ -155,24 +203,33 @@ func pushAppConfig(appName string) error {
 		anvilConfig.Git.Email,
 	)
 
+	return githubClient, nil
+}
+
+// prepareDiffPreview prepares and shows the diff preview
+func prepareDiffPreview(githubClient *github.GitHubClient, appName, configPath string, ctx context.Context) (*github.DiffSummary, error) {
+	output := getOutputHandler()
 	output.PrintStage(fmt.Sprintf("Preparing to push %s configuration...", appName))
-	output.PrintInfo("Repository: %s", anvilConfig.GitHub.ConfigRepo)
-	output.PrintInfo("Branch: %s", anvilConfig.GitHub.Branch)
+	output.PrintInfo("Repository: %s", githubClient.RepoURL)
+	output.PrintInfo("Branch: %s", githubClient.Branch)
 	output.PrintInfo("App: %s", appName)
 	output.PrintInfo("Local config path: %s", configPath)
 
-	// NEW: Add diff output before confirmation
+	// Add diff output before confirmation
 	output.PrintStage("Analyzing changes...")
-	ctx := context.Background()
 	targetPath := fmt.Sprintf("%s/", appName)
 	diffSummary, err := githubClient.GetDiffPreview(ctx, configPath, targetPath)
 	if err != nil {
 		output.PrintWarning("Unable to generate diff preview: %v", err)
-	} else {
-		showDiffOutput(diffSummary)
+		return nil, nil
 	}
 
-	// Stage 5: User confirmation
+	showDiffOutput(diffSummary)
+	return diffSummary, nil
+}
+
+// handleUserConfirmation handles user confirmation for the push operation
+func handleUserConfirmation(output interfaces.OutputHandler, appName string, githubClient *github.GitHubClient, ctx context.Context) bool {
 	output.PrintStage("Requesting user confirmation...")
 	if !output.Confirm(fmt.Sprintf("Do you want to push your %s configurations to the repository?", appName)) {
 		output.PrintInfo("Push cancelled by user")
@@ -180,11 +237,16 @@ func pushAppConfig(appName string) error {
 		if cleanupErr := githubClient.CleanupStagedChanges(ctx); cleanupErr != nil {
 			output.PrintWarning("Failed to cleanup staged changes: %v", cleanupErr)
 		}
-		return nil
+		return false
 	}
+	return true
+}
 
-	// Stage 6: Push configuration
+// performPushOperation executes the actual push operation
+func performPushOperation(githubClient *github.GitHubClient, appName, configPath string, diffSummary *github.DiffSummary, anvilConfig *config.AnvilConfig, ctx context.Context) error {
+	output := getOutputHandler()
 	output.PrintStage(fmt.Sprintf("Pushing %s configuration to repository...", appName))
+
 	result, err := githubClient.PushAppConfig(ctx, appName, configPath)
 	if err != nil {
 		// Clean up any staged changes in case of error
@@ -201,7 +263,6 @@ func pushAppConfig(appName string) error {
 	}
 
 	displaySuccessMessage(appName, result, diffSummary, anvilConfig)
-
 	return nil
 }
 

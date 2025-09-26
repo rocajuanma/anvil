@@ -117,47 +117,40 @@ func installGroup(groupName string, tools []string, dryRun bool, concurrent bool
 	deduplicatedTools, err := deduplicateGroupTools(groupName, tools)
 	if err != nil {
 		o.PrintWarning("Failed to deduplicate group tools: %v", err)
-		// Continue with original tools list
-		deduplicatedTools = tools
 	} else {
-		// Use the deduplicated tools list for installation
 		tools = deduplicatedTools
 	}
 
 	o.PrintInfo("Installing %d tools: %s", len(tools), strings.Join(tools, ", "))
 
-	// Use concurrent installation if requested
 	if concurrent {
 		return installGroupConcurrent(groupName, tools, dryRun, maxWorkers, timeout)
 	}
 
-	// Use existing serial installation
 	return installGroupSerial(groupName, tools, dryRun)
 }
 
 // deduplicateGroupTools removes duplicate tools within a group and updates the settings file
 func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
-	// Track which tools we've seen
-	seen := make(map[string]bool)
-	var deduplicatedTools []string
+	seen := make(map[string]struct{}, len(tools))
+	deduplicatedTools := make([]string, 0, len(tools))
 	var duplicatesFound []string
 
-	// Build deduplicated list
+	// Deduplicate
 	for _, tool := range tools {
-		if !seen[tool] {
-			seen[tool] = true
+		if _, exists := seen[tool]; !exists {
+			seen[tool] = struct{}{}
 			deduplicatedTools = append(deduplicatedTools, tool)
 		} else {
 			duplicatesFound = append(duplicatesFound, tool)
 		}
 	}
 
-	// If no duplicates found, return original list
+	// Return original list if no duplicates found
 	if len(duplicatesFound) == 0 {
 		return tools, nil
 	}
 
-	// Report found duplicates
 	o := getOutputHandler()
 	o.PrintWarning("Found duplicates in group '%s': %s", groupName, strings.Join(duplicatesFound, ", "))
 	o.PrintInfo("Removing duplicates from settings file...")

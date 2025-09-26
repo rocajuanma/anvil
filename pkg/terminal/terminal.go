@@ -28,3 +28,38 @@ const (
 	ColorWhite  = "\033[37m"
 	ColorBold   = "\033[1m"
 )
+
+var (
+	// outputColors is a map of output levels to their corresponding colors
+	outputColors = map[OutputLevel]string{
+		LevelHeader:  ColorCyan,
+		LevelStage:   ColorBlue,
+		LevelSuccess: ColorGreen,
+		LevelError:   ColorRed,
+		LevelWarning: ColorYellow,
+		LevelInfo:    "",
+	}
+
+	// outputEmojis is a map of output levels to their corresponding emojis
+	outputEmojis = map[OutputLevel]string{
+		LevelHeader:  "",
+		LevelStage:   "🔧 ",
+		LevelSuccess: "✅ ",
+		LevelError:   "❌ ",
+		LevelWarning: "⚠️  ",
+		LevelInfo:    "",
+	}
+
+	// outputPrefixes is a map of output levels to their corresponding prefixes
+	outputPrefixes = map[OutputLevel]string{
+		LevelHeader:  headerFormat,
+		LevelStage:   "[STAGE] ",
+		LevelSuccess: "[SUCCESS] ",
+		LevelError:   "[ERROR] ",
+		LevelWarning: "[WARNING] ",
+		LevelInfo:    "",
+	}
+
+	coloredHeaderFormat = "\n%s%s=== %s ===%s\n"
+	headerFormat        = "\n=== %s ===\n"
+)

@@ -103,55 +103,87 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 
 	// Check if there are differences before proceeding
 	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
-
-	// Get the output handler
 	output := getOutputHandler()
 
-	// For new apps, we need to check if the target directory exists in the repo
-	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
-	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
-		// Target doesn't exist in repo - this is a new app
-		// Verify the local path actually exists and has content
-		if localInfo, err := os.Stat(configPath); err == nil {
-			if localInfo.IsDir() {
-				// Check if directory has files
-				entries, err := os.ReadDir(configPath)
-				if err == nil && len(entries) > 0 {
-					output.PrintInfo("New app '%s' detected - will be added to repository", appName)
-				} else {
-					output.PrintSuccess("Configuration is up-to-date!")
-					output.PrintInfo("Local %s configs match the remote repository.", appName)
-					output.PrintInfo("No changes to push.")
-					return nil, nil
-				}
-			} else if localInfo.Size() > 0 {
-				output.PrintInfo("New app '%s' detected - will be added to repository", appName)
-			} else {
-				output.PrintSuccess("Configuration is up-to-date!")
-				output.PrintInfo("Local %s configs match the remote repository.", appName)
-				output.PrintInfo("No changes to push.")
-				return nil, nil
-			}
-		} else {
-			return nil, fmt.Errorf("local config path is invalid: %w", err)
-		}
-	} else {
-		// Target exists in repo - check for changes
-		hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to check for config changes: %w", err)
-		}
-
-		if !hasChanges {
-			output.PrintSuccess("Configuration is up-to-date!")
-			output.PrintInfo("Local %s configs match the remote repository.", appName)
-			output.PrintInfo("No changes to push.")
-			return nil, nil
-		}
+	// Check for changes and handle new vs existing apps
+	shouldProceed, err := gc.checkForChanges(ctx, appName, configPath, targetPath)
+	if err != nil {
+		return nil, err
+	}
+	if !shouldProceed {
+		return nil, nil // No changes to push
 	}
 
 	output.PrintInfo("Differences detected between local and remote %s configuration", appName)
 
+	// Perform the push operation
+	return gc.performPushOperation(ctx, appName, configPath)
+}
+
+// checkForChanges determines if there are changes to push and handles new vs existing apps
+func (gc *GitHubClient) checkForChanges(ctx context.Context, appName, configPath, targetPath string) (bool, error) {
+	repoTargetPath := filepath.Join(gc.LocalPath, targetPath)
+
+	// Check if target exists in repo
+	if _, err := os.Stat(repoTargetPath); os.IsNotExist(err) {
+		return gc.handleNewApp(appName, configPath)
+	}
+
+	// Target exists in repo - check for changes
+	return gc.handleExistingApp(appName, configPath, targetPath)
+}
+
+// handleNewApp handles the case where this is a new app not yet in the repository
+func (gc *GitHubClient) handleNewApp(appName, configPath string) (bool, error) {
+	output := getOutputHandler()
+
+	// Verify the local path actually exists and has content
+	localInfo, err := os.Stat(configPath)
+	if err != nil {
+		return false, fmt.Errorf("local config path is invalid: %w", err)
+	}
+
+	if localInfo.IsDir() {
+		// Check if directory has files
+		entries, err := os.ReadDir(configPath)
+		if err == nil && len(entries) > 0 {
+			output.PrintInfo("New app '%s' detected - will be added to repository", appName)
+			return true, nil
+		}
+	} else if localInfo.Size() > 0 {
+		output.PrintInfo("New app '%s' detected - will be added to repository", appName)
+		return true, nil
+	}
+
+	// No content to push
+	output.PrintSuccess("Configuration is up-to-date!")
+	output.PrintInfo("Local %s configs match the remote repository.", appName)
+	output.PrintInfo("No changes to push.")
+	return false, nil
+}
+
+// handleExistingApp handles the case where the app already exists in the repository
+func (gc *GitHubClient) handleExistingApp(appName, configPath, targetPath string) (bool, error) {
+	output := getOutputHandler()
+
+	// Check for changes
+	hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to check for config changes: %w", err)
+	}
+
+	if !hasChanges {
+		output.PrintSuccess("Configuration is up-to-date!")
+		output.PrintInfo("Local %s configs match the remote repository.", appName)
+		output.PrintInfo("No changes to push.")
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// performPushOperation executes the actual push operation
+func (gc *GitHubClient) performPushOperation(ctx context.Context, appName, configPath string) (*PushConfigResult, error) {
 	// Generate branch name with timestamp
 	branchName := generateTimestampedBranchName("config-push")
 
