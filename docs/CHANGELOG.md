@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Command Descriptions Simplified** 📝 - Streamlined all command descriptions for better readability
+  - Reduced description length while preserving essential usage information
+  - Removed verbose feature lists for cleaner, more scannable descriptions
+  - **Benefit**: Improved user experience with concise, focused command documentation
 
 ### Fixed
 
