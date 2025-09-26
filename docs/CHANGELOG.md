@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+## [1.4.1] - 2025-09-25
+
+### Added
+
+### Changed
+
+### Fixed
 - **Code Complexity Reduction** 🔧 - Refactored high-complexity functions & fix goreportcard issues to improve maintainability
   - Reduced cyclomatic complexity on push, clean and output logic while maintaining identical functionality
   - **Benefit**: Improved code organization, testability, and maintainability
