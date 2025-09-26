@@ -76,56 +76,22 @@ func (oh *DefaultOutputHandler) FormatMessage(level OutputLevel, message string)
 	var prefix, color string
 
 	if oh.config.UseColors && oh.config.UseEmojis && oh.config.UseFormatting {
-		switch level {
-		case LevelHeader:
-			color = ColorCyan
-			return fmt.Sprintf("\n%s%s=== %s ===%s\n", ColorBold, color, message, ColorReset)
-		case LevelStage:
-			prefix, color = "🔧 ", ColorBlue
-		case LevelSuccess:
-			prefix, color = "✅ ", ColorGreen
-		case LevelError:
-			prefix, color = "❌ ", ColorRed
-		case LevelWarning:
-			prefix, color = "⚠️  ", ColorYellow
-		case LevelInfo:
-			prefix, color = "", ""
+		prefix = outputEmojis[level]
+		color = outputColors[level]
+		if level == LevelHeader {
+			return fmt.Sprintf(coloredHeaderFormat, ColorBold, color, message, ColorReset)
 		}
 	} else if oh.config.UseColors {
-		switch level {
-		case LevelHeader:
-			color = ColorCyan
-			return fmt.Sprintf("\n%s%s=== %s ===%s\n", ColorBold, color, message, ColorReset)
-		case LevelStage:
-			prefix, color = "[STAGE] ", ColorBlue
-		case LevelSuccess:
-			prefix, color = "[SUCCESS] ", ColorGreen
-		case LevelError:
-			prefix, color = "[ERROR] ", ColorRed
-		case LevelWarning:
-			prefix, color = "[WARNING] ", ColorYellow
-		case LevelInfo:
-			prefix, color = "", ""
+		prefix = outputPrefixes[level]
+		color = outputColors[level]
+		if level == LevelHeader {
+			return fmt.Sprintf(coloredHeaderFormat, ColorBold, color, message, ColorReset)
 		}
 	} else {
-		switch level {
-		case LevelHeader:
-			return fmt.Sprintf("\n=== %s ===\n", message)
-		case LevelStage:
-			prefix = "[STAGE] "
-		case LevelSuccess:
-			prefix = "[SUCCESS] "
-		case LevelError:
-			prefix = "[ERROR] "
-		case LevelWarning:
-			prefix = "[WARNING] "
-		case LevelInfo:
-			prefix = ""
+		prefix = outputPrefixes[level]
+		if level == LevelHeader {
+			return fmt.Sprintf(prefix, message)
 		}
-	}
-
-	if level == LevelHeader {
-		return fmt.Sprintf("\n%s%s=== %s ===%s\n", ColorBold, color, message, ColorReset)
 	}
 
 	if oh.config.UseColors && oh.config.UseFormatting {
