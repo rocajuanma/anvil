@@ -1,10 +1,4 @@
 groups:
-  essentials:
-    - git
-    - vscode
-    - chrome
-    - iterm2
-    - zsh
   development:
     - nodejs
     - python

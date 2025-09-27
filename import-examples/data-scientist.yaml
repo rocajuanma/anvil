@@ -1,9 +1,5 @@
 groups:
-  essentials:
-    - git
-    - vscode
-    - iterm2
-    - zsh
+  code:
     - python
   data-analysis:
     - jupyter
