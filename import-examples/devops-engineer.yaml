@@ -1,10 +1,4 @@
 groups:
-  essentials:
-    - git
-    - vscode
-    - iterm2
-    - zsh
-    - docker
   infrastructure:
     - kubernetes
     - terraform

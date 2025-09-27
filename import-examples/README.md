@@ -6,42 +6,36 @@ This directory contains example group configurations for different developer per
 
 ### 🎨 Frontend Developer (`frontend-developer.yaml`)
 Perfect for web developers working with modern frontend technologies.
-- **essentials**: Core development tools
 - **frontend-core**: JavaScript/TypeScript ecosystem
 - **design-tools**: Design and prototyping applications
 - **productivity**: Communication and organization tools
 
 ### ⚙️ Backend Developer (`backend-developer.yaml`)
 Ideal for server-side developers and API builders.
-- **essentials**: Core development environment
 - **backend-core**: Server technologies and databases
 - **devops**: Infrastructure and deployment tools
 - **productivity**: Development and collaboration tools
 
 ### 📊 Data Scientist (`data-scientist.yaml`)
 Tailored for data analysis and machine learning professionals.
-- **essentials**: Basic development setup
 - **data-analysis**: Data processing and visualization tools
 - **ml-ops**: Machine learning and deployment tools
 - **productivity**: Collaboration and documentation tools
 
 ### 🚀 DevOps Engineer (`devops-engineer.yaml`)
 Designed for infrastructure and deployment specialists.
-- **essentials**: Core development tools
 - **infrastructure**: Container orchestration and automation
 - **cloud-tools**: Multi-cloud management tools
 - **monitoring**: Observability and monitoring stack
 
 ### 🎭 Designer (`designer.yaml`)
 Perfect for UI/UX designers and creative professionals.
-- **essentials**: Basic productivity tools
 - **design-core**: Primary design applications
 - **prototyping**: Interactive prototyping tools
 - **productivity**: Collaboration and file management
 
 ### 🏢 Startup Founder (`startup-founder.yaml`)
 Comprehensive setup for technical founders and early-stage teams.
-- **essentials**: Core development environment
 - **development**: Full-stack development tools
 - **business-tools**: Communication and project management
 - **analytics**: User behavior and business metrics
@@ -54,12 +48,12 @@ Import any of these configurations using the `anvil config import` command:
 # Import frontend developer setup
 anvil config import import-examples/frontend-developer.yaml
 
-# Import from remote URL (if hosted)
-anvil config import https://raw.githubusercontent.com/your-repo/anvil/import-examples/backend-developer.yaml
+# Import from remote URL
+anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/backend-developer.yaml
 
 # Import multiple configurations
-anvil config import import-examples/data-scientist.yaml
-anvil config import import-examples/devops-engineer.yaml
+anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/data-scientist.yaml
+anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/devops-engineer.yaml
 ```
 
 ## Customization

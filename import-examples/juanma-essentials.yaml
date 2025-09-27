@@ -1,0 +1,26 @@
+groups:
+  essentials:
+  - slack
+  - google-chrome
+  - duckduckgo
+  - 1password
+  - spotify
+  - iterm2
+  chats:
+  - whatsapp
+  - discord
+  code:
+  - git
+  - visual-studio-code
+  - cursor
+  - go
+  - python
+  utils:
+  - postman
+  - obsidian
+  - clocker
+  terminal:
+  - tree
+  - t-rec
+  - lazydocker
+  - lazygit

@@ -60,7 +60,7 @@ anvil install terraform  # Individual apps
 anvil config import https://example.com/team-groups.yaml
 
 # Or start with example configurations
-anvil config import import-examples/frontend-developer.yaml
+anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/juanma-essentials.yaml
 
 # Check environment health
 anvil doctor
