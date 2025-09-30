@@ -21,28 +21,17 @@ This guide provides detailed installation instructions for Anvil CLI across diff
 - **Internet Connection**: For downloading dependencies and tools
 - **Terminal/Command Line**: Basic familiarity recommended
 
-### Platform-Specific Requirements
-
-#### macOS
-
-- **Homebrew**: Installed automatically by Anvil if missing
-- **Xcode Command Line Tools**: `xcode-select --install`
-- **Admin privileges**: For tool installations
-
-#### Linux
-
-- **Package manager**: apt, yum, or equivalent
-- **Build tools**: `build-essential` (Ubuntu) or `Development Tools` (CentOS)
-- **curl**: Usually pre-installed
-
-#### Windows
-
-- **Git Bash** or **WSL**: Recommended for best experience
-- **PowerShell**: Windows PowerShell 5.1 or PowerShell Core 6+
-
 ## Quick Installation
 
-### Method 1: Download and Build (Recommended)
+### Method 1: Direct Download (Recommended)
+
+Download the latest release binary from [GitHub Releases](https://github.com/rocajuanma/anvil/releases):
+
+```bash
+curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+```
+
+### Method 2: Download and Build
 
 ```bash
 # Clone the repository
@@ -52,167 +41,8 @@ cd anvil
 # Build the binary
 go build -o anvil main.go
 
-# Make it executable (Linux/macOS)
-chmod +x anvil
-
 # Move to PATH (optional)
 sudo mv anvil /usr/local/bin/
-```
-
-### Method 2: Go Install (if available)
-
-```bash
-go install github.com/rocajuanma/anvil@latest
-```
-
-### Method 3: Direct Binary Download
-
-Download the latest release binary from [GitHub Releases](https://github.com/rocajuanma/anvil/releases):
-
-```bash
-# macOS (Intel)
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil
-
-# macOS (Apple Silicon)
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-arm64 -o anvil
-
-# Linux (x86_64)
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-linux-amd64 -o anvil
-
-# Make executable and move to PATH
-chmod +x anvil
-sudo mv anvil /usr/local/bin/
-```
-
-## Platform-Specific Installation
-
-### macOS Installation
-
-#### Using Homebrew (Future)
-
-```bash
-# Once available in Homebrew
-brew tap rocajuanma/anvil
-brew install anvil
-```
-
-#### Manual Installation
-
-```bash
-# Install dependencies
-xcode-select --install
-
-# Clone and build
-git clone https://github.com/rocajuanma/anvil.git
-cd anvil
-go build -o anvil main.go
-
-# Install to system
-sudo mv anvil /usr/local/bin/
-sudo chmod +x /usr/local/bin/anvil
-
-# Verify installation
-anvil --version
-```
-
-#### macOS Security Notice
-
-If you get a security warning when running Anvil:
-
-1. Go to **System Preferences** → **Security & Privacy**
-2. Click **Allow Anyway** next to the Anvil security notice
-3. Or run: `sudo spctl --add /usr/local/bin/anvil`
-
-### Linux Installation
-
-#### Ubuntu/Debian
-
-```bash
-# Install dependencies
-sudo apt update
-sudo apt install -y git build-essential curl
-
-# Install Go (if not installed)
-wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
-export PATH=$PATH:/usr/local/go/bin
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-
-# Clone and build Anvil
-git clone https://github.com/rocajuanma/anvil.git
-cd anvil
-go build -o anvil main.go
-
-# Install system-wide
-sudo mv anvil /usr/local/bin/
-sudo chmod +x /usr/local/bin/anvil
-```
-
-#### CentOS/RHEL/Fedora
-
-```bash
-# Install dependencies
-sudo yum groupinstall -y "Development Tools"
-sudo yum install -y git curl
-
-# Or for newer versions
-sudo dnf groupinstall -y "Development Tools"
-sudo dnf install -y git curl
-
-# Install Go and Anvil (same as Ubuntu steps above)
-```
-
-#### Arch Linux
-
-```bash
-# Install dependencies
-sudo pacman -S git base-devel go
-
-# Clone and build
-git clone https://github.com/rocajuanma/anvil.git
-cd anvil
-go build -o anvil main.go
-sudo mv anvil /usr/local/bin/
-```
-
-### Windows Installation
-
-#### Using Git Bash (Recommended)
-
-```bash
-# Install Git for Windows first: https://git-scm.com/download/win
-# Open Git Bash
-
-# Install Go: https://golang.org/dl/
-# Clone and build
-git clone https://github.com/rocajuanma/anvil.git
-cd anvil
-go build -o anvil.exe main.go
-
-# Move to a directory in your PATH
-mv anvil.exe /c/Windows/System32/
-```
-
-#### Using PowerShell
-
-```powershell
-# Clone repository
-git clone https://github.com/rocajuanma/anvil.git
-cd anvil
-
-# Build
-go build -o anvil.exe main.go
-
-# Add to PATH (run as Administrator)
-$env:PATH += ";C:\path\to\anvil"
-[Environment]::SetEnvironmentVariable("PATH", $env:PATH, [EnvironmentVariableTarget]::Machine)
-```
-
-#### Using WSL (Windows Subsystem for Linux)
-
-```bash
-# Follow the Linux installation instructions inside WSL
-# WSL provides the best Anvil experience on Windows
 ```
 
 ## Development Installation
@@ -222,16 +52,11 @@ For contributing to Anvil or customizing functionality:
 ### Setup Development Environment
 
 ```bash
-# Clone with development setup
-git clone https://github.com/rocajuanma/anvil.git
-cd anvil
+# Build using Method #2
 
 # Install dependencies
 go mod download
 go mod tidy
-
-# Build development version
-go build -o anvil-dev main.go
 
 # Run tests
 go test ./...
@@ -241,32 +66,6 @@ go install golang.org/x/tools/cmd/goimports@latest
 go install golang.org/x/lint/golint@latest
 ```
 
-### Development Dependencies
-
-```bash
-# Code formatting
-go install golang.org/x/tools/cmd/goimports@latest
-
-# Linting
-go install golang.org/x/lint/golint@latest
-go install honnef.co/go/tools/cmd/staticcheck@latest
-
-# Testing
-go install gotest.tools/gotestsum@latest
-```
-
-### Building for Multiple Platforms
-
-```bash
-# Build for all platforms
-./scripts/build-all.sh
-
-# Or manually
-GOOS=darwin GOARCH=amd64 go build -o dist/anvil-darwin-amd64 main.go
-GOOS=darwin GOARCH=arm64 go build -o dist/anvil-darwin-arm64 main.go
-GOOS=linux GOARCH=amd64 go build -o dist/anvil-linux-amd64 main.go
-GOOS=windows GOARCH=amd64 go build -o dist/anvil-windows-amd64.exe main.go
-```
 
 ## Verification
 
@@ -276,17 +75,13 @@ After installation, verify Anvil is working correctly:
 
 ```bash
 # Check version and help
+anvil -v
 anvil --help
-
-# Verify main commands are available
-anvil init --help
-anvil install --help
-anvil config --help
-anvil config show --help
-anvil config sync --help
 
 # Test initialization (this should work without errors)
 anvil init
+
+anvil doctor
 ```
 
 ### Extended Verification
@@ -302,101 +97,14 @@ anvil install --list
 anvil install dev --dry-run
 
 # Check configuration
-cat ~/.anvil/settings.yaml
+anvil config show
 ```
 
 ### Health Check
 
 ```bash
-# Verify all components
-anvil init
-anvil install --list
-
-# Check configuration directory
-ls -la ~/.anvil/
-```
-
-## Troubleshooting
-
-### Common Installation Issues
-
-#### Go Not Found
-
-```bash
-# Install Go
-# macOS with Homebrew
-brew install go
-
-# Ubuntu/Debian
-sudo apt install golang-go
-
-# Or download from https://golang.org/dl/
-```
-
-#### Permission Denied
-
-```bash
-# Fix permissions
-chmod +x anvil
-sudo chown $(whoami) anvil
-
-# For system installation
-sudo mv anvil /usr/local/bin/
-```
-
-#### PATH Issues
-
-```bash
-# Add to PATH temporarily
-export PATH=$PATH:/path/to/anvil
-
-# Add to PATH permanently
-echo 'export PATH=$PATH:/path/to/anvil' >> ~/.bashrc
-source ~/.bashrc
-```
-
-#### Build Failures
-
-```bash
-# Update Go modules
-go mod download
-go mod tidy
-
-# Clean build cache
-go clean -cache
-go clean -modcache
-
-# Rebuild
-go build -o anvil main.go
-```
-
-### Platform-Specific Issues
-
-#### macOS: "Cannot be opened because it is from an unidentified developer"
-
-```bash
-# Allow the binary
-sudo spctl --add /path/to/anvil
-
-# Or use system preferences method described above
-```
-
-#### Linux: Missing Dependencies
-
-```bash
-# Ubuntu/Debian
-sudo apt install -y build-essential git curl
-
-# CentOS/RHEL
-sudo yum groupinstall -y "Development Tools"
-sudo yum install -y git curl
-```
-
-#### Windows: Execution Policy
-
-```powershell
-# Allow script execution
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+# Verify all components and runs checks
+anvil doctor
 ```
 
 ### Getting Help
@@ -469,8 +177,5 @@ anvil update
 anvil update --dry-run
 ```
 
-For versions prior to v1.2.0, use the curl installation method above to upgrade to the latest version.
+For versions prior to v1.2.0, use the curl installation(Method 1) in the first section to upgrade to the latest version.
 
----
-
-**Need help?** Check our [troubleshooting guide](GETTING_STARTED.md#troubleshooting) or [open an issue](https://github.com/rocajuanma/anvil/issues).
