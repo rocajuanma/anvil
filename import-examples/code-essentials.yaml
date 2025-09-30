@@ -2,6 +2,6 @@ groups:
   essentials:
     - git
     - vscode
-    - chrome
+    - google-chrome
     - iterm2
     - zsh

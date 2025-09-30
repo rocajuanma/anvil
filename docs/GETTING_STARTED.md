@@ -36,6 +36,13 @@ Anvil is a CLI automation tool that helps developers:
 
 ### Quick Install
 
+#### Latest version
+```bash
+curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+```
+
+#### From source
+
 ```bash
 # Clone and build
 git clone https://github.com/rocajuanma/anvil.git
@@ -65,22 +72,6 @@ This command will:
 - **⚙️ Generate default settings.yaml** - Configuration file
 - **🔍 Check your environment** - Provide recommendations
 
-**Expected output:**
-
-```
-=== Anvil Initialization ===
-
-🔧 Validating and installing required tools...
-✅ All required tools are available
-🔧 Creating necessary directories...
-✅ Directories created successfully
-🔧 Generating default settings.yaml...
-✅ Default settings.yaml generated
-🔧 Checking local environment configurations...
-✅ Environment configurations are properly set
-
-=== Initialization Complete! ===
-```
 
 ### 2. Verify Your Setup
 
@@ -98,41 +89,8 @@ This command will:
 - **🔗 Test connectivity** - External services (if configured)
 - **📊 Show live progress** - Indicators so you know exactly what's happening
 
-**What to expect:**
 
-```
-=== Running Anvil Health Check ===
-
-🔍 Validating environment, dependencies, configuration, and connectivity...
-
-🔧 Executing 12 health checks...
-[1/12] 8% - Running init-run
-   ✅ Anvil initialization complete
-[2/12] 17% - Running settings-file
-   ✅ Settings file is valid
-[3/12] 25% - Running directory-structure
-   ✅ Directory structure is correct
-[4/12] 33% - Running homebrew
-   ✅ Homebrew is installed and functional
-[5/12] 42% - Running required-tools
-   ✅ All required tools installed (2/2)
-...
-
-✅ All validation checks completed
-
-✅ Environment
-  ✅ Anvil initialization complete
-  ✅ Settings file is valid
-  ✅ Directory structure is correct
-
-✅ Dependencies
-  ✅ Homebrew is installed and functional
-  ✅ All required tools installed (2/2)
-
-✅ Overall status: Healthy
-```
-
-If you see any issues, the doctor will provide specific fix recommendations. Use `anvil doctor --verbose` for detailed troubleshooting information.
+If you see any issues, the doctor command will provide specific fix recommendations. Use `anvil doctor --verbose` for detailed troubleshooting information.
 
 ### 3. Explore Available Commands
 
@@ -156,10 +114,16 @@ anvil doctor --help
 
 ### 3. Check Your Configuration
 
-View the generated configuration:
+View the generated anvil configuration:
 
 ```bash
 cat ~/.anvil/settings.yaml
+```
+
+or simply run:
+
+```bash
+anvil config show
 ```
 
 You'll see something like:
@@ -223,6 +187,9 @@ Use dry-run to see what would be installed:
 anvil install dev --dry-run
 anvil install new-laptop --dry-run
 ```
+### Custom Group Creation
+
+You can create your own custom groups with any app you would like to organize. Group creation can be donee manually directly in the settings.yaml file or by importing existing gropups. See some examples in [import-examples](../import-examples/README.md)
 
 ### Installing Individual Applications
 
@@ -289,11 +256,11 @@ anvil init
 # Step 2: Verify setup is working
 anvil doctor
 
-# Step 3: Install development tools
-anvil install dev
+# Step 3: Import coding essentials group
+anvil import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/code-essentials.yaml
 
-# Step 4: Add essential applications
-anvil install new-laptop
+# Step 4: Install essentials group
+anvil install essentials
 
 # Step 5: Verify all installations
 anvil doctor dependencies
@@ -313,17 +280,17 @@ anvil init
 # Verify environment before proceeding
 anvil doctor
 
-# Install team-standard tools
-anvil install dev
+# Import backend team groups
+anvil import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/backend-developer.yaml
 
-# Add team communication tools
-anvil install slack
+# Install imported group: slack, postman, 1password
+anvil install productivity
+
+# Install backend tools
+anvil install backend-core
 
 # Final verification
 anvil doctor
-
-# Additional tools can be defined in custom groups
-# See configuration section for custom group setup
 ```
 
 ### Workflow 3: Selective Tool Installation
@@ -423,21 +390,7 @@ Anvil provides powerful configuration management to sync dotfiles and applicatio
 
 ### Setting Up Configuration Management
 
-1. **Create a GitHub repository** for your configurations:
-
-   ```bash
-   # Create a repository structure like:
-   your-config-repo/
-   ├── cursor/
-   │   ├── settings.json
-   │   └── keybindings.json
-   ├── vs-code/
-   │   ├── settings.json
-   │   └── extensions.json
-   └── zsh/
-       ├── .zshrc
-       └── .zsh_aliases
-   ```
+1. **Create a GitHub repository** for your configurations.
 
 2. **Configure Anvil** by editing `~/.anvil/settings.yaml`:
 
@@ -455,27 +408,18 @@ Anvil provides powerful configuration management to sync dotfiles and applicatio
    ```
 
 3. **Set up authentication** (choose one):
+Anvil uses your existing `.ssh` configs for authentication. The `init` command should configure everything in your `settings.yaml` automatically.
 
-   **SSH Keys (Recommended):**
-
-   ```bash
-   # Add your SSH key to GitHub
-   cat ~/.ssh/id_ed25519.pub | pbcopy
-   ```
-
-   **GitHub Token:**
-
-   ```bash
-   # Set environment variable
-   export GITHUB_TOKEN="your_token_here"
-   echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.zshrc
-   ```
+If you run into problems or need to update those values(because of an ssh key update, etc), just run `anvil doctor git-config --fix`
 
 ### Pulling Configurations
 
 Pull specific configuration directories from your repository:
 
 ```bash
+# Pull Anvil settings(if present in remote repo)
+anvil config pull
+
 # Pull Cursor editor configurations
 anvil config pull cursor
 
@@ -497,43 +441,6 @@ anvil config sync --dry-run   # Preview sync changes
 
 **Current Behavior**: Always fetches the latest changes from your repository and pulls files to `~/.anvil/temp/[directory]` for review before manual application.
 
-**Example Output**:
-
-```bash
-$ anvil config pull cursor
-
-🔧 Using branch: main
-
-=== Pulling Configuration Directory: cursor ===
-
-Repository: username/dotfiles
-Branch: main
-Target directory: cursor
-✅ GitHub token found in environment variable: GITHUB_TOKEN
-🔧 Validating repository access and branch configuration...
-✅ Repository and branch configuration validated
-🔧 Setting up local repository...
-✅ Local repository ready
-🔧 Pulling latest changes...
-✅ Repository updated
-🔧 Copying configuration directory...
-✅ Configuration directory copied to temp location
-
-=== Pull Complete! ===
-
-Configuration directory 'cursor' has been pulled from: username/dotfiles
-Files are available at: /Users/username/.anvil/temp/cursor
-
-Copied files:
-  • settings.json
-  • keybindings.json
-
-Next steps:
-  • Review the pulled configuration files in: /Users/username/.anvil/temp/cursor
-  • Apply/copy configurations to their destination as needed
-  • Use 'anvil config push' to upload any local changes
-```
-
 ### Configuration Push
 
 The `anvil config push` command allows you to upload your anvil configuration changes back to your repository:
@@ -549,7 +456,7 @@ anvil config push
 # 4. Push branch and provide PR link
 ```
 
-**Note**: Application-specific configuration push (e.g., `anvil config push cursor`) is still in development.
+**Note**: Application-specific configuration push (e.g., `anvil config push <app-name>`) is also fully supported.
 
 ### For More Details
 
@@ -590,6 +497,11 @@ anvil config push
    ```bash
    cp ~/.anvil/settings.yaml ~/.anvil/settings.yaml.backup
    ```
+  
+  or push to remote to have a backup in repo
+  ```bash
+  anvil config push
+  ```
 
 2. **Use descriptive names** for custom groups
 3. **Keep groups focused** - don't make them too large
@@ -710,18 +622,6 @@ sudo chown -R $(whoami) $(brew --prefix)/*
 - **Xcode tools missing**: Run `xcode-select --install`
 - **Homebrew PATH issues**: Add `/opt/homebrew/bin` to PATH
 
-#### Linux
-
-- **Missing build tools**: Install `build-essential` (Ubuntu) or `Development Tools` (CentOS)
-- **Permission issues**: Use `sudo` for system-wide installations
-- **Package manager**: Some tools may not be available via package managers
-
-#### Windows
-
-- **Use WSL or Git Bash** for best experience
-- **PowerShell execution policy**: Run `Set-ExecutionPolicy RemoteSigned`
-- **Limited tool support**: Not all tools available on Windows
-
 ### Getting Help
 
 If you encounter issues not covered here:
@@ -754,7 +654,6 @@ Now that you're familiar with the basics:
 ### Contribute
 
 - **[Contributing Guide](CONTRIBUTING.md)** - Help improve Anvil
-- **[Development Setup](.local/anvil-rules.md)** - Development guidelines
 - **Report bugs** or **request features** on GitHub
 
 ### Stay Updated
@@ -798,8 +697,4 @@ anvil --help                   # Get help
 
 - **Configuration**: `~/.anvil/`
 - **Documentation**: `docs/` directory
-- **Development**: `.local/anvil-rules.md`
 
----
-
-**Ready to start?** Run `anvil init` and begin automating your development workflow!

@@ -537,86 +537,7 @@ anvil config import ./downloads/team-groups.yaml
 - ✅ **Safe Sources**: Works with public URLs and local files
 - ✅ **Interactive**: Requires confirmation before making changes
 
-### Example 8: Team Onboarding Script (Legacy)
 
-**Scenario**: Simple script for onboarding new team members without group import.
-
-**File**: `simple-team-setup.sh`
-
-```bash
-#!/bin/bash
-echo "🚀 Welcome to the team! Setting up your development environment..."
-
-# Initialize Anvil
-echo "📋 Initializing Anvil..."
-anvil init
-
-# Install core development tools
-echo "🔧 Installing development tools..."
-anvil install dev
-
-# Install team communication tools
-echo "💬 Installing communication tools..."
-anvil install slack
-
-# Custom team tools
-echo "🛠️  Installing team-specific tools..."
-anvil install figma
-anvil install postman
-
-echo "✅ Setup complete! Welcome to the team!"
-```
-
-**Usage**:
-
-```bash
-chmod +x simple-team-setup.sh
-./simple-team-setup.sh
-```
-
-### Example 9: Team Configuration Sharing
-
-**Scenario**: Share a standard configuration across team members.
-
-**File**: `team-settings.yaml`
-
-```yaml
-version: 1.0.0
-directories:
-  config: ~/.anvil
-  cache: ~/.anvil/cache
-  data: ~/.anvil/data
-tools:
-  required_tools: [git, curl]
-  optional_tools: [brew, docker, kubectl]
-groups:
-  dev: [git, zsh, iterm2, vscode]
-  new-laptop: [slack, chrome, 1password]
-  frontend:
-    - git
-    - node
-    - yarn
-    - vscode
-    - chrome
-    - figma
-  backend:
-    - git
-    - docker
-    - vscode
-    - postgresql
-    - redis
-  qa:
-    - git
-    - chrome
-    - postman
-    - cypress
-git:
-  username: ""
-  email: ""
-environment:
-  EDITOR: "code"
-  TEAM_NAME: "awesome-team"
-```
 
 **Distribution**:
 
@@ -630,36 +551,6 @@ curl -o ~/.anvil/settings.yaml https://company.com/anvil/team-settings.yaml
 
 # Then install team tools
 anvil install frontend  # or backend, qa
-```
-
-### Example 10: Multi-Platform Team Setup
-
-**Scenario**: Team with members on different platforms.
-
-**macOS team member**:
-
-```bash
-anvil init
-anvil install dev
-anvil install --slack
-```
-
-**Linux team member**:
-
-```bash
-anvil init
-# May see platform warnings
-anvil install --git --vscode
-# Install additional tools manually or via platform package manager
-```
-
-**Windows team member**:
-
-```bash
-# Use WSL or Git Bash
-anvil init
-anvil install --git --vscode
-# Install Windows-specific alternatives manually
 ```
 
 ## Advanced Configurations
