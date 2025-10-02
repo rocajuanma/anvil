@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [1.5.0] - 2025-10-01
+
+### Added
 - **Enhanced Repository Badges** 🏆 - Enhance badge collection to README for better project visibility
   - Go Report Card badge for code quality assessment
 
