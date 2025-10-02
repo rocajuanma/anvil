@@ -7,9 +7,11 @@
 
 [![Go Version](https://img.shields.io/badge/go-1.17+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rocajuanma/anvil)](https://goreportcard.com/report/github.com/rocajuanma/anvil)
+[![GitHub Release](https://img.shields.io/github/v/release/rocajuanma/anvil?style=flat&label=Release)](https://github.com/rocajuanma/anvil/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-macOS%20only-blue.svg)](#installation)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Version](https://img.shields.io/github/v/release/rocajuanma/anvil?style=flat&label=Release)](docs/CHANGELOG.md)
+
 </div>
 
  Tired of wasting time setting up your Mac for development? Anvil automates tool installs, syncs configs, and keeps your environment consistent—no hassle, no manual steps, just one powerful CLI.
