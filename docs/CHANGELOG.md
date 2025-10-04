@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+## [1.5.1] - 2025-10-04
+
+### Added
+
+### Changed
+
+### Fixed
 - **Installation Script Directory Creation** 🔧 - Fixed installation failure on fresh macOS systems
   - Installation script now creates `/usr/local/bin` directory if it doesn't exist
   - Resolves "No such file or directory" error when installing on systems without Homebrew or other package managers
