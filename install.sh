@@ -116,6 +116,16 @@ install_anvil() {
     # Install binary
     print_status "Installing to $INSTALL_DIR/$BINARY_NAME"
     
+    # Create install directory if it doesn't exist
+    if [ ! -d "$INSTALL_DIR" ]; then
+        print_status "Creating directory $INSTALL_DIR"
+        if ! sudo mkdir -p "$INSTALL_DIR"; then
+            print_error "Failed to create directory $INSTALL_DIR"
+            rm -rf "$tmp_dir"
+            exit 1
+        fi
+    fi
+    
     if [ -w "$INSTALL_DIR" ]; then
         mv "$tmp_file" "$INSTALL_DIR/$BINARY_NAME"
     else
