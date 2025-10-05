@@ -30,8 +30,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -51,8 +50,8 @@ var ImportCmd = &cobra.Command{
 }
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 // ImportConfig represents the structure for importing configurations
@@ -134,7 +133,6 @@ func fetchFile(sourcePath string) (string, func(), error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Check if it's a URL
 	if isURL(sourcePath) {
 		return fetchFromURL(ctx, sourcePath)
 	}

@@ -28,14 +28,13 @@ import (
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/installer"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 // InstallCmd represents the install command
@@ -175,10 +174,8 @@ func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWo
 		toolConfigs = nil
 	}
 
-	// Create output handler
-	outputHandler := terminal.NewOutputHandler()
-
-	// Create concurrent installer
+	// Create nwe output handler to send into concurrent installer
+	outputHandler := palantir.NewDefaultOutputHandler()
 	concurrentInstaller := installer.NewConcurrentInstaller(maxWorkers, outputHandler, dryRun)
 
 	// Set pre-loaded configs if available
@@ -186,15 +183,12 @@ func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWo
 		concurrentInstaller.SetToolConfigs(toolConfigs)
 	}
 
-	// Set timeout if provided
 	if timeout > 0 {
 		concurrentInstaller.SetTimeout(timeout)
 	}
 
 	// Create context with potential cancellation
 	ctx := context.Background()
-
-	// Install tools concurrently
 	stats, err := concurrentInstaller.InstallTools(ctx, tools)
 
 	// Track successfully installed apps

@@ -31,7 +31,7 @@ import (
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
+	"github.com/rocajuanma/palantir"
 )
 
 // InstallationResult represents the result of a single tool installation
@@ -59,7 +59,7 @@ type InstallationStats struct {
 // ConcurrentInstaller handles concurrent tool installation
 type ConcurrentInstaller struct {
 	maxWorkers    int
-	output        interfaces.OutputHandler
+	output        palantir.OutputHandler
 	dryRun        bool
 	timeout       time.Duration
 	retryAttempts int
@@ -67,7 +67,7 @@ type ConcurrentInstaller struct {
 }
 
 // NewConcurrentInstaller creates a new concurrent installer
-func NewConcurrentInstaller(maxWorkers int, output interfaces.OutputHandler, dryRun bool) *ConcurrentInstaller {
+func NewConcurrentInstaller(maxWorkers int, output palantir.OutputHandler, dryRun bool) *ConcurrentInstaller {
 	if maxWorkers <= 0 {
 		maxWorkers = runtime.NumCPU()
 	}

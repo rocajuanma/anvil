@@ -25,14 +25,13 @@ import (
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
 	"github.com/rocajuanma/anvil/pkg/github"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 var PushCmd = &cobra.Command{
@@ -229,7 +228,7 @@ func prepareDiffPreview(githubClient *github.GitHubClient, appName, configPath s
 }
 
 // handleUserConfirmation handles user confirmation for the push operation
-func handleUserConfirmation(output interfaces.OutputHandler, appName string, githubClient *github.GitHubClient, ctx context.Context) bool {
+func handleUserConfirmation(output palantir.OutputHandler, appName string, githubClient *github.GitHubClient, ctx context.Context) bool {
 	output.PrintStage("Requesting user confirmation...")
 	if !output.Confirm(fmt.Sprintf("Do you want to push your %s configurations to the repository?", appName)) {
 		output.PrintInfo("Push cancelled by user")

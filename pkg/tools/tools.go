@@ -22,14 +22,13 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/brew"
 	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 // Tool represents a macOS system tool

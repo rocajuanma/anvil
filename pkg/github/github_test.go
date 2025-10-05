@@ -470,11 +470,12 @@ func TestCopyFileErrors(t *testing.T) {
 			dstFile: filepath.Join(tempDir, "dest.txt"),
 		},
 		{
-			name:    "destination directory doesn't exist",
+			name:    "destination directory is read-only",
 			srcFile: filepath.Join(tempDir, "source.txt"),
-			dstFile: filepath.Join(tempDir, "nonexistent", "dest.txt"),
+			dstFile: filepath.Join(tempDir, "readonly", "dest.txt"),
 			setupFunc: func() {
 				os.WriteFile(filepath.Join(tempDir, "source.txt"), []byte("content"), 0644)
+				os.MkdirAll(filepath.Join(tempDir, "readonly"), 0444) // read-only directory
 			},
 		},
 	}

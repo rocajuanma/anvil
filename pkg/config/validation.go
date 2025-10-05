@@ -23,12 +23,12 @@ import (
 	"strings"
 
 	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 // ConfigValidator implements the Validator interface for configuration validation

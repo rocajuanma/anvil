@@ -10,8 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Terminal Output Package Refactor** 🔄 - Replaced local terminal package with external Palantir dependency
+  - Removed `pkg/terminal` package (296 lines deleted) in favor of `github.com/rocajuanma/palantir v1.0.0`
+  - Updated all commands and packages to use `palantir.GetGlobalOutputHandler()`
+  - Improved consistency and maintainability of terminal output across the codebase
+  - **Breaking Change**: Applications directly using `pkg/terminal` will need to migrate to the `palantir` package
 
 ### Fixed
+- **Test Suite Compatibility** 🔧 - Fixed GitHub test case for updated `CopyFileSimple` behavior
+  - Updated test to align with new directory creation behavior in filesystem utilities
 
 ## [1.5.1] - 2025-10-04
 

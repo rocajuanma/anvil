@@ -29,10 +29,9 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
 	"github.com/rocajuanma/anvil/pkg/system"
-	"github.com/rocajuanma/anvil/pkg/terminal"
 	"github.com/rocajuanma/anvil/pkg/utils"
+	"github.com/rocajuanma/palantir"
 )
 
 // PushConfigResult represents the result of a config push operation
@@ -44,8 +43,8 @@ type PushConfigResult struct {
 }
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 // verifyRepositoryPrivacy ensures the repository is private before allowing push operations

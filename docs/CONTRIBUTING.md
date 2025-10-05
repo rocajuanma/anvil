@@ -344,11 +344,11 @@ func InstallTool(toolName string) error {
 
 ### Terminal Output Standards
 
-Use consistent terminal output patterns:
+Use consistent structure output patterns from https://github.com/rocajuanma/palantir
 
 ```go
 // Use terminal package functions
-output = terminal.GetGlobalOutputHandler()
+output = palantir.GetGlobalOutputHandler()
 output.PrintHeader("Major Section")
 output.PrintStage("Processing step...")
 output.PrintSuccess("Operation completed")
