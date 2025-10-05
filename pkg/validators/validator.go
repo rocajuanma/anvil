@@ -22,8 +22,7 @@ import (
 	"sort"
 
 	"github.com/rocajuanma/anvil/pkg/config"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 )
 
 // ValidationStatus represents the result status of a validation check
@@ -37,8 +36,8 @@ const (
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 func (vs ValidationStatus) String() string {
 	switch vs {
@@ -152,11 +151,11 @@ func (vr *ValidationRegistry) ListChecks() map[string][]string {
 // DoctorEngine manages the validation process
 type DoctorEngine struct {
 	registry *ValidationRegistry
-	output   interfaces.OutputHandler
+	output   palantir.OutputHandler
 }
 
 // NewDoctorEngine creates a new doctor engine
-func NewDoctorEngine(output interfaces.OutputHandler) *DoctorEngine {
+func NewDoctorEngine(output palantir.OutputHandler) *DoctorEngine {
 	engine := &DoctorEngine{
 		registry: NewValidationRegistry(),
 		output:   output,

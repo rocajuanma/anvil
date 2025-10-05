@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-// MockOutputHandler implements interfaces.OutputHandler for testing
+// MockOutputHandler implements palantir.OutputHandler for testing
 type MockOutputHandler struct {
 	messages []string
 }
@@ -67,6 +67,10 @@ func (m *MockOutputHandler) Confirm(message string) bool {
 
 func (m *MockOutputHandler) IsSupported() bool {
 	return true
+}
+
+func (m *MockOutputHandler) Disable() {
+	// Not implemented
 }
 
 // PrintWithLevel is removed from interface

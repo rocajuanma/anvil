@@ -24,14 +24,13 @@ import (
 
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 var CleanCmd = &cobra.Command{
@@ -139,7 +138,7 @@ func getItemsToClean(anvilDir string) ([]string, error) {
 }
 
 // displayCleanPreview shows what will be cleaned
-func displayCleanPreview(output interfaces.OutputHandler, itemsToClean []string) {
+func displayCleanPreview(output palantir.OutputHandler, itemsToClean []string) {
 	output.PrintInfo("Found %d root directories to clean:", len(itemsToClean))
 	output.PrintInfo("Directory structure to be cleaned:")
 
@@ -158,7 +157,7 @@ func displayCleanPreview(output interfaces.OutputHandler, itemsToClean []string)
 }
 
 // handleUserConfirmation handles user confirmation and returns true if should proceed
-func handleUserConfirmation(output interfaces.OutputHandler, force, dryRun bool, itemCount int) bool {
+func handleUserConfirmation(output palantir.OutputHandler, force, dryRun bool, itemCount int) bool {
 	// Confirm deletion unless force flag is used
 	if !force && !dryRun {
 		confirmMsg := fmt.Sprintf("Are you sure you want to clean the contents of these %d root directories? This action cannot be undone", itemCount)
@@ -171,7 +170,7 @@ func handleUserConfirmation(output interfaces.OutputHandler, force, dryRun bool,
 }
 
 // performCleaning executes the actual cleaning process
-func performCleaning(output interfaces.OutputHandler, itemsToClean []string) error {
+func performCleaning(output palantir.OutputHandler, itemsToClean []string) error {
 	output.PrintStage("Cleaning directories and files")
 
 	// Clean each item
@@ -195,7 +194,7 @@ func performCleaning(output interfaces.OutputHandler, itemsToClean []string) err
 }
 
 // displayCleanResult shows the result of cleaning a specific item
-func displayCleanResult(output interfaces.OutputHandler, itemPath string) {
+func displayCleanResult(output palantir.OutputHandler, itemPath string) {
 	itemName := filepath.Base(itemPath)
 	if info, err := os.Stat(itemPath); err == nil && info.IsDir() {
 		if itemName == "dotfiles" {

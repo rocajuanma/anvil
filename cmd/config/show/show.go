@@ -26,14 +26,13 @@ import (
 	"github.com/rocajuanma/anvil/pkg/config"
 	"github.com/rocajuanma/anvil/pkg/constants"
 	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/interfaces"
-	"github.com/rocajuanma/anvil/pkg/terminal"
+	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
 
 // getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() interfaces.OutputHandler {
-	return terminal.GetGlobalOutputHandler()
+func getOutputHandler() palantir.OutputHandler {
+	return palantir.GetGlobalOutputHandler()
 }
 
 var ShowCmd = &cobra.Command{
@@ -287,17 +286,17 @@ func printTreeNode(node *TreeNode, prefix string, isLast bool, isRoot bool) {
 		// Color the output based on file type
 		var coloredName string
 		if node.IsDir {
-			coloredName = fmt.Sprintf("%s%s%s%s", terminal.ColorBold, terminal.ColorBlue, node.Name, terminal.ColorReset)
+			coloredName = fmt.Sprintf("%s%s%s%s", palantir.ColorBold, palantir.ColorBlue, node.Name, palantir.ColorReset)
 		} else {
 			// Color files based on extension
 			ext := strings.ToLower(filepath.Ext(node.Name))
 			switch ext {
 			case ".json", ".yaml", ".yml", ".toml":
-				coloredName = fmt.Sprintf("%s%s%s", terminal.ColorGreen, node.Name, terminal.ColorReset)
+				coloredName = fmt.Sprintf("%s%s%s", palantir.ColorGreen, node.Name, palantir.ColorReset)
 			case ".md", ".txt", ".log":
-				coloredName = fmt.Sprintf("%s%s%s", terminal.ColorCyan, node.Name, terminal.ColorReset)
+				coloredName = fmt.Sprintf("%s%s%s", palantir.ColorCyan, node.Name, palantir.ColorReset)
 			case ".sh", ".zsh", ".bash":
-				coloredName = fmt.Sprintf("%s%s%s", terminal.ColorYellow, node.Name, terminal.ColorReset)
+				coloredName = fmt.Sprintf("%s%s%s", palantir.ColorYellow, node.Name, palantir.ColorReset)
 			default:
 				coloredName = node.Name
 			}

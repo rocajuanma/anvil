@@ -86,31 +86,31 @@ func displaySuccessMessage(appName string, result *github.PushConfigResult, diff
 
 // showDiffOutput displays diff information using Git's native output
 func showDiffOutput(diffSummary *github.DiffSummary) {
-	output := getOutputHandler()
+	o := getOutputHandler()
 	if diffSummary.TotalFiles == 0 {
-		output.PrintInfo("No changes detected")
+		o.PrintInfo("No changes detected")
 		return
 	}
 
-	output.PrintHeader("\n📋 Changes to be pushed:")
+	o.PrintHeader("\n📋 Changes to be pushed:")
 
 	// Show Git's native stat output directly
 	if diffSummary.GitStatOutput != "" {
-		output.PrintInfo("")
-		output.PrintInfo(diffSummary.GitStatOutput)
+		o.PrintInfo("")
+		o.PrintInfo(diffSummary.GitStatOutput)
 	}
 
 	// For single small files, show full diff
 	if diffSummary.TotalFiles == 1 && diffSummary.FullDiff != "" {
 		lines := strings.Split(diffSummary.FullDiff, "\n")
 		if len(lines) <= 50 {
-			output.PrintInfo("\n📄 Full diff:\n")
-			output.PrintInfo(diffSummary.FullDiff)
+			o.PrintInfo("\n📄 Full diff:\n")
+			o.PrintInfo(diffSummary.FullDiff)
 		} else {
-			output.PrintInfo("\n📄 Diff preview (first 50 lines):\n")
-			output.PrintInfo(strings.Join(lines[:50], "\n"))
-			output.PrintInfo("\n... [diff truncated] ...")
+			o.PrintInfo("\n📄 Diff preview (first 50 lines):\n")
+			o.PrintInfo(strings.Join(lines[:50], "\n"))
+			o.PrintInfo("\n... [diff truncated] ...")
 		}
 	}
-	output.PrintInfo("")
+	o.PrintInfo("")
 }

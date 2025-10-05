@@ -53,20 +53,6 @@ type Package interface {
 	IsInstalled() bool
 }
 
-// OutputHandler defines the interface for terminal output operations
-type OutputHandler interface {
-	PrintHeader(message string)
-	PrintStage(message string)
-	PrintSuccess(message string)
-	PrintError(format string, args ...interface{})
-	PrintWarning(format string, args ...interface{})
-	PrintInfo(format string, args ...interface{})
-	PrintAlreadyAvailable(format string, args ...interface{})
-	PrintProgress(current, total int, message string)
-	Confirm(message string) bool
-	IsSupported() bool
-}
-
 // ConfigManager defines the interface for configuration management
 type ConfigManager interface {
 	Load() error
@@ -143,32 +129,4 @@ type CacheManager interface {
 	Delete(key string)
 	Clear()
 	Size() int
-}
-
-// FileSystemManager defines the interface for file system operations
-type FileSystemManager interface {
-	CreateDirectory(path string) error
-	ReadFile(path string) ([]byte, error)
-	WriteFile(path string, data []byte) error
-	FileExists(path string) bool
-	DirectoryExists(path string) bool
-	DeleteFile(path string) error
-	DeleteDirectory(path string) error
-}
-
-// PlatformDetector defines the interface for platform detection
-type PlatformDetector interface {
-	GetOS() string
-	GetArch() string
-	IsSupported() bool
-	GetPackageManager() PackageManager
-}
-
-// ServiceManager defines the interface for service management
-type ServiceManager interface {
-	Start(service string) error
-	Stop(service string) error
-	Restart(service string) error
-	Status(service string) (string, error)
-	IsRunning(service string) bool
 }
