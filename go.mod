@@ -1,6 +1,6 @@
 module github.com/rocajuanma/anvil
 
-go 1.25.1
+go 1.23.6
 
 require (
 	github.com/rocajuanma/palantir v1.1.0
