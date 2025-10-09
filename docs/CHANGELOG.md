@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Package Architecture Refactor** 🏗️ - Migrated codebase from `pkg/` to `internal/` package structure
+  - **Breaking Change**: Improved encapsulation boundaries using Go's internal package visibility
+  - Enhanced maintainability and refactoring safety for internal components
+
 - **Terminal Output Package Refactor** 🔄 - Replaced local terminal package with external Palantir dependency
   - Removed `internal/terminal` package (296 lines deleted) in favor of `github.com/rocajuanma/palantir v1.0.0`
   - Updated all commands and packages to use `palantir.GetGlobalOutputHandler()`
