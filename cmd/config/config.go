@@ -22,7 +22,7 @@ import (
 	"github.com/rocajuanma/anvil/cmd/config/push"
 	"github.com/rocajuanma/anvil/cmd/config/show"
 	"github.com/rocajuanma/anvil/cmd/config/sync"
-	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/spf13/cobra"
 )
 

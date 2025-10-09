@@ -25,7 +25,7 @@ import (
 	"github.com/rocajuanma/anvil/cmd/initcmd"
 	"github.com/rocajuanma/anvil/cmd/install"
 	"github.com/rocajuanma/anvil/cmd/update"
-	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/spf13/cobra"
 )
 

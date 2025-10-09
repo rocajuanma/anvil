@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rocajuanma/anvil/pkg/interfaces"
+	"github.com/rocajuanma/anvil/internal/interfaces"
 	"github.com/rocajuanma/palantir"
 )
 

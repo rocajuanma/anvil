@@ -101,7 +101,7 @@ anvil/
 │   │   ├── pull/          # Pull subcommand (config pull)
 │   │   └── push/          # Push subcommand (config push)
 │   └── root.go            # Root command configuration
-├── pkg/                   # Reusable packages
+├── internal/                   # Reusable packages
 │   ├── brew/              # Homebrew integration
 │   ├── config/            # Configuration management
 │   ├── constants/         # Application constants
@@ -242,7 +242,7 @@ Follow our development standards for:
 - **Error handling patterns** - Use `errors.AnvilError` for structured error handling with operation context and error types
 - **Terminal output formatting** - Use `terminal` package for consistent output formatting
 - **Configuration management** - Use cached configuration access for optimal performance
-- **Constants usage** - Use constants from `pkg/constants/` instead of magic strings
+- **Constants usage** - Use constants from `internal/constants/` instead of magic strings
 - **Documentation standards** - Update relevant documentation for any changes
 
 ### 3. Test Changes
@@ -255,7 +255,7 @@ go test ./...
 go test -cover ./...
 
 # Test specific package
-go test ./pkg/config/
+go test ./internal/config/
 
 # Manual testing
 go build -o anvil-dev main.go
@@ -306,8 +306,8 @@ import (
     "gopkg.in/yaml.v2"
 
     // Local packages
-    "github.com/rocajuanma/anvil/pkg/config"
-    "github.com/rocajuanma/anvil/pkg/terminal"
+    "github.com/rocajuanma/anvil/internal/config"
+    "github.com/rocajuanma/anvil/internal/terminal"
 )
 ```
 
@@ -469,7 +469,7 @@ go test -v ./...
 go test -cover ./...
 
 # Run specific test
-go test -run TestGetDefaultConfig ./pkg/config/
+go test -run TestGetDefaultConfig ./internal/config/
 
 # Run tests and generate coverage report
 go test -coverprofile=coverage.out ./...
@@ -500,7 +500,7 @@ When adding features that affect users:
 - `docs/GETTING_STARTED.md` - For user-facing changes
 - `docs/command-readme.md` - For command-specific features
 - `docs/EXAMPLES.md` - Add usage examples
-- Help text in `pkg/constants/constants.go`
+- Help text in `internal/constants/constants.go`
 
 ## Submitting Changes
 

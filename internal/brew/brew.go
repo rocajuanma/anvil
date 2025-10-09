@@ -22,8 +22,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/system"
 	"github.com/rocajuanma/palantir"
 )
 

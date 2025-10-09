@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/internal/constants"
 )
 
 // CopyOptions holds options for file and directory copying operations

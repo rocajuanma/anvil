@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rocajuanma/anvil/pkg/config"
+	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/palantir"
 )
 
