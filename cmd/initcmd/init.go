@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rocajuanma/anvil/pkg/config"
-	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/tools"
+	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/tools"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )

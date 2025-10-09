@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rocajuanma/anvil/pkg/config"
-	"github.com/rocajuanma/anvil/pkg/github"
+	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/rocajuanma/anvil/internal/github"
 )
 
 // showNewAppInfo displays information about new app additions
