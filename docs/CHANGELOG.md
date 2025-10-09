@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [2.0.0] - 2025-10-08
+
+### Added
+
+### Changed
 - **Package Architecture Refactor** 🏗️ - Migrated codebase from `pkg/` to `internal/` package structure
   - **Breaking Change**: Improved encapsulation boundaries using Go's internal package visibility
   - Enhanced maintainability and refactoring safety for internal components
