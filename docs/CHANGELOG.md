@@ -11,10 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Terminal Output Package Refactor** 🔄 - Replaced local terminal package with external Palantir dependency
-  - Removed `pkg/terminal` package (296 lines deleted) in favor of `github.com/rocajuanma/palantir v1.0.0`
+  - Removed `internal/terminal` package (296 lines deleted) in favor of `github.com/rocajuanma/palantir v1.0.0`
   - Updated all commands and packages to use `palantir.GetGlobalOutputHandler()`
   - Improved consistency and maintainability of terminal output across the codebase
-  - **Breaking Change**: Applications directly using `pkg/terminal` will need to migrate to the `palantir` package
+  - **Breaking Change**: Applications directly using `internal/terminal` will need to migrate to the `palantir` package
 
 ### Fixed
 - **Test Suite Compatibility** 🔧 - Fixed GitHub test case for updated `CopyFileSimple` behavior
@@ -236,7 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Branch validation with detailed error messages listing available branches
   - Temporary file storage at `~/.anvil/temp/[directory]` for review before manual application
   - Enhanced error handling with step-by-step troubleshooting guidance
-- **GitHub Integration Package** - New `pkg/github` package for repository operations
+- **GitHub Integration Package** - New `internal/github` package for repository operations
   - Repository cloning and pulling with branch support
   - Multiple authentication methods (SSH keys, GitHub tokens, public access)
   - Branch existence validation and available branch listing

@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rocajuanma/anvil/pkg/brew"
-	"github.com/rocajuanma/anvil/pkg/config"
-	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/internal/brew"
+	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/rocajuanma/anvil/internal/system"
 )
 
 // BrewValidator checks if Homebrew is installed and functional

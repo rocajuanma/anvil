@@ -27,10 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/errors"
-	"github.com/rocajuanma/anvil/pkg/system"
-	"github.com/rocajuanma/anvil/pkg/utils"
+	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/system"
+	"github.com/rocajuanma/anvil/internal/utils"
 	"github.com/rocajuanma/palantir"
 )
 

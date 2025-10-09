@@ -22,9 +22,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rocajuanma/anvil/pkg/config"
-	"github.com/rocajuanma/anvil/pkg/constants"
-	"github.com/rocajuanma/anvil/pkg/utils"
+	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/utils"
 )
 
 // InitRunValidator checks if anvil init has been run successfully

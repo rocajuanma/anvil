@@ -23,7 +23,7 @@ package interfaces
 import (
 	"context"
 
-	"github.com/rocajuanma/anvil/pkg/system"
+	"github.com/rocajuanma/anvil/internal/system"
 )
 
 // CommandExecutor defines the interface for executing system commands

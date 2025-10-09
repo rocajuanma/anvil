@@ -20,7 +20,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/rocajuanma/anvil/pkg/constants"
+	"github.com/rocajuanma/anvil/internal/constants"
 )
 
 // setupTestConfig creates a test configuration with temporary directories
