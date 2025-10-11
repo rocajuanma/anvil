@@ -24,6 +24,7 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
@@ -111,10 +112,14 @@ func getAnvilDirectoryPath() (string, error) {
 func getItemsToClean(anvilDir string) ([]string, error) {
 	output := getOutputHandler()
 	output.PrintStage("Scanning .anvil directory for content to clean")
+	
+	spinner := charm.NewCircleSpinner("Scanning .anvil directory")
+	spinner.Start()
 
 	// Get all items in .anvil directory
 	items, err := os.ReadDir(anvilDir)
 	if err != nil {
+		spinner.Error("Failed to scan directory")
 		return nil, &errors.AnvilError{
 			Op:      "clean",
 			Command: "clean",
@@ -134,6 +139,7 @@ func getItemsToClean(anvilDir string) ([]string, error) {
 		itemsToClean = append(itemsToClean, itemPath)
 	}
 
+	spinner.Success(fmt.Sprintf("Found %d items to clean", len(itemsToClean)))
 	return itemsToClean, nil
 }
 
@@ -172,6 +178,9 @@ func handleUserConfirmation(output palantir.OutputHandler, force, dryRun bool, i
 // performCleaning executes the actual cleaning process
 func performCleaning(output palantir.OutputHandler, itemsToClean []string) error {
 	output.PrintStage("Cleaning directories and files")
+	
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Cleaning %d items", len(itemsToClean)))
+	spinner.Start()
 
 	// Clean each item
 	cleanedCount := 0
@@ -182,6 +191,14 @@ func performCleaning(output palantir.OutputHandler, itemsToClean []string) error
 		}
 		cleanedCount++
 		displayCleanResult(output, itemPath)
+	}
+
+	if cleanedCount == len(itemsToClean) {
+		spinner.Success(fmt.Sprintf("Successfully cleaned %d items", cleanedCount))
+	} else if cleanedCount > 0 {
+		spinner.Warning(fmt.Sprintf("Cleaned %d/%d items (some failed)", cleanedCount, len(itemsToClean)))
+	} else {
+		spinner.Error("Failed to clean items")
 	}
 
 	output.PrintInfo("Successfully cleaned contents of %d/%d root directories", cleanedCount, len(itemsToClean))
