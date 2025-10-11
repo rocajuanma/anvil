@@ -26,16 +26,9 @@ import (
 	"github.com/rocajuanma/anvil/cmd/install"
 	"github.com/rocajuanma/anvil/cmd/update"
 	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/version"
 	"github.com/spf13/cobra"
 )
-
-// appVersion holds the version set at build time
-var appVersion = "dev"
-
-// SetVersion sets the application version
-func SetVersion(v string) {
-	appVersion = v
-}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -44,8 +37,8 @@ var rootCmd = &cobra.Command{
 	Long:  fmt.Sprintf("%s\n\n%s", constants.AnvilLogo, constants.ANVIL_LONG_DESCRIPTION),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check if version flag was used
-		if version, _ := cmd.Flags().GetBool("version"); version {
-			fmt.Printf("Anvil %s\n", appVersion)
+		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
+			fmt.Printf("Anvil %s\n", version.GetVersion())
 			return
 		}
 

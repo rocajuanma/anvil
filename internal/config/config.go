@@ -26,6 +26,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/system"
 	"github.com/rocajuanma/anvil/internal/utils"
+	"github.com/rocajuanma/anvil/internal/version"
 	"gopkg.in/yaml.v2"
 )
 
@@ -205,10 +206,20 @@ func invalidateCache() {
 
 // LoadSampleConfig loads the sample configuration from the assets file
 func LoadSampleConfig() (*AnvilConfig, error) {
+	return LoadSampleConfigWithVersion("")
+}
+
+// LoadSampleConfigWithVersion loads the sample configuration with a specific version
+func LoadSampleConfigWithVersion(version string) (*AnvilConfig, error) {
 	samplePath := getSampleConfigPath()
 	sampleData, err := os.ReadFile(samplePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read sample config file: %w", err)
+	}
+
+	// Replace version placeholder if version is provided
+	if version != "" {
+		sampleData = []byte(strings.ReplaceAll(string(sampleData), "{{APP_VERSION}}", version))
 	}
 
 	var config AnvilConfig
@@ -245,7 +256,22 @@ func getSampleConfigPath() string {
 
 	// Get the directory containing the executable
 	execDir := filepath.Dir(execPath)
-	return filepath.Join(execDir, "assets", "settings-sample.yaml")
+
+	// Check if assets directory exists in the executable directory
+	assetsPath := filepath.Join(execDir, "assets", "settings-sample.yaml")
+	if _, err := os.Stat(assetsPath); err == nil {
+		return assetsPath
+	}
+
+	// If not found, try current working directory (for go run scenarios)
+	wd, _ := os.Getwd()
+	wdAssetsPath := filepath.Join(wd, "assets", "settings-sample.yaml")
+	if _, err := os.Stat(wdAssetsPath); err == nil {
+		return wdAssetsPath
+	}
+
+	// Final fallback to executable directory
+	return assetsPath
 }
 
 // CreateDirectories creates necessary directories for anvil
@@ -262,6 +288,11 @@ func CreateDirectories() error {
 
 // GenerateDefaultSettings generates the default settings.yaml file
 func GenerateDefaultSettings() error {
+	return GenerateDefaultSettingsWithVersion(version.GetVersion())
+}
+
+// GenerateDefaultSettingsWithVersion generates the default settings.yaml file with a specific version
+func GenerateDefaultSettingsWithVersion(version string) error {
 	configPath := GetConfigPath()
 
 	// Check if settings.yaml already exists
@@ -269,8 +300,8 @@ func GenerateDefaultSettings() error {
 		return nil // File already exists, don't overwrite
 	}
 
-	// Load the sample configuration
-	config, err := LoadSampleConfig()
+	// Load the sample configuration with version
+	config, err := LoadSampleConfigWithVersion(version)
 	if err != nil {
 		return fmt.Errorf("failed to load sample config: %w", err)
 	}
