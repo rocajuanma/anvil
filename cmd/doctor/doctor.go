@@ -24,6 +24,7 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/validators"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
@@ -147,9 +148,19 @@ func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose b
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	o.PrintStage(fmt.Sprintf("Executing %s check...", checkName))
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %s check", checkName))
+	spinner.Start()
 
 	result := engine.RunCheckWithProgress(ctx, checkName, verbose)
+
+	if result.Status == validators.PASS {
+		spinner.Success(fmt.Sprintf("%s check passed", checkName))
+	} else if result.Status == validators.WARN {
+		spinner.Warning(fmt.Sprintf("%s check completed with warnings", checkName))
+	} else {
+		spinner.Error(fmt.Sprintf("%s check failed", checkName))
+	}
+
 	displayResults([]*validators.ValidationResult{result}, verbose)
 
 	if result.Status == validators.FAIL {
@@ -174,9 +185,31 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 		return errors.NewValidationError(constants.OpDoctor, category, fmt.Errorf("category not found"))
 	}
 
-	o.PrintStage(fmt.Sprintf("Executing %d checks in %s category...", len(categoryValidators), category))
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %d checks in %s category", len(categoryValidators), category))
+	spinner.Start()
 
 	results := engine.RunCategoryWithProgress(ctx, category, verbose)
+
+	// Count status
+	passed, warned, failed := 0, 0, 0
+	for _, result := range results {
+		if result.Status == validators.PASS {
+			passed++
+		} else if result.Status == validators.WARN {
+			warned++
+		} else if result.Status == validators.FAIL {
+			failed++
+		}
+	}
+
+	if failed > 0 {
+		spinner.Error(fmt.Sprintf("%s checks completed: %d failed", category, failed))
+	} else if warned > 0 {
+		spinner.Warning(fmt.Sprintf("%s checks completed: %d warnings", category, warned))
+	} else {
+		spinner.Success(fmt.Sprintf("All %s checks passed", category))
+	}
+
 	displayResults(results, verbose)
 	printSummary(results)
 
@@ -203,9 +236,31 @@ func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
 	allValidators := engine.GetAllValidators()
 	totalChecks := len(allValidators)
 
-	o.PrintStage(fmt.Sprintf("Executing %d health checks...", totalChecks))
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %d health checks", totalChecks))
+	spinner.Start()
 
 	results := engine.RunAllWithProgress(ctx, verbose)
+
+	// Count status
+	passed, warned, failed := 0, 0, 0
+	for _, result := range results {
+		if result.Status == validators.PASS {
+			passed++
+		} else if result.Status == validators.WARN {
+			warned++
+		} else if result.Status == validators.FAIL {
+			failed++
+		}
+	}
+
+	if failed > 0 {
+		spinner.Error(fmt.Sprintf("Health check completed: %d passed, %d failed", passed, failed))
+	} else if warned > 0 {
+		spinner.Warning(fmt.Sprintf("Health check completed: %d passed, %d warnings", passed, warned))
+	} else {
+		spinner.Success(fmt.Sprintf("All %d health checks passed!", totalChecks))
+	}
+
 	displayResults(results, verbose)
 	printSummary(results)
 
@@ -242,17 +297,21 @@ func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
 	}
 
 	// Attempt fix
-	o.PrintInfo("Attempting to fix %s...", checkName)
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Attempting to fix %s", checkName))
+	spinner.Start()
 	if err := engine.FixCheck(ctx, checkName); err != nil {
+		spinner.Error("Fix failed")
 		o.PrintError("Fix failed: %v", err)
 		return err
 	}
 
-	o.PrintSuccess("Fix completed!")
+	spinner.Success("Fix completed!")
 
 	// Verify fix
-	o.PrintInfo("Verifying fix...")
+	spinner = charm.NewLineSpinner("Verifying fix")
+	spinner.Start()
 	newResult := engine.RunCheck(ctx, checkName)
+	spinner.Success("Verification complete")
 	displayResults([]*validators.ValidationResult{newResult}, false)
 
 	if newResult.Status == validators.PASS {
