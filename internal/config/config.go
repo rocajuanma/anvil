@@ -38,21 +38,8 @@ var (
 
 var builtInGroups = []string{"dev", "essentials"}
 
-// ToolInstallConfig represents configuration for tool-specific installation
-type ToolInstallConfig struct {
-	PostInstallScript string            `yaml:"post_install_script,omitempty"`
-	EnvironmentSetup  map[string]string `yaml:"environment_setup,omitempty"`
-	ConfigCheck       bool              `yaml:"config_check,omitempty"`
-	Dependencies      []string          `yaml:"dependencies,omitempty"`
-}
-
 // AnvilGroups represents grouped tool configurations
 type AnvilGroups map[string][]string
-
-// AnvilToolConfigs represents tool-specific configurations
-type AnvilToolConfigs struct {
-	Tools map[string]ToolInstallConfig `yaml:"tools"`
-}
 
 // GitConfig represents git configuration
 type GitConfig struct {
@@ -72,19 +59,17 @@ type GitHubConfig struct {
 
 // AnvilConfig represents the main anvil configuration
 type AnvilConfig struct {
-	Version     string            `yaml:"version"`
-	Tools       AnvilTools        `yaml:"tools"`
-	Groups      AnvilGroups       `yaml:"groups"`
-	Configs     map[string]string `yaml:"configs"` // Maps app names to their local config paths
-	Git         GitConfig         `yaml:"git"`
-	GitHub      GitHubConfig      `yaml:"github"`
-	ToolConfigs AnvilToolConfigs  `yaml:"tool_configs,omitempty"`
+	Version string            `yaml:"version"`
+	Tools   AnvilTools        `yaml:"tools"`
+	Groups  AnvilGroups       `yaml:"groups"`
+	Configs map[string]string `yaml:"configs"` // Maps app names to their local config paths
+	Git     GitConfig         `yaml:"git"`
+	GitHub  GitHubConfig      `yaml:"github"`
 }
 
 // AnvilTools represents tool configurations
 type AnvilTools struct {
 	RequiredTools []string `yaml:"required_tools"`
-	OptionalTools []string `yaml:"optional_tools"`
 	InstalledApps []string `yaml:"installed_apps"` // Tracks individually installed applications
 }
 
@@ -141,10 +126,6 @@ func ensureMap(m interface{}) {
 	case *map[string]string:
 		if *v == nil {
 			*v = make(map[string]string)
-		}
-	case *map[string]ToolInstallConfig:
-		if *v == nil {
-			*v = make(map[string]ToolInstallConfig)
 		}
 	}
 }
@@ -498,56 +479,6 @@ func GetConfigDirectory() string {
 	return filepath.Join(getHomeDir(), constants.AnvilConfigDir)
 }
 
-// GetToolConfig returns the configuration for a specific tool
-func GetToolConfig(toolName string) (*ToolInstallConfig, error) {
-	var result *ToolInstallConfig
-	err := withConfig(func(config *AnvilConfig) error {
-		if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
-			result = &toolConfig
-		} else {
-			result = getDefaultToolConfig()
-		}
-		return nil
-	})
-	return result, err
-}
-
-// GetToolConfigs returns configurations for multiple tools in a single operation
-func GetToolConfigs(toolNames []string) (map[string]*ToolInstallConfig, error) {
-	var configs map[string]*ToolInstallConfig
-	err := withConfig(func(config *AnvilConfig) error {
-		configs = make(map[string]*ToolInstallConfig, len(toolNames))
-		for _, toolName := range toolNames {
-			if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
-				configs[toolName] = &toolConfig
-			} else {
-				configs[toolName] = getDefaultToolConfig()
-			}
-		}
-		return nil
-	})
-	return configs, err
-}
-
-// getDefaultToolConfig returns a default tool configuration
-func getDefaultToolConfig() *ToolInstallConfig {
-	return &ToolInstallConfig{
-		PostInstallScript: "",
-		EnvironmentSetup:  make(map[string]string),
-		ConfigCheck:       false,
-		Dependencies:      []string{},
-	}
-}
-
-// SetToolConfig sets the configuration for a specific tool
-func SetToolConfig(toolName string, toolConfig ToolInstallConfig) error {
-	return withConfigAndSave(func(config *AnvilConfig) error {
-		ensureMap(&config.ToolConfigs.Tools)
-		config.ToolConfigs.Tools[toolName] = toolConfig
-		return nil
-	})
-}
-
 // AddInstalledApp adds an app to the installed apps list if it's not already there
 func AddInstalledApp(appName string) error {
 	return withConfigAndSave(func(config *AnvilConfig) error {
@@ -576,7 +507,7 @@ func IsAppTracked(appName string) (bool, error) {
 	var found bool
 	err := withConfig(func(config *AnvilConfig) error {
 		// Check in all tool lists
-		for _, tool := range append(append(config.Tools.RequiredTools, config.Tools.OptionalTools...), config.Tools.InstalledApps...) {
+		for _, tool := range append(config.Tools.RequiredTools, config.Tools.InstalledApps...) {
 			if tool == appName {
 				found = true
 				return nil

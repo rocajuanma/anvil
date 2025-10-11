@@ -134,7 +134,6 @@ directories:
   config: /Users/username/.anvil
 tools:
   required_tools: [git, curl]
-  optional_tools: [brew, docker, kubectl]
 groups:
   dev: [git, zsh, iterm2, vscode]
   essentials: [slack, chrome, 1password]

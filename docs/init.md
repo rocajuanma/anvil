@@ -60,7 +60,6 @@ Generates a default `settings.yaml` configuration file with:
 ```yaml
 tools:
   required_tools: [git, curl, brew]
-  optional_tools: [docker, kubectl]
   installed_apps: [] # Auto-populated by anvil install [app-name]
 
 groups:

@@ -167,21 +167,9 @@ func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
 func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWorkers int, timeout time.Duration) error {
 	o := getOutputHandler()
 
-	// Batch-load all tool configurations at once
-	toolConfigs, err := config.GetToolConfigs(tools)
-	if err != nil {
-		o.PrintWarning("Failed to batch-load tool configs for concurrent installation, will load individually: %v", err)
-		toolConfigs = nil
-	}
-
-	// Create nwe output handler to send into concurrent installer
+	// Create new output handler to send into concurrent installer
 	outputHandler := palantir.NewDefaultOutputHandler()
 	concurrentInstaller := installer.NewConcurrentInstaller(maxWorkers, outputHandler, dryRun)
-
-	// Set pre-loaded configs if available
-	if toolConfigs != nil {
-		concurrentInstaller.SetToolConfigs(toolConfigs)
-	}
 
 	if timeout > 0 {
 		concurrentInstaller.SetTimeout(timeout)
@@ -204,21 +192,14 @@ func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWo
 func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	o := getOutputHandler()
 
-	// Batch-load all tool configurations at once to avoid repeated config loading
-	toolConfigs, err := config.GetToolConfigs(tools)
-	if err != nil {
-		o.PrintWarning("Failed to batch-load tool configs, will load individually: %v", err)
-		toolConfigs = nil // Fall back to individual loading
-	}
-
 	successCount := 0
 	var installErrors []string
 
 	for i, tool := range tools {
 		o.PrintProgress(i+1, len(tools), fmt.Sprintf("Processing %s", tool))
 
-		// Use unified installation logic with pre-loaded config
-		_, err := installSingleToolUnifiedWithConfig(tool, dryRun, toolConfigs)
+		// Use unified installation logic
+		_, err := installSingleToolUnified(tool, dryRun)
 		if err != nil {
 			errorMsg := fmt.Sprintf("%s: %v", tool, err)
 			installErrors = append(installErrors, errorMsg)
@@ -272,38 +253,24 @@ func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error
 
 // installSingleTool installs a single tool, handling special cases dynamically
 func installSingleTool(toolName string) error {
-	return installSingleToolWithConfig(toolName, nil)
-}
-
-// installSingleToolWithConfig installs a tool with pre-loaded configuration
-func installSingleToolWithConfig(toolName string, toolConfig *config.ToolInstallConfig) error {
 	o := getOutputHandler()
-
-	// Load config if not provided
-	if toolConfig == nil {
-		var err error
-		toolConfig, err = config.GetToolConfig(toolName)
-		if err != nil {
-			o.PrintWarning("Failed to get tool config for %s: %v", toolName, err)
-			toolConfig = &config.ToolInstallConfig{} // Use empty config
-		}
-	}
 
 	// Install the tool via brew (availability already checked by caller)
 	if err := brew.InstallPackageDirectly(toolName); err != nil {
 		return err
 	}
 
-	// Handle post-install script if configured
-	if toolConfig.PostInstallScript != "" {
+	// Handle special cases for specific tools
+	if toolName == "zsh" {
 		o.PrintInfo("Running post-install script for %s...", toolName)
-		if err := runPostInstallScript(toolConfig.PostInstallScript); err != nil {
+		ohMyZshScript := `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
+		if err := runPostInstallScript(ohMyZshScript); err != nil {
 			o.PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
 		}
 	}
 
-	// Handle config check if configured
-	if toolConfig.ConfigCheck {
+	// Handle config check for git
+	if toolName == "git" {
 		if err := checkToolConfiguration(toolName); err != nil {
 			o.PrintWarning("Configuration check failed for %s: %v", toolName, err)
 		}
@@ -315,11 +282,6 @@ func installSingleToolWithConfig(toolName string, toolConfig *config.ToolInstall
 // installSingleToolUnified provides unified installation logic for all installation modes
 // This is the core function that ensures consistent behavior across individual, serial, and concurrent installations
 func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled bool, err error) {
-	return installSingleToolUnifiedWithConfig(toolName, dryRun, nil)
-}
-
-// installSingleToolUnifiedWithConfig provides unified installation logic with pre-loaded configs
-func installSingleToolUnifiedWithConfig(toolName string, dryRun bool, toolConfigs map[string]*config.ToolInstallConfig) (wasNewlyInstalled bool, err error) {
 	o := getOutputHandler()
 
 	// ALWAYS check availability first using the latest IsApplicationAvailable logic
@@ -334,14 +296,8 @@ func installSingleToolUnifiedWithConfig(toolName string, dryRun bool, toolConfig
 		return true, nil
 	}
 
-	// Get pre-loaded config or fall back to individual loading
-	var toolConfig *config.ToolInstallConfig
-	if toolConfigs != nil {
-		toolConfig = toolConfigs[toolName]
-	}
-
-	// Perform real installation using existing logic with config
-	if err := installSingleToolWithConfig(toolName, toolConfig); err != nil {
+	// Perform real installation using existing logic
+	if err := installSingleTool(toolName); err != nil {
 		return false, err
 	}
 

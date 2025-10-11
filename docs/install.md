@@ -146,7 +146,6 @@ groups:
 Apps are automatically tracked in `tools.installed_apps` when installed individually, UNLESS they are already present in:
 
 - `tools.required_tools`
-- `tools.optional_tools`
 - Any group in `groups`
 
 This prevents duplication and keeps your settings clean.
@@ -226,7 +225,6 @@ The install command reads from your `~/.anvil/settings.yaml`:
 ```yaml
 tools:
   required_tools: [git, curl, brew]
-  optional_tools: [docker, kubectl]
   installed_apps: [figma, notion, spotify] # Auto-populated
 
 groups:

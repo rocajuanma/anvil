@@ -61,7 +61,6 @@ func createTestConfig() *AnvilConfig {
 		Version: "2.0.0",
 		Tools: AnvilTools{
 			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
-			OptionalTools: []string{constants.BrewCommand, constants.PkgDocker, constants.PkgKubectl},
 			InstalledApps: []string{},
 		},
 		Groups: AnvilGroups{
@@ -79,19 +78,6 @@ func createTestConfig() *AnvilConfig {
 			Branch:      "main",
 			LocalPath:   "/tmp/test_dotfiles",
 			TokenEnvVar: "GITHUB_TOKEN",
-		},
-		ToolConfigs: AnvilToolConfigs{
-			Tools: map[string]ToolInstallConfig{
-				constants.PkgZsh: {
-					PostInstallScript: constants.OhMyZshInstallCmd,
-					ConfigCheck:       false,
-					Dependencies:      []string{},
-				},
-				constants.PkgGit: {
-					ConfigCheck:  true,
-					Dependencies: []string{},
-				},
-			},
 		},
 	}
 }
@@ -435,66 +421,6 @@ func TestHelperFunctions(t *testing.T) {
 	}
 	if IsBuiltInGroup("custom-group") {
 		t.Error("Expected 'custom-group' to not be a built-in group")
-	}
-}
-
-// Test tool configuration functions
-func TestToolConfigFunctions(t *testing.T) {
-	_, cleanup := setupTestConfig(t)
-	defer cleanup()
-
-	// Test GetToolConfig for existing tool
-	toolConfig, err := GetToolConfig(constants.PkgGit)
-	if err != nil {
-		t.Fatalf("Failed to get tool config: %v", err)
-	}
-	if toolConfig == nil {
-		t.Error("Expected tool config to not be nil")
-	}
-	if !toolConfig.ConfigCheck {
-		t.Error("Expected git tool config to have ConfigCheck enabled")
-	}
-
-	// Test GetToolConfig for non-existing tool (should return default)
-	toolConfig, err = GetToolConfig("non-existing-tool")
-	if err != nil {
-		t.Fatalf("Failed to get tool config for non-existing tool: %v", err)
-	}
-	if toolConfig == nil {
-		t.Error("Expected default tool config to not be nil")
-	}
-	if toolConfig.ConfigCheck {
-		t.Error("Expected default tool config to have ConfigCheck disabled")
-	}
-
-	// Test GetToolConfigs for multiple tools
-	toolNames := []string{constants.PkgGit, constants.PkgZsh, "non-existing-tool"}
-	configs, err := GetToolConfigs(toolNames)
-	if err != nil {
-		t.Fatalf("Failed to get tool configs: %v", err)
-	}
-	if len(configs) != len(toolNames) {
-		t.Errorf("Expected %d tool configs, got %d", len(toolNames), len(configs))
-	}
-
-	// Test SetToolConfig
-	newToolConfig := ToolInstallConfig{
-		PostInstallScript: "echo 'test'",
-		ConfigCheck:       true,
-		Dependencies:      []string{"dependency1"},
-	}
-	err = SetToolConfig("test-tool", newToolConfig)
-	if err != nil {
-		t.Fatalf("Failed to set tool config: %v", err)
-	}
-
-	// Verify the tool config was saved
-	savedConfig, err := GetToolConfig("test-tool")
-	if err != nil {
-		t.Fatalf("Failed to get saved tool config: %v", err)
-	}
-	if savedConfig.PostInstallScript != newToolConfig.PostInstallScript {
-		t.Errorf("Expected PostInstallScript '%s', got '%s'", newToolConfig.PostInstallScript, savedConfig.PostInstallScript)
 	}
 }
 
