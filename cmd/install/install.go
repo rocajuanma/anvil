@@ -28,6 +28,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
 	"github.com/rocajuanma/anvil/internal/installer"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
@@ -262,10 +263,14 @@ func installSingleTool(toolName string) error {
 
 	// Handle special cases for specific tools
 	if toolName == "zsh" {
-		o.PrintInfo("Running post-install script for %s...", toolName)
+		spinner := charm.NewLineSpinner("Installing Oh My Zsh")
+		spinner.Start()
 		ohMyZshScript := `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
 		if err := runPostInstallScript(ohMyZshScript); err != nil {
-			o.PrintWarning("Failed to run post-install script for %s: %v", toolName, err)
+			spinner.Warning("Oh My Zsh setup skipped")
+			o.PrintWarning("Post-install script failed for %s: %v", toolName, err)
+		} else {
+			spinner.Success("Oh My Zsh installed successfully")
 		}
 	}
 
@@ -313,17 +318,19 @@ func trackAppInSettings(appName string) error {
 		o.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
 		return nil // Don't fail installation for tracking issues
 	} else if isTracked {
-		o.PrintInfo("%s is already tracked in settings", appName)
 		return nil
 	}
 
-	o.PrintInfo("Updating settings to track %s...", appName)
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Tracking %s in settings", appName))
+	spinner.Start()
+
 	if err := config.AddInstalledApp(appName); err != nil {
+		spinner.Warning("Failed to update settings")
 		o.PrintWarning("Failed to update settings file: %v", err)
 		return nil // Don't fail installation for tracking issues
 	}
 
-	o.PrintSuccess(fmt.Sprintf("Settings updated - %s is now tracked", appName))
+	spinner.Success(fmt.Sprintf("%s tracked in settings", appName))
 	return nil
 }
 
