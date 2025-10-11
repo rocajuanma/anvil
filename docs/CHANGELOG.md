@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration Function Improvements** ⚙️ - Enhanced configuration management functions with better error handling
 - **Validation System Streamlining** ✅ - Simplified and improved validation logic
 - **Documentation Updates** 📚 - Updated all references to use new group naming
+- **Simplified Settings Structure** 🧹 - Removed `tool_configs` and `optional_tools` from default settings
+  - **Breaking Change**: Removed complex tool configuration system in favor of direct handling
 
 ### Fixed
 - **Code Duplication Elimination** 🔧 - Removed duplicate code patterns across configuration functions
