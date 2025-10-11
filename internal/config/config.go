@@ -107,6 +107,54 @@ func getCachedConfig() (*AnvilConfig, error) {
 	return configCache, err
 }
 
+// withConfig executes a function with the cached config, handling common error patterns
+func withConfig(fn func(*AnvilConfig) error) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+	return fn(config)
+}
+
+// withConfigAndSave executes a function with the cached config and saves it
+func withConfigAndSave(fn func(*AnvilConfig) error) error {
+	config, err := getCachedConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+	if err := fn(config); err != nil {
+		return err
+	}
+	return SaveConfig(config)
+}
+
+// ensureGroupsMap ensures the Groups map is initialized
+func ensureGroupsMap(config *AnvilConfig) {
+	if config.Groups == nil {
+		config.Groups = make(map[string][]string)
+	}
+}
+
+// ensureConfigsMap ensures the Configs map is initialized
+func ensureConfigsMap(config *AnvilConfig) {
+	if config.Configs == nil {
+		config.Configs = make(map[string]string)
+	}
+}
+
+// ensureToolConfigsMap ensures the ToolConfigs.Tools map is initialized
+func ensureToolConfigsMap(config *AnvilConfig) {
+	if config.ToolConfigs.Tools == nil {
+		config.ToolConfigs.Tools = make(map[string]ToolInstallConfig)
+	}
+}
+
+// getHomeDir returns the user's home directory
+func getHomeDir() string {
+	homeDir, _ := os.UserHomeDir()
+	return homeDir
+}
+
 // PopulateGitConfigFromSystem populates git configuration from local git settings and auto-detects SSH keys
 func PopulateGitConfigFromSystem(gitConfig *GitConfig) error {
 	// Always populate username from local git config
@@ -156,53 +204,49 @@ func invalidateCache() {
 	configCache = nil
 }
 
-// GetDefaultConfig returns the default anvil configuration
-func GetDefaultConfig() *AnvilConfig {
-	homeDir, _ := os.UserHomeDir()
-
-	return &AnvilConfig{
-		Version: "1.0.0",
-		Tools: AnvilTools{
-			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
-			OptionalTools: []string{constants.BrewCommand, constants.PkgDocker, constants.PkgKubectl},
-			InstalledApps: []string{}, // Initialize empty slice for tracking
-		},
-		Groups: AnvilGroups{
-			"dev":        {constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
-			"new-laptop": {constants.PkgSlack, constants.PkgChrome, constants.Pkg1Password},
-		},
-		Configs: make(map[string]string), // Initialize empty configs section
-		Git: GitConfig{
-			Username:   "",
-			Email:      "",
-			SSHKeyPath: filepath.Join(homeDir, constants.SSHDir, "id_rsa"),
-		},
-		GitHub: GitHubConfig{
-			ConfigRepo:  "", // User needs to populate this
-			Branch:      "main",
-			LocalPath:   filepath.Join(homeDir, constants.AnvilConfigDir, "dotfiles"),
-			TokenEnvVar: "GITHUB_TOKEN", // Recommend using env var for token
-		},
-		ToolConfigs: AnvilToolConfigs{
-			Tools: map[string]ToolInstallConfig{
-				constants.PkgZsh: {
-					PostInstallScript: constants.OhMyZshInstallCmd,
-					ConfigCheck:       false,
-					Dependencies:      []string{},
-				},
-				constants.PkgGit: {
-					ConfigCheck:  true,
-					Dependencies: []string{},
-				},
-			},
-		},
+// LoadSampleConfig loads the sample configuration from the assets file
+func LoadSampleConfig() (*AnvilConfig, error) {
+	samplePath := getSampleConfigPath()
+	sampleData, err := os.ReadFile(samplePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read sample config file: %w", err)
 	}
+
+	var config AnvilConfig
+	if err := yaml.Unmarshal(sampleData, &config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal sample config: %w", err)
+	}
+
+	// Set dynamic paths
+	homeDir, _ := os.UserHomeDir()
+	config.GitHub.LocalPath = filepath.Join(homeDir, constants.AnvilConfigDir, "dotfiles")
+
+	// Populate Git configuration from system, including auto-detecting ssh_key_path
+	if err := PopulateGitConfigFromSystem(&config.Git); err != nil {
+		return nil, fmt.Errorf("failed to populate git configuration: %w", err)
+	}
+
+	return &config, nil
 }
 
 // GetConfigPath returns the path to the anvil configuration file
 func GetConfigPath() string {
-	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, constants.AnvilConfigDir, constants.ConfigFileName)
+	return filepath.Join(getHomeDir(), constants.AnvilConfigDir, constants.ConfigFileName)
+}
+
+// getSampleConfigPath returns the path to the sample configuration file
+func getSampleConfigPath() string {
+	// Get the directory where the binary is located
+	execPath, err := os.Executable()
+	if err != nil {
+		// Fallback to current working directory
+		wd, _ := os.Getwd()
+		return filepath.Join(wd, "assets", "settings-sample.yaml")
+	}
+
+	// Get the directory containing the executable
+	execDir := filepath.Dir(execPath)
+	return filepath.Join(execDir, "assets", "settings-sample.yaml")
 }
 
 // CreateDirectories creates necessary directories for anvil
@@ -226,10 +270,11 @@ func GenerateDefaultSettings() error {
 		return nil // File already exists, don't overwrite
 	}
 
-	config := GetDefaultConfig()
-
-	// Try to populate git configuration from system
-	PopulateGitConfigFromSystem(&config.Git)
+	// Load the sample configuration
+	config, err := LoadSampleConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load sample config: %w", err)
+	}
 
 	// Marshal to YAML
 	data, err := yaml.Marshal(config)
@@ -292,34 +337,30 @@ func SaveConfig(config *AnvilConfig) error {
 
 // GetGroupTools returns the tools for a specific group
 func GetGroupTools(groupName string) ([]string, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Check if the group exists in the Groups map
-	if tools, exists := config.Groups[groupName]; exists {
-		return tools, nil
-	}
-
-	return nil, fmt.Errorf("group '%s' not found", groupName)
+	var result []string
+	err := withConfig(func(config *AnvilConfig) error {
+		// Check if the group exists in the Groups map
+		if tools, exists := config.Groups[groupName]; exists {
+			result = tools
+			return nil
+		}
+		return fmt.Errorf("group '%s' not found", groupName)
+	})
+	return result, err
 }
 
 // GetAvailableGroups returns all available groups
 func GetAvailableGroups() (map[string][]string, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	groups := make(map[string][]string)
-
-	// Add built-in groups
-	for name, tools := range config.Groups {
-		groups[name] = tools
-	}
-
-	return groups, nil
+	var groups map[string][]string
+	err := withConfig(func(config *AnvilConfig) error {
+		groups = make(map[string][]string)
+		// Add built-in groups
+		for name, tools := range config.Groups {
+			groups[name] = tools
+		}
+		return nil
+	})
+	return groups, err
 }
 
 // GetBuiltInGroups returns the list of built-in group names
@@ -340,66 +381,47 @@ func IsBuiltInGroup(groupName string) bool {
 
 // AddCustomGroup adds a new custom group
 func AddCustomGroup(name string, tools []string) error {
-	config, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if config.Groups == nil {
-		config.Groups = make(map[string][]string)
-	}
-
-	config.Groups[name] = tools
-
-	return SaveConfig(config)
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		ensureGroupsMap(config)
+		config.Groups[name] = tools
+		return nil
+	})
 }
 
 // UpdateGroupTools updates the tools list for an existing group
 func UpdateGroupTools(groupName string, tools []string) error {
-	config, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Check if the group exists
-	if _, exists := config.Groups[groupName]; !exists {
-		return fmt.Errorf("group '%s' does not exist", groupName)
-	}
-
-	// Update the group with new tools list
-	config.Groups[groupName] = tools
-
-	return SaveConfig(config)
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		// Check if the group exists
+		if _, exists := config.Groups[groupName]; !exists {
+			return fmt.Errorf("group '%s' does not exist", groupName)
+		}
+		// Update the group with new tools list
+		config.Groups[groupName] = tools
+		return nil
+	})
 }
 
 // AddAppToGroup adds an app to a group, creating the group if it doesn't exist
 func AddAppToGroup(groupName string, appName string) error {
-	config, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		ensureGroupsMap(config)
 
-	// Initialize groups map if it doesn't exist
-	if config.Groups == nil {
-		config.Groups = make(map[string][]string)
-	}
-
-	// Check if the group exists
-	if tools, exists := config.Groups[groupName]; exists {
-		// Check if app is already in the group to avoid duplicates
-		for _, tool := range tools {
-			if tool == appName {
-				return nil // App already in group, no need to add
+		// Check if the group exists
+		if tools, exists := config.Groups[groupName]; exists {
+			// Check if app is already in the group to avoid duplicates
+			for _, tool := range tools {
+				if tool == appName {
+					return nil // App already in group, no need to add
+				}
 			}
+			// Add app to existing group
+			config.Groups[groupName] = append(tools, appName)
+		} else {
+			// Create new group with the app
+			config.Groups[groupName] = []string{appName}
 		}
-		// Add app to existing group
-		config.Groups[groupName] = append(tools, appName)
-	} else {
-		// Create new group with the app
-		config.Groups[groupName] = []string{appName}
-	}
-
-	return SaveConfig(config)
+		return nil
+	})
 }
 
 // CheckEnvironmentConfigurations checks local environment configurations
@@ -448,41 +470,38 @@ func CheckEnvironmentConfigurations() []string {
 
 // GetConfigDirectory returns the anvil configuration directory
 func GetConfigDirectory() string {
-	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, constants.AnvilConfigDir)
+	return filepath.Join(getHomeDir(), constants.AnvilConfigDir)
 }
 
 // GetToolConfig returns the configuration for a specific tool
 func GetToolConfig(toolName string) (*ToolInstallConfig, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
-		return &toolConfig, nil
-	}
-
-	return getDefaultToolConfig(), nil
+	var result *ToolInstallConfig
+	err := withConfig(func(config *AnvilConfig) error {
+		if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
+			result = &toolConfig
+		} else {
+			result = getDefaultToolConfig()
+		}
+		return nil
+	})
+	return result, err
 }
 
 // GetToolConfigs returns configurations for multiple tools in a single operation
 func GetToolConfigs(toolNames []string) (map[string]*ToolInstallConfig, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	configs := make(map[string]*ToolInstallConfig, len(toolNames))
-	for _, toolName := range toolNames {
-		if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
-			configs[toolName] = &toolConfig
-		} else {
-			configs[toolName] = getDefaultToolConfig()
+	var configs map[string]*ToolInstallConfig
+	err := withConfig(func(config *AnvilConfig) error {
+		configs = make(map[string]*ToolInstallConfig, len(toolNames))
+		for _, toolName := range toolNames {
+			if toolConfig, exists := config.ToolConfigs.Tools[toolName]; exists {
+				configs[toolName] = &toolConfig
+			} else {
+				configs[toolName] = getDefaultToolConfig()
+			}
 		}
-	}
-
-	return configs, nil
+		return nil
+	})
+	return configs, err
 }
 
 // getDefaultToolConfig returns a default tool configuration
@@ -496,19 +515,12 @@ func getDefaultToolConfig() *ToolInstallConfig {
 }
 
 // SetToolConfig sets the configuration for a specific tool
-func SetToolConfig(toolName string, config ToolInstallConfig) error {
-	anvilConfig, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if anvilConfig.ToolConfigs.Tools == nil {
-		anvilConfig.ToolConfigs.Tools = make(map[string]ToolInstallConfig)
-	}
-
-	anvilConfig.ToolConfigs.Tools[toolName] = config
-
-	return SaveConfig(anvilConfig)
+func SetToolConfig(toolName string, toolConfig ToolInstallConfig) error {
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		ensureToolConfigsMap(config)
+		config.ToolConfigs.Tools[toolName] = toolConfig
+		return nil
+	})
 }
 
 // AddInstalledApp adds an app to the installed apps list if it's not already there
@@ -704,30 +716,21 @@ func ResolveAppLocation(appName string) (string, LocationSource, error) {
 
 // SetAppConfigPath sets the config path for an app in the configs section
 func SetAppConfigPath(appName, configPath string) error {
-	config, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if config.Configs == nil {
-		config.Configs = make(map[string]string)
-	}
-
-	config.Configs[appName] = configPath
-	return SaveConfig(config)
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		ensureConfigsMap(config)
+		config.Configs[appName] = configPath
+		return nil
+	})
 }
 
 // GetConfiguredApps returns a list of all apps that have configured paths
 func GetConfiguredApps() ([]string, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
 	var apps []string
-	for appName := range config.Configs {
-		apps = append(apps, appName)
-	}
-
-	return apps, nil
+	err := withConfig(func(config *AnvilConfig) error {
+		for appName := range config.Configs {
+			apps = append(apps, appName)
+		}
+		return nil
+	})
+	return apps, err
 }
