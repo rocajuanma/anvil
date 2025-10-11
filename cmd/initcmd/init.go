@@ -25,6 +25,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/tools"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
@@ -63,36 +64,47 @@ func runInitCommand() error {
 	}
 
 	// Stage 1: Tool validation and installation
-	o.PrintStage("Validating and installing required tools...")
+	o.PrintStage("Stage 1: Tool validation and installation")
+	spinner := charm.NewCircleSpinner("Validating and installing required tools")
+	spinner.Start()
 	if err := tools.ValidateAndInstallTools(); err != nil {
+		spinner.Error("Tool validation failed")
 		return errors.NewValidationError(constants.OpInit, "validate-tools", err)
 	}
-	o.PrintSuccess("All required tools are available")
+	spinner.Success("All required tools are available")
 
 	// Stage 2: Create necessary directories
-	o.PrintStage("Creating necessary directories...")
+	o.PrintStage("Stage 2: Creating necessary directories")
+	spinner = charm.NewDotsSpinner("Creating necessary directories")
+	spinner.Start()
 	if err := config.CreateDirectories(); err != nil {
+		spinner.Error("Failed to create directories")
 		return errors.NewFileSystemError(constants.OpInit, "create-directories", err)
 	}
-	o.PrintSuccess("Directories created successfully")
+	spinner.Success("Directories created successfully")
 
 	// Stage 3: Generate default settings.yaml
-	o.PrintStage("Generating default settings.yaml...")
+	o.PrintStage("Stage 3: Generating default settings.yaml")
+	spinner = charm.NewDotsSpinner("Generating default settings.yaml")
+	spinner.Start()
 	if err := config.GenerateDefaultSettings(); err != nil {
+		spinner.Error("Failed to generate settings")
 		return errors.NewConfigurationError(constants.OpInit, "generate-settings", err)
 	}
-	o.PrintSuccess("Default settings.yaml generated")
+	spinner.Success("Default settings.yaml generated")
 
 	// Stage 4: Check local environment configurations
-	o.PrintStage("Checking local environment configurations...")
+	o.PrintStage("Stage 4: Checking local environment configurations")
+	spinner = charm.NewLineSpinner("Checking local environment configurations")
+	spinner.Start()
 	warnings := config.CheckEnvironmentConfigurations()
 	if len(warnings) > 0 {
-		o.PrintWarning("Environment configuration warnings:")
+		spinner.Warning("Environment configuration warnings found")
 		for _, warning := range warnings {
 			o.PrintWarning("  - %s", warning)
 		}
 	} else {
-		o.PrintSuccess("Environment configurations are properly set")
+		spinner.Success("Environment configurations are properly set")
 	}
 
 	// Stage 5: Print completion message and next steps
