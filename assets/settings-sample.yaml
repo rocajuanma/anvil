@@ -1,0 +1,39 @@
+version: 2.0.0
+tools:
+  required_tools:
+  - git
+  - curl
+  optional_tools:
+  - brew
+  - docker
+  - kubectl
+  installed_apps: []
+groups:
+  dev:
+  - git
+  - zsh
+  - iterm2
+  - visual-studio-code
+  new-laptop:
+  - slack
+  - google-chrome
+  - 1password
+configs: {}
+git:
+  username: ""
+  email: ""
+  ssh_key_path: ""
+github:
+  config_repo: ""
+  branch: main
+  local_path: ""
+  token_env_var: GITHUB_TOKEN
+tool_configs:
+  tools:
+    zsh:
+      post_install_script: 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
+      config_check: false
+      dependencies: []
+    git:
+      config_check: true
+      dependencies: []
