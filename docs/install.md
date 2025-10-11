@@ -58,7 +58,7 @@ Install all tools in a predefined or custom group:
 
 ```bash
 anvil install dev         # Development tools
-anvil install new-laptop  # Essential applications for new machines
+anvil install essentials  # Essential applications for new machines
 ```
 
 ### List Available Options
@@ -92,10 +92,10 @@ dev:
   - visual-studio-code
 ```
 
-**new-laptop** - Essential applications for new machines:
+**essentials** - Essential applications for new machines:
 
 ```yaml
-new-laptop:
+essentials:
   - slack
   - google-chrome
   - 1password
@@ -146,7 +146,6 @@ groups:
 Apps are automatically tracked in `tools.installed_apps` when installed individually, UNLESS they are already present in:
 
 - `tools.required_tools`
-- `tools.optional_tools`
 - Any group in `groups`
 
 This prevents duplication and keeps your settings clean.
@@ -175,7 +174,7 @@ anvil install kubernetes-cli --group-name devops
 
 ```bash
 # Install essential applications
-anvil install new-laptop
+anvil install essentials
 
 # Add personal productivity apps
 anvil install notion
@@ -226,12 +225,11 @@ The install command reads from your `~/.anvil/settings.yaml`:
 ```yaml
 tools:
   required_tools: [git, curl, brew]
-  optional_tools: [docker, kubectl]
   installed_apps: [figma, notion, spotify] # Auto-populated
 
 groups:
   dev: [git, zsh, iterm2, visual-studio-code]
-  new-laptop: [slack, google-chrome, 1password]
+  essentials: [slack, google-chrome, 1password]
 
   # Your custom groups
   frontend: [git, node, visual-studio-code, figma]

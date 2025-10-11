@@ -31,6 +31,38 @@ func getOutputHandler() palantir.OutputHandler {
 	return palantir.GetGlobalOutputHandler()
 }
 
+// validateString validates a string with common rules
+func validateString(value, fieldName string, maxLength int, pattern string) error {
+	if value == "" {
+		return fmt.Errorf("%s cannot be empty", fieldName)
+	}
+
+	if len(value) > maxLength {
+		return fmt.Errorf("%s too long (max %d characters)", fieldName, maxLength)
+	}
+
+	if pattern != "" {
+		regex, err := regexp.Compile(pattern)
+		if err != nil {
+			return fmt.Errorf("invalid regex pattern: %w", err)
+		}
+		if !regex.MatchString(value) {
+			return fmt.Errorf("invalid %s format", fieldName)
+		}
+	}
+
+	return nil
+}
+
+// validateEmail validates an email address
+func validateEmail(email string) error {
+	if email == "" {
+		return nil // Empty email is allowed
+	}
+	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	return validateString(email, "email", 100, pattern)
+}
+
 // ConfigValidator implements the Validator interface for configuration validation
 type ConfigValidator struct {
 	config *AnvilConfig
@@ -45,39 +77,17 @@ func NewConfigValidator(config *AnvilConfig) interfaces.Validator {
 
 // ValidateGroupName validates a group name
 func (cv *ConfigValidator) ValidateGroupName(groupName string) error {
-	if groupName == "" {
-		return fmt.Errorf("group name cannot be empty")
-	}
-
-	// Check if group name contains invalid characters
-	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]+$`, groupName); !matched {
+	if err := validateString(groupName, "group name", 50, `^[a-zA-Z0-9_-]+$`); err != nil {
 		return fmt.Errorf("group name '%s' contains invalid characters. Only alphanumeric, underscore, and dash are allowed", groupName)
 	}
-
-	// Check if group name is too long
-	if len(groupName) > 50 {
-		return fmt.Errorf("group name '%s' is too long (max 50 characters)", groupName)
-	}
-
 	return nil
 }
 
 // ValidateAppName validates an application name
 func (cv *ConfigValidator) ValidateAppName(appName string) error {
-	if appName == "" {
-		return fmt.Errorf("application name cannot be empty")
-	}
-
-	// Check if app name contains invalid characters
-	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9_.-]+$`, appName); !matched {
+	if err := validateString(appName, "application name", 100, `^[a-zA-Z0-9_.-]+$`); err != nil {
 		return fmt.Errorf("application name '%s' contains invalid characters. Only alphanumeric, underscore, dot, and dash are allowed", appName)
 	}
-
-	// Check if app name is too long
-	if len(appName) > 100 {
-		return fmt.Errorf("application name '%s' is too long (max 100 characters)", appName)
-	}
-
 	return nil
 }
 
@@ -128,11 +138,6 @@ func (cv *ConfigValidator) ValidateConfig(config interface{}) error {
 		return fmt.Errorf("git config validation failed: %w", err)
 	}
 
-	// Validate tool configs
-	if err := cv.validateToolConfigs(&anvilConfig.ToolConfigs); err != nil {
-		return fmt.Errorf("tool configs validation failed: %w", err)
-	}
-
 	return nil
 }
 
@@ -163,13 +168,6 @@ func (cv *ConfigValidator) validateTools(tools *AnvilTools) error {
 		}
 	}
 
-	// Validate optional tools
-	for _, tool := range tools.OptionalTools {
-		if err := cv.ValidateAppName(tool); err != nil {
-			return fmt.Errorf("invalid optional tool name: %w", err)
-		}
-	}
-
 	// Validate installed apps
 	for _, app := range tools.InstalledApps {
 		if err := cv.ValidateAppName(app); err != nil {
@@ -191,14 +189,6 @@ func (cv *ConfigValidator) validateNoDuplicateTools(tools *AnvilTools) error {
 
 	// Check required tools
 	for _, tool := range tools.RequiredTools {
-		if allTools[tool] {
-			return fmt.Errorf("duplicate tool found: %s", tool)
-		}
-		allTools[tool] = true
-	}
-
-	// Check optional tools
-	for _, tool := range tools.OptionalTools {
 		if allTools[tool] {
 			return fmt.Errorf("duplicate tool found: %s", tool)
 		}
@@ -230,9 +220,9 @@ func (cv *ConfigValidator) validateGroups(groups *AnvilGroups) error {
 		return fmt.Errorf("dev group is required and cannot be empty")
 	}
 
-	newLaptopGroup, newLaptopExists := groupsMap["new-laptop"]
+	newLaptopGroup, newLaptopExists := groupsMap["essentials"]
 	if !newLaptopExists || len(newLaptopGroup) == 0 {
-		return fmt.Errorf("new-laptop group is required and cannot be empty")
+		return fmt.Errorf("essentials group is required and cannot be empty")
 	}
 
 	// Validate all groups
@@ -258,69 +248,13 @@ func (cv *ConfigValidator) validateGroups(groups *AnvilGroups) error {
 // validateGitConfig validates git configuration
 func (cv *ConfigValidator) validateGitConfig(git *GitConfig) error {
 	if git.Username != "" {
-		if len(git.Username) > 100 {
-			return fmt.Errorf("git username too long (max 100 characters)")
+		if err := validateString(git.Username, "git username", 100, ""); err != nil {
+			return err
 		}
 	}
 
-	if git.Email != "" {
-		// Basic email validation
-		if matched, _ := regexp.MatchString(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`, git.Email); !matched {
-			return fmt.Errorf("invalid git email format: %s", git.Email)
-		}
-	}
-
-	return nil
-}
-
-// validateToolConfigs validates tool-specific configurations
-func (cv *ConfigValidator) validateToolConfigs(configs *AnvilToolConfigs) error {
-	if configs.Tools == nil {
-		return nil // Optional section
-	}
-
-	for toolName, toolConfig := range configs.Tools {
-		if err := cv.ValidateAppName(toolName); err != nil {
-			return fmt.Errorf("invalid tool config name: %w", err)
-		}
-
-		if err := cv.validateToolConfig(toolName, &toolConfig); err != nil {
-			return fmt.Errorf("invalid config for tool '%s': %w", toolName, err)
-		}
-	}
-
-	return nil
-}
-
-// validateToolConfig validates a single tool configuration
-func (cv *ConfigValidator) validateToolConfig(toolName string, config *ToolInstallConfig) error {
-	// Validate post-install script
-	if config.PostInstallScript != "" {
-		if len(config.PostInstallScript) > 500 {
-			return fmt.Errorf("post-install script too long (max 500 characters)")
-		}
-	}
-
-	// Validate environment setup
-	for key, value := range config.EnvironmentSetup {
-		if key == "" {
-			return fmt.Errorf("environment variable name cannot be empty")
-		}
-
-		if matched, _ := regexp.MatchString(`^[A-Z_][A-Z0-9_]*$`, key); !matched {
-			return fmt.Errorf("invalid environment variable name: %s", key)
-		}
-
-		if len(value) > 1000 {
-			return fmt.Errorf("environment variable value too long (max 1000 characters)")
-		}
-	}
-
-	// Validate dependencies
-	for _, dep := range config.Dependencies {
-		if err := cv.ValidateAppName(dep); err != nil {
-			return fmt.Errorf("invalid dependency name: %w", err)
-		}
+	if err := validateEmail(git.Email); err != nil {
+		return fmt.Errorf("invalid git email format: %s", git.Email)
 	}
 
 	return nil
@@ -345,23 +279,6 @@ func ValidateFileAccess(filePath string) error {
 	}
 
 	return nil
-}
-
-// ValidateConfigFile validates the entire configuration file
-func ValidateConfigFile(configPath string) error {
-	// Check if file exists and is accessible
-	if err := ValidateFileAccess(configPath); err != nil {
-		return err
-	}
-
-	// Load and validate configuration
-	config, err := LoadConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load configuration: %w", err)
-	}
-
-	validator := NewConfigValidator(config)
-	return validator.ValidateConfig(config)
 }
 
 // ValidateAndFixGitHubConfig validates and automatically fixes GitHub configuration
@@ -427,28 +344,4 @@ func normalizeGitHubRepo(repoURL string) string {
 
 	// If no pattern matches, return as-is (might be invalid, but let validation catch it)
 	return repoURL
-}
-
-// validateGitHubRepoFormat validates that the repository is in the correct format
-func validateGitHubRepoFormat(repo string) error {
-	if repo == "" {
-		return nil // Empty is handled elsewhere
-	}
-
-	// Expected format: username/repository
-	repoPattern := regexp.MustCompile(`^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$`)
-	if !repoPattern.MatchString(repo) {
-		return fmt.Errorf(`invalid repository format: '%s'
-Expected format: 'username/repository' (e.g., 'octocat/Hello-World')
-
-Supported input formats that will be auto-corrected:
-  • https://github.com/username/repository
-  • https://github.com/username/repository.git
-  • git@github.com:username/repository.git
-  • github.com/username/repository
-
-Your repository will be auto-corrected to the proper format when the config is loaded.`, repo)
-	}
-
-	return nil
 }

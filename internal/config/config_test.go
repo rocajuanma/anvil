@@ -18,6 +18,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/rocajuanma/anvil/internal/constants"
@@ -36,8 +37,8 @@ func setupTestConfig(t *testing.T) (string, func()) {
 
 	os.Setenv("HOME", tempDir)
 
-	// Create a test config
-	config := GetDefaultConfig()
+	// Create a minimal test config instead of relying on sample file
+	config := createTestConfig()
 
 	// Create the necessary directories
 	err := CreateDirectories()
@@ -52,6 +53,33 @@ func setupTestConfig(t *testing.T) (string, func()) {
 	}
 
 	return tempDir, cleanup
+}
+
+// createTestConfig creates a minimal test configuration
+func createTestConfig() *AnvilConfig {
+	return &AnvilConfig{
+		Version: "2.0.0",
+		Tools: AnvilTools{
+			RequiredTools: []string{constants.PkgGit, constants.CurlCommand},
+			InstalledApps: []string{},
+		},
+		Groups: AnvilGroups{
+			"dev":        {constants.PkgGit, constants.PkgZsh, constants.PkgIterm2, constants.PkgVSCode},
+			"essentials": {constants.PkgSlack, constants.PkgChrome, constants.Pkg1Password},
+		},
+		Configs: make(map[string]string),
+		Git: GitConfig{
+			Username:   "Test User",
+			Email:      "test@example.com",
+			SSHKeyPath: "/tmp/test_ssh_key",
+		},
+		GitHub: GitHubConfig{
+			ConfigRepo:  "",
+			Branch:      "main",
+			LocalPath:   "/tmp/test_dotfiles",
+			TokenEnvVar: "GITHUB_TOKEN",
+		},
+	}
 }
 
 func TestAddInstalledApp(t *testing.T) {
@@ -256,7 +284,7 @@ func TestAddAppToGroup(t *testing.T) {
 		t.Fatalf("Failed to load updated config: %v", err)
 	}
 
-	// Default config has 2 groups ("dev" and "new-laptop"), so we expect 3 total
+	// Default config has 2 groups ("dev" and "essentials"), so we expect 3 total
 	if len(updatedConfig.Groups) != 3 {
 		t.Errorf("Expected 3 groups (2 default + 1 new), got %d", len(updatedConfig.Groups))
 	}
@@ -352,5 +380,139 @@ func TestAddAppToGroupDuplicate(t *testing.T) {
 		t.Errorf("Expected 1 tool in group (no duplicates), got %d", len(tools))
 	} else if tools[0] != appName {
 		t.Errorf("Expected app '%s' in group, got '%s'", appName, tools[0])
+	}
+}
+
+// Test helper functions and DRY improvements
+func TestHelperFunctions(t *testing.T) {
+	_, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	// Test GetConfigDirectory
+	configDir := GetConfigDirectory()
+	if configDir == "" {
+		t.Error("Expected GetConfigDirectory to return a non-empty string")
+	}
+
+	// Test GetConfigPath
+	configPath := GetConfigPath()
+	if configPath == "" {
+		t.Error("Expected GetConfigPath to return a non-empty string")
+	}
+
+	// Test GetBuiltInGroups
+	builtInGroups := GetBuiltInGroups()
+	expectedGroups := []string{"dev", "essentials"}
+	if len(builtInGroups) != len(expectedGroups) {
+		t.Errorf("Expected %d built-in groups, got %d", len(expectedGroups), len(builtInGroups))
+	}
+	for i, expected := range expectedGroups {
+		if builtInGroups[i] != expected {
+			t.Errorf("Expected built-in group '%s' at index %d, got '%s'", expected, i, builtInGroups[i])
+		}
+	}
+
+	// Test IsBuiltInGroup
+	if !IsBuiltInGroup("dev") {
+		t.Error("Expected 'dev' to be a built-in group")
+	}
+	if !IsBuiltInGroup("essentials") {
+		t.Error("Expected 'essentials' to be a built-in group")
+	}
+	if IsBuiltInGroup("custom-group") {
+		t.Error("Expected 'custom-group' to not be a built-in group")
+	}
+}
+
+// Test app configuration functions
+func TestAppConfigFunctions(t *testing.T) {
+	tempDir, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	// Test SetAppConfigPath
+	appName := "test-app"
+	configPath := filepath.Join(tempDir, "test-config")
+
+	// Create the directory to avoid path existence check failure
+	err := os.MkdirAll(configPath, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create test config directory: %v", err)
+	}
+
+	err = SetAppConfigPath(appName, configPath)
+	if err != nil {
+		t.Fatalf("Failed to set app config path: %v", err)
+	}
+
+	// Test GetConfiguredApps
+	apps, err := GetConfiguredApps()
+	if err != nil {
+		t.Fatalf("Failed to get configured apps: %v", err)
+	}
+	if len(apps) != 1 {
+		t.Errorf("Expected 1 configured app, got %d", len(apps))
+	}
+	if apps[0] != appName {
+		t.Errorf("Expected app '%s', got '%s'", appName, apps[0])
+	}
+
+	// Test GetAppConfigPath
+	retrievedPath, found, err := GetAppConfigPath(appName)
+	if err != nil {
+		t.Fatalf("Failed to get app config path: %v", err)
+	}
+	if !found {
+		t.Error("Expected app config path to be found")
+	}
+	if retrievedPath != configPath {
+		t.Errorf("Expected config path '%s', got '%s'", configPath, retrievedPath)
+	}
+}
+
+// Test group management functions
+func TestGroupManagementFunctions(t *testing.T) {
+	_, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	// Test AddCustomGroup
+	groupName := "test-group"
+	tools := []string{"tool1", "tool2"}
+	err := AddCustomGroup(groupName, tools)
+	if err != nil {
+		t.Fatalf("Failed to add custom group: %v", err)
+	}
+
+	// Verify the group was added
+	groupTools, err := GetGroupTools(groupName)
+	if err != nil {
+		t.Fatalf("Failed to get group tools: %v", err)
+	}
+	if len(groupTools) != len(tools) {
+		t.Errorf("Expected %d tools in group, got %d", len(tools), len(groupTools))
+	}
+
+	// Test UpdateGroupTools
+	newTools := []string{"tool3", "tool4", "tool5"}
+	err = UpdateGroupTools(groupName, newTools)
+	if err != nil {
+		t.Fatalf("Failed to update group tools: %v", err)
+	}
+
+	// Verify the group was updated
+	updatedTools, err := GetGroupTools(groupName)
+	if err != nil {
+		t.Fatalf("Failed to get updated group tools: %v", err)
+	}
+	if len(updatedTools) != len(newTools) {
+		t.Errorf("Expected %d tools in updated group, got %d", len(newTools), len(updatedTools))
+	}
+
+	// Test GetAvailableGroups
+	groups, err := GetAvailableGroups()
+	if err != nil {
+		t.Fatalf("Failed to get available groups: %v", err)
+	}
+	if len(groups) < 3 { // Should have at least 2 built-in + 1 custom
+		t.Errorf("Expected at least 3 groups, got %d", len(groups))
 	}
 }

@@ -74,7 +74,7 @@ anvil config sync neovim
 
 ## Key Features
 
-- **🎯 Smart Installation** - Install individual apps or predefined groups (`dev`, `new-laptop`)
+- **🎯 Smart Installation** - Install individual apps or predefined groups (`dev`, `essentials`)
 - **📝 Auto-tracking** - Automatically tracks installed apps and prevents duplicates
 - **📥 Group Import** - Import groups from local files or URLs with validation and conflict detection
 - **🔒 Secure Config Sync** - Uses private GitHub repositories with automatic backups

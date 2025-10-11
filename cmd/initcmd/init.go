@@ -130,7 +130,7 @@ func runInitCommand() error {
 			o.PrintInfo("Custom groups: %d defined", len(groups)-len(builtInGroups))
 		}
 	} else {
-		o.PrintInfo("\nAvailable groups: dev, new-laptop")
+		o.PrintInfo("\nAvailable groups: dev, essentials")
 	}
 	o.PrintInfo("Example: 'anvil install dev' or 'anvil install firefox'")
 

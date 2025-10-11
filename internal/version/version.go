@@ -13,17 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
 
-import (
-	"github.com/rocajuanma/anvil/cmd"
-	"github.com/rocajuanma/anvil/internal/version"
-)
+package version
 
-// appVersion is set at build time via ldflags
-var appVersion = "dev-local"
+// appVersion holds the application version set at build time
+var appVersion = "dev"
 
-func main() {
-	version.SetVersion(appVersion)
-	cmd.Execute()
+// SetVersion sets the application version
+func SetVersion(v string) {
+	appVersion = v
+}
+
+// GetVersion returns the current application version
+func GetVersion() string {
+	return appVersion
 }

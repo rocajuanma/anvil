@@ -293,7 +293,6 @@ func (d *DoctorEngine) registerDefaultValidators() {
 	// Dependency validators
 	d.registry.Register(&BrewValidator{})
 	d.registry.Register(&RequiredToolsValidator{})
-	d.registry.Register(&OptionalToolsValidator{})
 
 	// Configuration validators
 	d.registry.Register(&GitConfigValidator{})

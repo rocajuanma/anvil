@@ -376,7 +376,6 @@ directories:
   data: "/path/to/data"
 tools:
   required_tools: []
-  optional_tools: []
 groups:
   predefined_group: []
 environment: {}

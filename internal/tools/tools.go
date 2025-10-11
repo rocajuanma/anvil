@@ -61,26 +61,6 @@ func GetRequiredTools() []Tool {
 	}
 }
 
-// GetOptionalTools returns the list of optional tools for anvil on macOS
-func GetOptionalTools() []Tool {
-	return []Tool{
-		{
-			Name:        "Docker",
-			Command:     "docker",
-			Required:    false,
-			InstallWith: "brew",
-			Description: "Container runtime",
-		},
-		{
-			Name:        "kubectl",
-			Command:     "kubectl",
-			Required:    false,
-			InstallWith: "brew",
-			Description: "Kubernetes command-line tool",
-		},
-	}
-}
-
 // ValidateAndInstallTools validates and installs required tools on macOS
 func ValidateAndInstallTools() error {
 	// Ensure we're running on macOS
@@ -98,14 +78,6 @@ func ValidateAndInstallTools() error {
 	for _, tool := range requiredTools {
 		if err := validateTool(tool); err != nil {
 			return fmt.Errorf("failed to validate required tool %s: %w", tool.Name, err)
-		}
-	}
-
-	// Validate optional tools (don't fail if they're not available)
-	optionalTools := GetOptionalTools()
-	for _, tool := range optionalTools {
-		if err := validateTool(tool); err != nil {
-			getOutputHandler().PrintWarning("Optional tool %s is not available: %v", tool.Name, err)
 		}
 	}
 
@@ -151,7 +123,7 @@ func validateTool(tool Tool) error {
 
 // GetToolInfo returns information about a specific tool
 func GetToolInfo(toolName string) (*Tool, error) {
-	allTools := append(GetRequiredTools(), GetOptionalTools()...)
+	allTools := GetRequiredTools()
 
 	for _, tool := range allTools {
 		if tool.Name == toolName || tool.Command == toolName {
@@ -170,7 +142,7 @@ func CheckToolsStatus() (map[string]bool, error) {
 
 	status := make(map[string]bool)
 
-	allTools := append(GetRequiredTools(), GetOptionalTools()...)
+	allTools := GetRequiredTools()
 	for _, tool := range allTools {
 		status[tool.Name] = system.CommandExists(tool.Command)
 	}

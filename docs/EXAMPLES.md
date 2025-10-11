@@ -61,7 +61,7 @@ Group: dev
   • iterm2
   • vscode
 
-Group: new-laptop
+Group: essentials
   • slack
   • chrome
   • 1password
@@ -135,10 +135,10 @@ Installing oh-my-zsh...
 $ anvil init
 
 # Install essential applications
-$ anvil install new-laptop
+$ anvil install essentials
 
-=== Setting up 'new-laptop' group ===
-Installing tools for group 'new-laptop': slack, chrome, 1password
+=== Setting up 'essentials' group ===
+Installing tools for group 'essentials': slack, chrome, 1password
 [1/3] 33% - Installing slack
 ✅ slack installed successfully
 [2/3] 67% - Installing chrome
@@ -147,7 +147,7 @@ Installing tools for group 'new-laptop': slack, chrome, 1password
 ✅ 1password installed successfully
 
 === Group Setup Complete! ===
-Successfully installed 3 of 3 tools in group 'new-laptop'
+Successfully installed 3 of 3 tools in group 'essentials'
 ```
 
 ### Example 3.5: Organizing Applications into Groups
@@ -196,7 +196,7 @@ $ anvil install --list
 === Available Groups ===
 Built-in Groups:
   • dev: git, zsh, iterm2, visual-studio-code
-  • new-laptop: slack, google-chrome, 1password
+  • essentials: slack, google-chrome, 1password
 
 Custom Groups:
   • browsers: firefox, chrome
@@ -1008,7 +1008,7 @@ anvil install python-project
 # Full macOS setup
 anvil init  # Installs Homebrew automatically
 anvil install dev  # Includes iTerm2
-anvil install new-laptop
+anvil install essentials
 
 # Add macOS-specific productivity tools
 anvil install --alfred --spectacle --raycast

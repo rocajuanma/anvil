@@ -1,0 +1,26 @@
+version: "{{APP_VERSION}}"
+tools:
+  required_tools:
+  - git
+  - curl
+  installed_apps: []
+groups:
+  dev:
+  - git
+  - zsh
+  - iterm2
+  - visual-studio-code
+  essentials:
+  - slack
+  - google-chrome
+  - 1password
+configs: {}
+git:
+  username: ""
+  email: ""
+  ssh_key_path: ""
+github:
+  config_repo: ""
+  branch: main
+  local_path: ""
+  token_env_var: GITHUB_TOKEN
