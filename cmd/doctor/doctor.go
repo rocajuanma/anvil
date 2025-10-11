@@ -437,38 +437,102 @@ func displayCategory(category string, results []*validators.ValidationResult, ve
 
 // printSummary shows overall health check summary
 func printSummary(results []*validators.ValidationResult) {
-	passed, warned, failed, skipped := validators.GetSummary(results)
+	passed, warned, failed, _ := validators.GetSummary(results)
 	total := len(results)
 
-	o := getOutputHandler()
-	o.PrintHeader("Health Check Summary")
-	o.PrintInfo("Total checks: %d", total)
-	o.PrintInfo("✅ Passed: %d", passed)
-	if warned > 0 {
-		o.PrintInfo("⚠️  Warnings: %d", warned)
+	// Get category breakdown
+	categoryStats := getCategoryBreakdown(results)
+	
+	// Build dashboard box
+	var dashboardContent strings.Builder
+	dashboardContent.WriteString("\n")
+	
+	// Category status bars
+	for _, category := range []string{"environment", "dependencies", "configuration", "connectivity"} {
+		if stats, exists := categoryStats[category]; exists {
+			status := getCategoryStatus(stats.passed, stats.warned, stats.failed, stats.skipped)
+			
+			// Calculate percentage for progress bar
+			percentage := 0
+			if stats.total > 0 {
+				percentage = (stats.passed * 100) / stats.total
+			}
+			
+			// Create progress bar (20 chars wide)
+			barWidth := 20
+			filled := (percentage * barWidth) / 100
+			bar := strings.Repeat("━", filled) + strings.Repeat("━", barWidth-filled)
+			
+			categoryTitle := strings.Title(category)
+			dashboardContent.WriteString(fmt.Sprintf("  %s %-15s %s  %d/%d passing\n", 
+				status, categoryTitle, bar, stats.passed, stats.total))
+		}
 	}
-	if failed > 0 {
-		o.PrintInfo("❌ Failed: %d", failed)
-	}
-	if skipped > 0 {
-		o.PrintInfo("⏭️  Skipped: %d", skipped)
-	}
-
-	// Show fixable issues
+	
+	dashboardContent.WriteString("\n")
+	dashboardContent.WriteString(fmt.Sprintf("  Overall: %d/%d checks passing\n", passed, total))
+	dashboardContent.WriteString("\n")
+	
+	// Render dashboard box
+	fmt.Println(charm.RenderBox("ANVIL HEALTH CHECK", dashboardContent.String(), "#00D9FF"))
+	
+	// Show fixable issues in a separate box
 	fixableIssues := validators.GetFixableIssues(results)
 	if len(fixableIssues) > 0 {
-		o.PrintInfo("\n🔧 %d issues can be auto-fixed", len(fixableIssues))
-		o.PrintInfo("Run 'anvil doctor --fix' to automatically fix them")
+		var fixContent strings.Builder
+		for _, issue := range fixableIssues {
+			fixContent.WriteString(fmt.Sprintf("  • %s\n", issue.Name))
+		}
+		fixContent.WriteString("\n")
+		fixContent.WriteString("  Run 'anvil doctor --fix' to automatically fix them\n")
+		
+		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700"))
 	}
 
-	// Overall status
+	// Overall status badge
+	fmt.Println()
 	if failed > 0 {
-		o.PrintWarning("❌ Overall status: Issues found")
+		fmt.Println("  " + charm.RenderBadge("ISSUES FOUND", "#FF5F87"))
 	} else if warned > 0 {
-		o.PrintInfo("⚠️  Overall status: Minor issues")
+		fmt.Println("  " + charm.RenderBadge("MINOR ISSUES", "#FFD700"))
 	} else {
-		o.PrintSuccess("✅ Overall status: Healthy")
+		fmt.Println("  " + charm.RenderBadge("HEALTHY", "#00FF87"))
 	}
+	fmt.Println()
+}
+
+// categoryStats holds statistics for a category
+type categoryStats struct {
+	passed  int
+	warned  int
+	failed  int
+	skipped int
+	total   int
+}
+
+// getCategoryBreakdown returns stats broken down by category
+func getCategoryBreakdown(results []*validators.ValidationResult) map[string]categoryStats {
+	breakdown := make(map[string]categoryStats)
+	
+	for _, result := range results {
+		stats := breakdown[result.Category]
+		stats.total++
+		
+		switch result.Status {
+		case validators.PASS:
+			stats.passed++
+		case validators.WARN:
+			stats.warned++
+		case validators.FAIL:
+			stats.failed++
+		case validators.SKIP:
+			stats.skipped++
+		}
+		
+		breakdown[result.Category] = stats
+	}
+	
+	return breakdown
 }
 
 // Helper functions for display formatting
