@@ -8,10 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Template-based Configuration System** 📄 - New sample configuration file system for dynamic settings generation
+- **Centralized Version Management** 🔄 - New version package for improved version control
+- **Enhanced Configuration Helpers** ⚙️ - New utility functions for cleaner configuration management
 
 ### Changed
+- **Settings Structure Refactor** 🏗️ - Major refactoring of configuration system with template-based generation
+  - **Breaking Change**: Renamed `new-laptop` group to `essentials` for better clarity
+- **Version Management Refactor** 🔄 - Improved version handling across the application
+- **Configuration Function Improvements** ⚙️ - Enhanced configuration management functions with better error handling
+- **Validation System Streamlining** ✅ - Simplified and improved validation logic
+- **Documentation Updates** 📚 - Updated all references to use new group naming
 
 ### Fixed
+- **Code Duplication Elimination** 🔧 - Removed duplicate code patterns across configuration functions
+- **Map Initialization Safety** 🔧 - Prevented potential nil map panics
 
 ## [2.0.0] - 2025-10-08
 
