@@ -14,7 +14,7 @@ groups:
   - zsh
   - iterm2
   - visual-studio-code
-  new-laptop:
+  essentials:
   - slack
   - google-chrome
   - 1password
