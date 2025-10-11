@@ -27,7 +27,7 @@ Anvil is a CLI automation tool that helps developers:
 ### Key Concepts
 
 - **Commands**: Actions you can perform (`init`, `install`, `config pull`, `config show`, `config sync`, `config push`, `clean`, `doctor`)
-- **Groups**: Collections of related tools (`dev`, `new-laptop`, custom groups)
+- **Groups**: Collections of related tools (`dev`, `essentials`, custom groups)
 - **Configuration**: Settings stored in `~/.anvil/settings.yaml`
 - **Health Checks**: Validation and troubleshooting via `anvil doctor`
 - **Tools**: Individual applications or utilities that can be installed
@@ -137,7 +137,7 @@ tools:
   optional_tools: [brew, docker, kubectl]
 groups:
   dev: [git, zsh, iterm2, vscode]
-  new-laptop: [slack, chrome, 1password]
+  essentials: [slack, chrome, 1password]
 git:
   username: "Your Name"
   email: "your.email@example.com"
@@ -170,7 +170,7 @@ This installs:
 Set up a new machine with essential applications:
 
 ```bash
-anvil install new-laptop
+anvil install essentials
 ```
 
 This installs:
@@ -185,7 +185,7 @@ Use dry-run to see what would be installed:
 
 ```bash
 anvil install dev --dry-run
-anvil install new-laptop --dry-run
+anvil install essentials --dry-run
 ```
 ### Custom Group Creation
 

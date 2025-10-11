@@ -65,7 +65,7 @@ tools:
 
 groups:
   dev: [git, zsh, iterm2, visual-studio-code]
-  new-laptop: [slack, google-chrome, 1password]
+  essentials: [slack, google-chrome, 1password]
 
 git:
   username: ""
@@ -141,7 +141,7 @@ After running `anvil init`, you can:
 
    ```bash
    anvil install dev          # Development tools
-   anvil install new-laptop   # Essential applications
+   anvil install essentials   # Essential applications
    ```
 
 2. **Configure GitHub sync** (optional):

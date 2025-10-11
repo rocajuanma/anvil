@@ -58,7 +58,7 @@ Install all tools in a predefined or custom group:
 
 ```bash
 anvil install dev         # Development tools
-anvil install new-laptop  # Essential applications for new machines
+anvil install essentials  # Essential applications for new machines
 ```
 
 ### List Available Options
@@ -92,10 +92,10 @@ dev:
   - visual-studio-code
 ```
 
-**new-laptop** - Essential applications for new machines:
+**essentials** - Essential applications for new machines:
 
 ```yaml
-new-laptop:
+essentials:
   - slack
   - google-chrome
   - 1password
@@ -175,7 +175,7 @@ anvil install kubernetes-cli --group-name devops
 
 ```bash
 # Install essential applications
-anvil install new-laptop
+anvil install essentials
 
 # Add personal productivity apps
 anvil install notion
@@ -231,7 +231,7 @@ tools:
 
 groups:
   dev: [git, zsh, iterm2, visual-studio-code]
-  new-laptop: [slack, google-chrome, 1password]
+  essentials: [slack, google-chrome, 1password]
 
   # Your custom groups
   frontend: [git, node, visual-studio-code, figma]
