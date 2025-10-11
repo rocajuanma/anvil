@@ -21,6 +21,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
@@ -54,8 +55,10 @@ func runInitCommand() error {
 	// Display the Anvil logo
 	fmt.Println(constants.AnvilLogo)
 	fmt.Println()
-	o := getOutputHandler()
-	o.PrintHeader("Anvil Initialization")
+
+	// Display initialization banner
+	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", "", "#00D9FF"))
+	fmt.Println()
 
 	// Ensure we're running on macOS
 	if runtime.GOOS != "darwin" {
@@ -63,48 +66,94 @@ func runInitCommand() error {
 			fmt.Errorf("Anvil is only supported on macOS"))
 	}
 
+	// Initialize stages tracking
+	stages := []struct {
+		name     string
+		status   string
+		duration string
+	}{
+		{"Tool Validation", "pending", ""},
+		{"Directory Creation", "pending", ""},
+		{"Settings Generation", "pending", ""},
+		{"Environment Check", "pending", ""},
+	}
+
 	// Stage 1: Tool validation and installation
-	o.PrintStage("Stage 1: Tool validation and installation")
+	stages[0].status = "running"
+	printInitStages(stages)
+
+	start := time.Now()
 	spinner := charm.NewCircleSpinner("Validating and installing required tools")
 	spinner.Start()
 	if err := tools.ValidateAndInstallTools(); err != nil {
 		spinner.Error("Tool validation failed")
+		stages[0].status = "failed"
+		printInitStages(stages)
 		return errors.NewValidationError(constants.OpInit, "validate-tools", err)
 	}
 	spinner.Success("All required tools are available")
+	stages[0].status = "done"
+	stages[0].duration = fmt.Sprintf("%.1fs", time.Since(start).Seconds())
+	printInitStages(stages)
 
 	// Stage 2: Create necessary directories
-	o.PrintStage("Stage 2: Creating necessary directories")
+	stages[1].status = "running"
+	printInitStages(stages)
+
+	start = time.Now()
 	spinner = charm.NewDotsSpinner("Creating necessary directories")
 	spinner.Start()
 	if err := config.CreateDirectories(); err != nil {
 		spinner.Error("Failed to create directories")
+		stages[1].status = "failed"
+		printInitStages(stages)
 		return errors.NewFileSystemError(constants.OpInit, "create-directories", err)
 	}
 	spinner.Success("Directories created successfully")
+	stages[1].status = "done"
+	stages[1].duration = fmt.Sprintf("%.1fs", time.Since(start).Seconds())
+	printInitStages(stages)
 
 	// Stage 3: Generate default settings.yaml
-	o.PrintStage("Stage 3: Generating default settings.yaml")
+	stages[2].status = "running"
+	printInitStages(stages)
+
+	start = time.Now()
 	spinner = charm.NewDotsSpinner("Generating default settings.yaml")
 	spinner.Start()
 	if err := config.GenerateDefaultSettings(); err != nil {
 		spinner.Error("Failed to generate settings")
+		stages[2].status = "failed"
+		printInitStages(stages)
 		return errors.NewConfigurationError(constants.OpInit, "generate-settings", err)
 	}
 	spinner.Success("Default settings.yaml generated")
+	stages[2].status = "done"
+	stages[2].duration = fmt.Sprintf("%.1fs", time.Since(start).Seconds())
+	printInitStages(stages)
 
 	// Stage 4: Check local environment configurations
-	o.PrintStage("Stage 4: Checking local environment configurations")
+	stages[3].status = "running"
+	printInitStages(stages)
+
+	start = time.Now()
 	spinner = charm.NewLineSpinner("Checking local environment configurations")
 	spinner.Start()
+	o := getOutputHandler()
 	warnings := config.CheckEnvironmentConfigurations()
 	if len(warnings) > 0 {
 		spinner.Warning("Environment configuration warnings found")
+		stages[3].status = "warning"
+		stages[3].duration = fmt.Sprintf("%.1fs", time.Since(start).Seconds())
+		printInitStages(stages)
 		for _, warning := range warnings {
 			o.PrintWarning("  - %s", warning)
 		}
 	} else {
 		spinner.Success("Environment configurations are properly set")
+		stages[3].status = "done"
+		stages[3].duration = fmt.Sprintf("%.1fs", time.Since(start).Seconds())
+		printInitStages(stages)
 	}
 
 	// Stage 5: Print completion message and next steps
@@ -147,6 +196,47 @@ func runInitCommand() error {
 	o.PrintInfo("Example: 'anvil install dev' or 'anvil install firefox'")
 
 	return nil
+}
+
+// printInitStages displays the current state of all initialization stages
+func printInitStages(stages []struct {
+	name     string
+	status   string
+	duration string
+}) {
+	var content strings.Builder
+	content.WriteString("\n")
+
+	for i, stage := range stages {
+		var statusIcon string
+		switch stage.status {
+		case "done":
+			statusIcon = "✓"
+		case "failed":
+			statusIcon = "✗"
+		case "warning":
+			statusIcon = "⚠"
+		case "running":
+			statusIcon = "⠋"
+		default:
+			statusIcon = "⋯"
+		}
+
+		line := fmt.Sprintf("  Stage %d: %-25s %s", i+1, stage.name, statusIcon)
+		if stage.duration != "" {
+			line += fmt.Sprintf("  %s", stage.duration)
+		}
+		content.WriteString(line + "\n")
+	}
+
+	content.WriteString("\n")
+
+	// Clear screen and print
+	fmt.Print("\033[2J\033[H")
+	fmt.Println(constants.AnvilLogo)
+	fmt.Println()
+	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", content.String(), "#00D9FF"))
+	fmt.Println()
 }
 
 func init() {
