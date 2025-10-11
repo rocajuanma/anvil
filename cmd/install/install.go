@@ -189,6 +189,13 @@ func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWo
 	return err
 }
 
+// toolStatus represents the status of a tool installation
+type toolStatus struct {
+	name   string
+	status string // "pending", "installing", "done", "failed"
+	emoji  string
+}
+
 // installGroupSerial installs tools serially using unified installation logic
 func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	o := getOutputHandler()
@@ -196,21 +203,81 @@ func installGroupSerial(groupName string, tools []string, dryRun bool) error {
 	successCount := 0
 	var installErrors []string
 
+	// Initialize tool statuses
+	toolStatuses := make([]toolStatus, len(tools))
 	for i, tool := range tools {
-		o.PrintProgress(i+1, len(tools), fmt.Sprintf("Processing %s", tool))
+		toolStatuses[i] = toolStatus{
+			name:   tool,
+			status: "pending",
+			emoji:  "⋯",
+		}
+	}
+
+	for i, tool := range tools {
+		// Update status to installing
+		toolStatuses[i].status = "installing"
+		toolStatuses[i].emoji = "⠋"
+
+		// Print dashboard
+		printInstallDashboard(groupName, toolStatuses, i+1, len(tools))
 
 		// Use unified installation logic
 		_, err := installSingleToolUnified(tool, dryRun)
+
 		if err != nil {
+			toolStatuses[i].status = "failed"
+			toolStatuses[i].emoji = "✗"
 			errorMsg := fmt.Sprintf("%s: %v", tool, err)
 			installErrors = append(installErrors, errorMsg)
 			o.PrintError("%s: %v", tool, err)
 		} else {
+			toolStatuses[i].status = "done"
+			toolStatuses[i].emoji = "✓"
 			successCount++
 		}
+
+		// Print final dashboard state
+		printInstallDashboard(groupName, toolStatuses, i+1, len(tools))
 	}
 
 	return reportGroupInstallationResults(groupName, successCount, len(tools), installErrors)
+}
+
+// printInstallDashboard displays the current installation progress
+func printInstallDashboard(groupName string, statuses []toolStatus, current, total int) {
+	var content strings.Builder
+	content.WriteString("\n")
+
+	// Show each tool with its status
+	for i, status := range statuses {
+		var statusText string
+		switch status.status {
+		case "done":
+			statusText = fmt.Sprintf("%-20s %s %-15s", status.name, status.emoji, "Installed")
+		case "failed":
+			statusText = fmt.Sprintf("%-20s %s %-15s", status.name, status.emoji, "Failed")
+		case "installing":
+			statusText = fmt.Sprintf("%-20s %s %-15s", status.name, status.emoji, "Installing...")
+		default:
+			statusText = fmt.Sprintf("%-20s %s %-15s", status.name, status.emoji, "Pending")
+		}
+
+		content.WriteString(fmt.Sprintf("  [%d/%d] %s\n", i+1, total, statusText))
+	}
+
+	content.WriteString("\n")
+
+	// Calculate progress
+	percentage := (current * 100) / total
+	barWidth := 30
+	filled := (percentage * barWidth) / 100
+	bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
+
+	content.WriteString(fmt.Sprintf("  Progress: %d%% %s\n", percentage, bar))
+
+	// Clear previous output and print new dashboard
+	fmt.Print("\033[2J\033[H") // Clear screen and move cursor to top
+	fmt.Println(charm.RenderBox(fmt.Sprintf("Installing '%s' group (%d tools)", groupName, total), content.String(), "#00D9FF"))
 }
 
 // installIndividualApp installs a single application using unified installation logic
