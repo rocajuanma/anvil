@@ -31,6 +31,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 )
 
@@ -251,10 +252,13 @@ func (ci *ConcurrentInstaller) installSingleTool(ctx context.Context, tool strin
 
 	// Handle special cases for specific tools
 	if tool == "zsh" {
-		ci.output.PrintInfo("Worker %d: Running post-install script for %s...", workerID, tool)
+		spinner := charm.NewLineSpinner(fmt.Sprintf("Worker %d: Installing Oh My Zsh", workerID))
+		spinner.Start()
 		ohMyZshScript := `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended`
 		if err := ci.runPostInstallScript(ohMyZshScript); err != nil {
-			ci.output.PrintWarning("Worker %d: Failed to run post-install script for %s: %v", workerID, tool, err)
+			spinner.Warning(fmt.Sprintf("Worker %d: Oh My Zsh setup skipped", workerID))
+		} else {
+			spinner.Success(fmt.Sprintf("Worker %d: Oh My Zsh installed", workerID))
 		}
 	}
 

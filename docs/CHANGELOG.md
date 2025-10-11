@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Template-based Configuration System** 📄 - New sample configuration file system for dynamic settings generation
 - **Centralized Version Management** 🔄 - New version package for improved version control
 - **Enhanced Configuration Helpers** ⚙️ - New utility functions for cleaner configuration management
+- **Charm UI Integration** 🎨 - Modern terminal UI with spinners, progress bars, and styled output
+  - New `internal/terminal/charm` package with lipgloss integration for enhanced visual experience
+  - Animated spinners for long-running operations across all commands
+  - Live-updating dashboards for installation progress and health checks
+  - Card-based stage visualization for initialization process
+  - Enhanced configuration display with boxed YAML views
+  - Branded welcome banner and version information
 
 ### Changed
 - **Settings Structure Refactor** 🏗️ - Major refactoring of configuration system with template-based generation
@@ -21,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation Updates** 📚 - Updated all references to use new group naming
 - **Simplified Settings Structure** 🧹 - Removed `tool_configs` and `optional_tools` from default settings
   - **Breaking Change**: Removed complex tool configuration system in favor of direct handling
+- **Enhanced Command UI** 🎭 - Improved visual feedback across all commands with real-time progress indicators
 
 ### Fixed
 - **Code Duplication Elimination** 🔧 - Removed duplicate code patterns across configuration functions

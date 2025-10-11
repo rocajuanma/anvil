@@ -26,6 +26,7 @@ import (
 	"github.com/rocajuanma/anvil/cmd/install"
 	"github.com/rocajuanma/anvil/cmd/update"
 	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -38,15 +39,11 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check if version flag was used
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
-			fmt.Printf("Anvil %s\n", version.GetVersion())
+			showVersionInfo()
 			return
 		}
 
-		fmt.Println(constants.AnvilLogo)
-		fmt.Println()
-		fmt.Println("🔥 One CLI to rule them all.")
-		fmt.Println()
-		fmt.Println("Use 'anvil --help' for usage information.")
+		showWelcomeBanner()
 	},
 }
 
@@ -57,6 +54,44 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+// showWelcomeBanner displays the enhanced welcome banner
+func showWelcomeBanner() {
+	fmt.Println(constants.AnvilLogo)
+	fmt.Println()
+	
+	// Main banner
+	bannerContent := fmt.Sprintf("\n              🔥 One CLI to rule them all\n                     Version %s\n\n", version.GetVersion())
+	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D"))
+	
+	// Quick start guide
+	quickStart := `
+  anvil init              Initialize your environment
+  anvil install dev       Install development tools
+  anvil doctor            Check system health
+  anvil config pull       Sync your dotfiles
+`
+	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF"))
+	
+	// Footer
+	fmt.Println()
+	fmt.Println("  📚 Documentation: anvil --help")
+	fmt.Println("  🐛 Issues: https://github.com/rocajuanma/anvil/issues")
+	fmt.Println()
+}
+
+// showVersionInfo displays the version information with branding
+func showVersionInfo() {
+	versionContent := fmt.Sprintf(`
+                    ANVIL CLI
+                    Version %s
+
+              🔥 One CLI to rule them all
+
+`, version.GetVersion())
+	
+	fmt.Println(charm.RenderBox("", versionContent, "#FF6B9D"))
 }
 
 func init() {

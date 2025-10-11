@@ -17,6 +17,7 @@ package main
 
 import (
 	"github.com/rocajuanma/anvil/cmd"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/version"
 )
 
@@ -24,6 +25,12 @@ import (
 var appVersion = "dev-local"
 
 func main() {
+	// Initialize enhanced Charm output
+	charm.InitCharmOutput()
+
+	// Set application version
 	version.SetVersion(appVersion)
+
+	// Execute the CLI
 	cmd.Execute()
 }

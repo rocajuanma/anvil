@@ -26,6 +26,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/utils"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
@@ -108,15 +109,22 @@ func syncAnvilSettings(dryRun bool) error {
 
 	o.PrintInfo("")
 
+	spinner := charm.NewDotsSpinner("Syncing anvil settings")
+	spinner.Start()
+
 	// Archive existing settings
 	if err := archiveExistingConfig("anvil-settings", currentSettingsPath, archivePath); err != nil {
+		spinner.Error("Failed to archive existing settings")
 		return fmt.Errorf("failed to archive existing settings: %w", err)
 	}
 
 	// Copy new settings
 	if err := utils.CopyFileSimple(tempSettingsPath, currentSettingsPath); err != nil {
+		spinner.Error("Failed to copy new settings")
 		return fmt.Errorf("failed to copy new settings: %w", err)
 	}
+
+	spinner.Success("Settings synced successfully")
 
 	// Report success
 	o.PrintSuccess("✅ Settings synced successfully")
@@ -193,15 +201,22 @@ func syncAppConfig(appName string, dryRun bool) error {
 
 	output.PrintInfo("")
 
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Syncing %s configuration", appName))
+	spinner.Start()
+
 	// Archive existing config
 	if err := archiveExistingConfig(fmt.Sprintf("%s-configs", appName), localConfigPath, archivePath); err != nil {
+		spinner.Error("Failed to archive existing config")
 		return fmt.Errorf("failed to archive existing config: %w", err)
 	}
 
 	// Copy new config
 	if err := copyDirRecursive(tempAppPath, localConfigPath); err != nil {
+		spinner.Error("Failed to copy new config")
 		return fmt.Errorf("failed to copy new config: %w", err)
 	}
+
+	spinner.Success(fmt.Sprintf("%s configuration synced successfully", strings.Title(appName)))
 
 	// Report success
 	output.PrintSuccess(fmt.Sprintf("✅ %s configs synced successfully", strings.Title(appName)))
