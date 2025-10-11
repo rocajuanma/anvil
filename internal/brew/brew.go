@@ -24,6 +24,7 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/system"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 )
 
@@ -116,12 +117,14 @@ func InstallBrew() error {
 		return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
 	}
 
-	getOutputHandler().PrintInfo("Installing Homebrew...")
+	spinner := charm.NewDotsSpinner("Installing Homebrew (this may take a few minutes)")
+	spinner.Start()
 
 	installCmd := `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 	result, err := system.RunCommand("/bin/bash", "-c", installCmd)
 	if err != nil {
+		spinner.Error("Failed to install Homebrew")
 		return fmt.Errorf("failed to run brew installation command: %w", err)
 	}
 
@@ -130,13 +133,16 @@ func InstallBrew() error {
 		if result.Output != "" {
 			errorDetails = fmt.Sprintf("%s\nOutput: %s", result.Error, strings.TrimSpace(result.Output))
 		}
+		spinner.Error("Homebrew installation failed")
 		return fmt.Errorf("brew installation failed: %s", errorDetails)
 	}
 
 	if !IsBrewInstalledAtPath() {
+		spinner.Error("Homebrew installation failed")
 		return fmt.Errorf("Homebrew installation completed but brew command not accessible")
 	}
 
+	spinner.Success("Homebrew installed successfully")
 	return nil
 }
 
@@ -146,17 +152,21 @@ func UpdateBrew() error {
 		return fmt.Errorf("Homebrew is not installed")
 	}
 
-	getOutputHandler().PrintInfo("Updating Homebrew...")
+	spinner := charm.NewDotsSpinner("Updating Homebrew")
+	spinner.Start()
 
 	result, err := system.RunCommand(constants.BrewCommand, constants.BrewUpdate)
 	if err != nil {
+		spinner.Error("Failed to update Homebrew")
 		return fmt.Errorf("failed to run brew update: %w", err)
 	}
 
 	if !result.Success {
+		spinner.Error("Homebrew update failed")
 		return fmt.Errorf("brew update failed: %s", result.Error)
 	}
 
+	spinner.Success("Homebrew updated successfully")
 	return nil
 }
 
@@ -525,7 +535,8 @@ func InstallPackageDirectly(packageName string) error {
 	}
 
 	isCask := isCaskPackage(packageName)
-	getOutputHandler().PrintInfo("Installing %s...", packageName)
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Installing %s", packageName))
+	spinner.Start()
 
 	var result *system.CommandResult
 	var err error
@@ -537,15 +548,17 @@ func InstallPackageDirectly(packageName string) error {
 	}
 
 	if err != nil {
+		spinner.Error(fmt.Sprintf("Failed to install %s", packageName))
 		return fmt.Errorf("failed to run brew install: %w", err)
 	}
 
 	if !result.Success {
 		if strings.Contains(result.Error, "already an App at") {
-			getOutputHandler().PrintAlreadyAvailable("%s is already installed manually, skipping Homebrew installation", packageName)
+			spinner.Warning(fmt.Sprintf("%s already installed manually", packageName))
 			return nil
 		}
 
+		spinner.Error(fmt.Sprintf("Failed to install %s", packageName))
 		if result.Output != "" {
 			return fmt.Errorf("brew: %s", strings.TrimSpace(result.Output))
 		} else {
@@ -553,5 +566,6 @@ func InstallPackageDirectly(packageName string) error {
 		}
 	}
 
+	spinner.Success(fmt.Sprintf("%s installed successfully", packageName))
 	return nil
 }

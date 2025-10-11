@@ -24,6 +24,7 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/validators"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
@@ -147,9 +148,19 @@ func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose b
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	o.PrintStage(fmt.Sprintf("Executing %s check...", checkName))
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %s check", checkName))
+	spinner.Start()
 
 	result := engine.RunCheckWithProgress(ctx, checkName, verbose)
+
+	if result.Status == validators.PASS {
+		spinner.Success(fmt.Sprintf("%s check passed", checkName))
+	} else if result.Status == validators.WARN {
+		spinner.Warning(fmt.Sprintf("%s check completed with warnings", checkName))
+	} else {
+		spinner.Error(fmt.Sprintf("%s check failed", checkName))
+	}
+
 	displayResults([]*validators.ValidationResult{result}, verbose)
 
 	if result.Status == validators.FAIL {
@@ -174,9 +185,31 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 		return errors.NewValidationError(constants.OpDoctor, category, fmt.Errorf("category not found"))
 	}
 
-	o.PrintStage(fmt.Sprintf("Executing %d checks in %s category...", len(categoryValidators), category))
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %d checks in %s category", len(categoryValidators), category))
+	spinner.Start()
 
 	results := engine.RunCategoryWithProgress(ctx, category, verbose)
+
+	// Count status
+	passed, warned, failed := 0, 0, 0
+	for _, result := range results {
+		if result.Status == validators.PASS {
+			passed++
+		} else if result.Status == validators.WARN {
+			warned++
+		} else if result.Status == validators.FAIL {
+			failed++
+		}
+	}
+
+	if failed > 0 {
+		spinner.Error(fmt.Sprintf("%s checks completed: %d failed", category, failed))
+	} else if warned > 0 {
+		spinner.Warning(fmt.Sprintf("%s checks completed: %d warnings", category, warned))
+	} else {
+		spinner.Success(fmt.Sprintf("All %s checks passed", category))
+	}
+
 	displayResults(results, verbose)
 	printSummary(results)
 
@@ -203,9 +236,31 @@ func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
 	allValidators := engine.GetAllValidators()
 	totalChecks := len(allValidators)
 
-	o.PrintStage(fmt.Sprintf("Executing %d health checks...", totalChecks))
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %d health checks", totalChecks))
+	spinner.Start()
 
 	results := engine.RunAllWithProgress(ctx, verbose)
+
+	// Count status
+	passed, warned, failed := 0, 0, 0
+	for _, result := range results {
+		if result.Status == validators.PASS {
+			passed++
+		} else if result.Status == validators.WARN {
+			warned++
+		} else if result.Status == validators.FAIL {
+			failed++
+		}
+	}
+
+	if failed > 0 {
+		spinner.Error(fmt.Sprintf("Health check completed: %d passed, %d failed", passed, failed))
+	} else if warned > 0 {
+		spinner.Warning(fmt.Sprintf("Health check completed: %d passed, %d warnings", passed, warned))
+	} else {
+		spinner.Success(fmt.Sprintf("All %d health checks passed!", totalChecks))
+	}
+
 	displayResults(results, verbose)
 	printSummary(results)
 
@@ -242,17 +297,21 @@ func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
 	}
 
 	// Attempt fix
-	o.PrintInfo("Attempting to fix %s...", checkName)
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Attempting to fix %s", checkName))
+	spinner.Start()
 	if err := engine.FixCheck(ctx, checkName); err != nil {
+		spinner.Error("Fix failed")
 		o.PrintError("Fix failed: %v", err)
 		return err
 	}
 
-	o.PrintSuccess("Fix completed!")
+	spinner.Success("Fix completed!")
 
 	// Verify fix
-	o.PrintInfo("Verifying fix...")
+	spinner = charm.NewLineSpinner("Verifying fix")
+	spinner.Start()
 	newResult := engine.RunCheck(ctx, checkName)
+	spinner.Success("Verification complete")
 	displayResults([]*validators.ValidationResult{newResult}, false)
 
 	if newResult.Status == validators.PASS {
@@ -378,38 +437,102 @@ func displayCategory(category string, results []*validators.ValidationResult, ve
 
 // printSummary shows overall health check summary
 func printSummary(results []*validators.ValidationResult) {
-	passed, warned, failed, skipped := validators.GetSummary(results)
+	passed, warned, failed, _ := validators.GetSummary(results)
 	total := len(results)
 
-	o := getOutputHandler()
-	o.PrintHeader("Health Check Summary")
-	o.PrintInfo("Total checks: %d", total)
-	o.PrintInfo("✅ Passed: %d", passed)
-	if warned > 0 {
-		o.PrintInfo("⚠️  Warnings: %d", warned)
-	}
-	if failed > 0 {
-		o.PrintInfo("❌ Failed: %d", failed)
-	}
-	if skipped > 0 {
-		o.PrintInfo("⏭️  Skipped: %d", skipped)
+	// Get category breakdown
+	categoryStats := getCategoryBreakdown(results)
+
+	// Build dashboard box
+	var dashboardContent strings.Builder
+	dashboardContent.WriteString("\n")
+
+	// Category status bars
+	for _, category := range []string{"environment", "dependencies", "configuration", "connectivity"} {
+		if stats, exists := categoryStats[category]; exists {
+			status := getCategoryStatus(stats.passed, stats.warned, stats.failed, stats.skipped)
+
+			// Calculate percentage for progress bar
+			percentage := 0
+			if stats.total > 0 {
+				percentage = (stats.passed * 100) / stats.total
+			}
+
+			// Create progress bar (20 chars wide)
+			barWidth := 20
+			filled := (percentage * barWidth) / 100
+			bar := strings.Repeat("━", filled) + strings.Repeat("━", barWidth-filled)
+
+			categoryTitle := strings.Title(category)
+			dashboardContent.WriteString(fmt.Sprintf("  %s %-15s %s  %d/%d passing\n",
+				status, categoryTitle, bar, stats.passed, stats.total))
+		}
 	}
 
-	// Show fixable issues
+	dashboardContent.WriteString("\n")
+	dashboardContent.WriteString(fmt.Sprintf("  Overall: %d/%d checks passing\n", passed, total))
+	dashboardContent.WriteString("\n")
+
+	// Render dashboard box
+	fmt.Println(charm.RenderBox("ANVIL HEALTH CHECK", dashboardContent.String(), "#00D9FF"))
+
+	// Show fixable issues in a separate box
 	fixableIssues := validators.GetFixableIssues(results)
 	if len(fixableIssues) > 0 {
-		o.PrintInfo("\n🔧 %d issues can be auto-fixed", len(fixableIssues))
-		o.PrintInfo("Run 'anvil doctor --fix' to automatically fix them")
+		var fixContent strings.Builder
+		for _, issue := range fixableIssues {
+			fixContent.WriteString(fmt.Sprintf("  • %s\n", issue.Name))
+		}
+		fixContent.WriteString("\n")
+		fixContent.WriteString("  Run 'anvil doctor --fix' to automatically fix them\n")
+
+		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700"))
 	}
 
-	// Overall status
+	// Overall status badge
+	fmt.Println()
 	if failed > 0 {
-		o.PrintWarning("❌ Overall status: Issues found")
+		fmt.Println("  " + charm.RenderBadge("ISSUES FOUND", "#FF5F87"))
 	} else if warned > 0 {
-		o.PrintInfo("⚠️  Overall status: Minor issues")
+		fmt.Println("  " + charm.RenderBadge("MINOR ISSUES", "#FFD700"))
 	} else {
-		o.PrintSuccess("✅ Overall status: Healthy")
+		fmt.Println("  " + charm.RenderBadge("HEALTHY", "#00FF87"))
 	}
+	fmt.Println()
+}
+
+// categoryStats holds statistics for a category
+type categoryStats struct {
+	passed  int
+	warned  int
+	failed  int
+	skipped int
+	total   int
+}
+
+// getCategoryBreakdown returns stats broken down by category
+func getCategoryBreakdown(results []*validators.ValidationResult) map[string]categoryStats {
+	breakdown := make(map[string]categoryStats)
+
+	for _, result := range results {
+		stats := breakdown[result.Category]
+		stats.total++
+
+		switch result.Status {
+		case validators.PASS:
+			stats.passed++
+		case validators.WARN:
+			stats.warned++
+		case validators.FAIL:
+			stats.failed++
+		case validators.SKIP:
+			stats.skipped++
+		}
+
+		breakdown[result.Category] = stats
+	}
+
+	return breakdown
 }
 
 // Helper functions for display formatting

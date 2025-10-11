@@ -26,6 +26,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
@@ -48,11 +49,17 @@ var ShowCmd = &cobra.Command{
 	},
 }
 
+func init() {
+	ShowCmd.Flags().Bool("raw", false, "Show raw file content without formatting")
+}
+
 // runShowCommand executes the configuration show process
 func runShowCommand(cmd *cobra.Command, args []string) error {
+	raw, _ := cmd.Flags().GetBool("raw")
+
 	// If no arguments provided, show the anvil settings.yaml
 	if len(args) == 0 {
-		return showAnvilSettings()
+		return showAnvilSettings(raw)
 	}
 
 	// Show specific pulled configuration directory
@@ -61,12 +68,10 @@ func runShowCommand(cmd *cobra.Command, args []string) error {
 }
 
 // showAnvilSettings displays the main anvil settings.yaml file
-func showAnvilSettings() error {
+func showAnvilSettings(raw bool) error {
 	o := getOutputHandler()
-	o.PrintHeader("Anvil Settings Configuration")
 
 	// Stage 1: Locate settings file
-	o.PrintStage("Locating anvil settings file...")
 	configPath := config.GetConfigPath()
 
 	// Check if settings file exists
@@ -75,19 +80,46 @@ func showAnvilSettings() error {
 		o.PrintInfo("💡 Run 'anvil init' to create the initial settings file")
 		return fmt.Errorf("settings file not found")
 	}
-	o.PrintSuccess("Settings file located")
-
-	o.PrintInfo("File: %s\n", configPath)
 
 	// Stage 2: Read and display content
-	o.PrintStage("Reading configuration content...")
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		return errors.NewFileSystemError(constants.OpShow, "read-settings", err)
 	}
-	o.PrintSuccess("Configuration content loaded\n")
 
-	fmt.Print(string(content))
+	// If raw flag is set, show raw content
+	if raw {
+		o.PrintHeader("Anvil Settings Configuration (Raw)")
+		o.PrintInfo("File: %s\n", configPath)
+		fmt.Print(string(content))
+		return nil
+	}
+
+	// Enhanced view with box
+	var boxContent strings.Builder
+	boxContent.WriteString("\n")
+	boxContent.WriteString(fmt.Sprintf("  Location: %s\n", configPath))
+	boxContent.WriteString("\n")
+
+	// Parse and display YAML content with slight indentation
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		if line != "" {
+			boxContent.WriteString("  " + line + "\n")
+		}
+	}
+
+	boxContent.WriteString("\n")
+
+	// Display in box
+	fmt.Println(charm.RenderBox("anvil settings.yaml", boxContent.String(), "#00FF87"))
+
+	// Footer with helpful info
+	fmt.Println()
+	fmt.Println("  💡 Edit with: nano " + configPath)
+	fmt.Println("  💡 Show raw: anvil config show --raw")
+	fmt.Println()
+
 	return nil
 }
 

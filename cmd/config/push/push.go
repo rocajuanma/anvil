@@ -25,6 +25,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
 	"github.com/rocajuanma/anvil/internal/github"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
@@ -342,8 +343,11 @@ func pushAnvilConfig() error {
 
 	// Stage 4: Push configuration
 	output.PrintStage("Pushing configuration to repository...")
+	spinner := charm.NewDotsSpinner("Pushing anvil configuration to repository")
+	spinner.Start()
 	result, err := githubClient.PushAnvilConfig(ctx, settingsPath)
 	if err != nil {
+		spinner.Error("Push failed")
 		// Clean up any staged changes in case of error
 		if cleanupErr := githubClient.CleanupStagedChanges(ctx); cleanupErr != nil {
 			output.PrintWarning("Failed to cleanup staged changes after error: %v", cleanupErr)
@@ -353,10 +357,11 @@ func pushAnvilConfig() error {
 
 	// Check if no changes were detected (result will be nil)
 	if result == nil {
-		// Configuration was up-to-date, success message already shown in PushAnvilConfig
+		spinner.Success("Configuration up-to-date (no changes)")
 		return nil
 	}
 
+	spinner.Success("Configuration pushed successfully")
 	displaySuccessMessage("anvil", result, diffSummary, anvilConfig)
 
 	return nil

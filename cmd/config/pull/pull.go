@@ -28,6 +28,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
 	"github.com/rocajuanma/anvil/internal/github"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/utils"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
@@ -104,8 +105,11 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	defer cancel()
 
 	// Stage 2: Repository validation
-	output.PrintStage("Validating repository access and branch configuration...")
+	output.PrintStage("Stage 2: Validating repository access...")
+	spinner := charm.NewCircleSpinner("Validating repository access and branch configuration")
+	spinner.Start()
 	if err := githubClient.ValidateRepository(ctx); err != nil {
+		spinner.Error("Repository validation failed")
 		// Provide additional context for repository validation errors
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
 			output.PrintError("\n" + err.Error())
@@ -117,11 +121,14 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("failed to validate repository: %w", err)
 	}
-	output.PrintSuccess("Repository access confirmed")
+	spinner.Success("Repository access confirmed")
 
 	// Stage 3: Clone/update repository
-	output.PrintStage("Cloning or updating repository...")
+	output.PrintStage("Stage 3: Cloning or updating repository...")
+	spinner = charm.NewDotsSpinner("Cloning or updating repository")
+	spinner.Start()
 	if err := githubClient.CloneRepository(ctx); err != nil {
+		spinner.Error("Clone failed")
 		// Provide additional context for clone errors
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
 			output.PrintError("\n" + err.Error())
@@ -134,11 +141,14 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
-	output.PrintSuccess("Repository ready")
+	spinner.Success("Repository ready")
 
 	// Stage 4: Pull latest changes
-	output.PrintStage("Pulling latest changes...")
+	output.PrintStage("Stage 4: Pulling latest changes...")
+	spinner = charm.NewDotsSpinner("Pulling latest changes")
+	spinner.Start()
 	if err := githubClient.PullChanges(ctx); err != nil {
+		spinner.Error("Pull failed")
 		// Provide additional context for branch configuration errors during pull
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
 			output.PrintError("\n" + err.Error())
@@ -151,15 +161,18 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("failed to pull changes: %w", err)
 	}
-	output.PrintSuccess("Repository updated")
+	spinner.Success("Repository updated")
 
 	// Stage 5: Copy configuration directory
-	output.PrintStage("Copying configuration directory...")
+	output.PrintStage("Stage 5: Copying configuration directory...")
+	spinner = charm.NewDotsSpinner(fmt.Sprintf("Copying %s directory", targetDir))
+	spinner.Start()
 	tempDir, err := copyDirectoryToTemp(cfg, targetDir)
 	if err != nil {
+		spinner.Error("Failed to copy configuration")
 		return err
 	}
-	output.PrintSuccess("Configuration directory copied to temp location")
+	spinner.Success("Configuration directory copied to temp location")
 
 	// Display completion message
 	output.PrintHeader("Pull Complete!")
