@@ -365,7 +365,7 @@ func GetAvailableGroups() (map[string][]string, error) {
 
 // GetBuiltInGroups returns the list of built-in group names
 func GetBuiltInGroups() []string {
-	return []string{"dev", "new-laptop"}
+	return []string{"dev", "essentials"}
 }
 
 // IsBuiltInGroup checks if a group name is a built-in group

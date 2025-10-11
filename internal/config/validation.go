@@ -230,9 +230,9 @@ func (cv *ConfigValidator) validateGroups(groups *AnvilGroups) error {
 		return fmt.Errorf("dev group is required and cannot be empty")
 	}
 
-	newLaptopGroup, newLaptopExists := groupsMap["new-laptop"]
+	newLaptopGroup, newLaptopExists := groupsMap["essentials"]
 	if !newLaptopExists || len(newLaptopGroup) == 0 {
-		return fmt.Errorf("new-laptop group is required and cannot be empty")
+		return fmt.Errorf("essentials group is required and cannot be empty")
 	}
 
 	// Validate all groups
