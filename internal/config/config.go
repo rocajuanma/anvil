@@ -35,6 +35,8 @@ var (
 	configCacheMutex sync.RWMutex
 )
 
+var builtInGroups = []string{"dev", "essentials"}
+
 // ToolInstallConfig represents configuration for tool-specific installation
 type ToolInstallConfig struct {
 	PostInstallScript string            `yaml:"post_install_script,omitempty"`
@@ -128,24 +130,21 @@ func withConfigAndSave(fn func(*AnvilConfig) error) error {
 	return SaveConfig(config)
 }
 
-// ensureGroupsMap ensures the Groups map is initialized
-func ensureGroupsMap(config *AnvilConfig) {
-	if config.Groups == nil {
-		config.Groups = make(map[string][]string)
-	}
-}
-
-// ensureConfigsMap ensures the Configs map is initialized
-func ensureConfigsMap(config *AnvilConfig) {
-	if config.Configs == nil {
-		config.Configs = make(map[string]string)
-	}
-}
-
-// ensureToolConfigsMap ensures the ToolConfigs.Tools map is initialized
-func ensureToolConfigsMap(config *AnvilConfig) {
-	if config.ToolConfigs.Tools == nil {
-		config.ToolConfigs.Tools = make(map[string]ToolInstallConfig)
+// ensureMap initializes a map if it's nil
+func ensureMap(m interface{}) {
+	switch v := m.(type) {
+	case *map[string][]string:
+		if *v == nil {
+			*v = make(map[string][]string)
+		}
+	case *map[string]string:
+		if *v == nil {
+			*v = make(map[string]string)
+		}
+	case *map[string]ToolInstallConfig:
+		if *v == nil {
+			*v = make(map[string]ToolInstallConfig)
+		}
 	}
 }
 
@@ -365,12 +364,11 @@ func GetAvailableGroups() (map[string][]string, error) {
 
 // GetBuiltInGroups returns the list of built-in group names
 func GetBuiltInGroups() []string {
-	return []string{"dev", "essentials"}
+	return builtInGroups
 }
 
 // IsBuiltInGroup checks if a group name is a built-in group
 func IsBuiltInGroup(groupName string) bool {
-	builtInGroups := GetBuiltInGroups()
 	for _, group := range builtInGroups {
 		if group == groupName {
 			return true
@@ -382,7 +380,7 @@ func IsBuiltInGroup(groupName string) bool {
 // AddCustomGroup adds a new custom group
 func AddCustomGroup(name string, tools []string) error {
 	return withConfigAndSave(func(config *AnvilConfig) error {
-		ensureGroupsMap(config)
+		ensureMap(&config.Groups)
 		config.Groups[name] = tools
 		return nil
 	})
@@ -404,20 +402,16 @@ func UpdateGroupTools(groupName string, tools []string) error {
 // AddAppToGroup adds an app to a group, creating the group if it doesn't exist
 func AddAppToGroup(groupName string, appName string) error {
 	return withConfigAndSave(func(config *AnvilConfig) error {
-		ensureGroupsMap(config)
+		ensureMap(&config.Groups)
 
-		// Check if the group exists
 		if tools, exists := config.Groups[groupName]; exists {
-			// Check if app is already in the group to avoid duplicates
 			for _, tool := range tools {
 				if tool == appName {
-					return nil // App already in group, no need to add
+					return nil
 				}
 			}
-			// Add app to existing group
 			config.Groups[groupName] = append(tools, appName)
 		} else {
-			// Create new group with the app
 			config.Groups[groupName] = []string{appName}
 		}
 		return nil
@@ -517,7 +511,7 @@ func getDefaultToolConfig() *ToolInstallConfig {
 // SetToolConfig sets the configuration for a specific tool
 func SetToolConfig(toolName string, toolConfig ToolInstallConfig) error {
 	return withConfigAndSave(func(config *AnvilConfig) error {
-		ensureToolConfigsMap(config)
+		ensureMap(&config.ToolConfigs.Tools)
 		config.ToolConfigs.Tools[toolName] = toolConfig
 		return nil
 	})
@@ -525,119 +519,64 @@ func SetToolConfig(toolName string, toolConfig ToolInstallConfig) error {
 
 // AddInstalledApp adds an app to the installed apps list if it's not already there
 func AddInstalledApp(appName string) error {
-	config, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Check if app is already in the installed apps list
-	for _, installedApp := range config.Tools.InstalledApps {
-		if installedApp == appName {
-			return nil // App already tracked, no need to add
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		// Check if already tracked anywhere
+		if tracked, _ := IsAppTracked(appName); tracked {
+			return nil
 		}
-	}
 
-	// Check if app is already in required or optional tools to avoid duplicates
-	for _, tool := range config.Tools.RequiredTools {
-		if tool == appName {
-			return nil // App is a required tool, no need to track separately
-		}
-	}
-
-	for _, tool := range config.Tools.OptionalTools {
-		if tool == appName {
-			return nil // App is an optional tool, no need to track separately
-		}
-	}
-
-	// Check if app is in any group to avoid duplicates
-	groups, err := GetAvailableGroups()
-	if err == nil {
-		for _, tools := range groups {
-			for _, tool := range tools {
-				if tool == appName {
-					return nil // App is in a group, no need to track separately
-				}
-			}
-		}
-	}
-
-	// Add the app to the installed apps list
-	config.Tools.InstalledApps = append(config.Tools.InstalledApps, appName)
-
-	// Save the updated configuration
-	return SaveConfig(config)
+		config.Tools.InstalledApps = append(config.Tools.InstalledApps, appName)
+		return nil
+	})
 }
 
 // GetInstalledApps returns the list of individually installed applications
 func GetInstalledApps() ([]string, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	return config.Tools.InstalledApps, nil
+	var apps []string
+	err := withConfig(func(config *AnvilConfig) error {
+		apps = config.Tools.InstalledApps
+		return nil
+	})
+	return apps, err
 }
 
 // IsAppTracked checks if an app is being tracked in any category
 func IsAppTracked(appName string) (bool, error) {
-	config, err := getCachedConfig()
-	if err != nil {
-		return false, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Check in required tools
-	for _, tool := range config.Tools.RequiredTools {
-		if tool == appName {
-			return true, nil
+	var found bool
+	err := withConfig(func(config *AnvilConfig) error {
+		// Check in all tool lists
+		for _, tool := range append(append(config.Tools.RequiredTools, config.Tools.OptionalTools...), config.Tools.InstalledApps...) {
+			if tool == appName {
+				found = true
+				return nil
+			}
 		}
-	}
 
-	// Check in optional tools
-	for _, tool := range config.Tools.OptionalTools {
-		if tool == appName {
-			return true, nil
-		}
-	}
-
-	// Check in installed apps
-	for _, app := range config.Tools.InstalledApps {
-		if app == appName {
-			return true, nil
-		}
-	}
-
-	// Check in groups
-	groups, err := GetAvailableGroups()
-	if err == nil {
-		for _, tools := range groups {
+		// Check in groups
+		for _, tools := range config.Groups {
 			for _, tool := range tools {
 				if tool == appName {
-					return true, nil
+					found = true
+					return nil
 				}
 			}
 		}
-	}
-
-	return false, nil
+		return nil
+	})
+	return found, err
 }
 
 // RemoveInstalledApp removes an app from the installed apps list
 func RemoveInstalledApp(appName string) error {
-	config, err := getCachedConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Find and remove the app from the installed apps list
-	for i, app := range config.Tools.InstalledApps {
-		if app == appName {
-			config.Tools.InstalledApps = append(config.Tools.InstalledApps[:i], config.Tools.InstalledApps[i+1:]...)
-			return SaveConfig(config)
+	return withConfigAndSave(func(config *AnvilConfig) error {
+		for i, app := range config.Tools.InstalledApps {
+			if app == appName {
+				config.Tools.InstalledApps = append(config.Tools.InstalledApps[:i], config.Tools.InstalledApps[i+1:]...)
+				break
+			}
 		}
-	}
-
-	return nil // App not found, nothing to remove
+		return nil
+	})
 }
 
 // LocationSource represents where an app config location was found
@@ -717,7 +656,7 @@ func ResolveAppLocation(appName string) (string, LocationSource, error) {
 // SetAppConfigPath sets the config path for an app in the configs section
 func SetAppConfigPath(appName, configPath string) error {
 	return withConfigAndSave(func(config *AnvilConfig) error {
-		ensureConfigsMap(config)
+		ensureMap(&config.Configs)
 		config.Configs[appName] = configPath
 		return nil
 	})

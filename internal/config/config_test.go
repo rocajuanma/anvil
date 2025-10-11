@@ -420,6 +420,11 @@ func TestHelperFunctions(t *testing.T) {
 	if len(builtInGroups) != len(expectedGroups) {
 		t.Errorf("Expected %d built-in groups, got %d", len(expectedGroups), len(builtInGroups))
 	}
+	for i, expected := range expectedGroups {
+		if builtInGroups[i] != expected {
+			t.Errorf("Expected built-in group '%s' at index %d, got '%s'", expected, i, builtInGroups[i])
+		}
+	}
 
 	// Test IsBuiltInGroup
 	if !IsBuiltInGroup("dev") {
