@@ -442,40 +442,40 @@ func printSummary(results []*validators.ValidationResult) {
 
 	// Get category breakdown
 	categoryStats := getCategoryBreakdown(results)
-	
+
 	// Build dashboard box
 	var dashboardContent strings.Builder
 	dashboardContent.WriteString("\n")
-	
+
 	// Category status bars
 	for _, category := range []string{"environment", "dependencies", "configuration", "connectivity"} {
 		if stats, exists := categoryStats[category]; exists {
 			status := getCategoryStatus(stats.passed, stats.warned, stats.failed, stats.skipped)
-			
+
 			// Calculate percentage for progress bar
 			percentage := 0
 			if stats.total > 0 {
 				percentage = (stats.passed * 100) / stats.total
 			}
-			
+
 			// Create progress bar (20 chars wide)
 			barWidth := 20
 			filled := (percentage * barWidth) / 100
 			bar := strings.Repeat("━", filled) + strings.Repeat("━", barWidth-filled)
-			
+
 			categoryTitle := strings.Title(category)
-			dashboardContent.WriteString(fmt.Sprintf("  %s %-15s %s  %d/%d passing\n", 
+			dashboardContent.WriteString(fmt.Sprintf("  %s %-15s %s  %d/%d passing\n",
 				status, categoryTitle, bar, stats.passed, stats.total))
 		}
 	}
-	
+
 	dashboardContent.WriteString("\n")
 	dashboardContent.WriteString(fmt.Sprintf("  Overall: %d/%d checks passing\n", passed, total))
 	dashboardContent.WriteString("\n")
-	
+
 	// Render dashboard box
 	fmt.Println(charm.RenderBox("ANVIL HEALTH CHECK", dashboardContent.String(), "#00D9FF"))
-	
+
 	// Show fixable issues in a separate box
 	fixableIssues := validators.GetFixableIssues(results)
 	if len(fixableIssues) > 0 {
@@ -485,7 +485,7 @@ func printSummary(results []*validators.ValidationResult) {
 		}
 		fixContent.WriteString("\n")
 		fixContent.WriteString("  Run 'anvil doctor --fix' to automatically fix them\n")
-		
+
 		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700"))
 	}
 
@@ -513,11 +513,11 @@ type categoryStats struct {
 // getCategoryBreakdown returns stats broken down by category
 func getCategoryBreakdown(results []*validators.ValidationResult) map[string]categoryStats {
 	breakdown := make(map[string]categoryStats)
-	
+
 	for _, result := range results {
 		stats := breakdown[result.Category]
 		stats.total++
-		
+
 		switch result.Status {
 		case validators.PASS:
 			stats.passed++
@@ -528,10 +528,10 @@ func getCategoryBreakdown(results []*validators.ValidationResult) map[string]cat
 		case validators.SKIP:
 			stats.skipped++
 		}
-		
+
 		breakdown[result.Category] = stats
 	}
-	
+
 	return breakdown
 }
 
