@@ -30,6 +30,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -65,13 +66,16 @@ func runImportCommand(cmd *cobra.Command, importPath string) error {
 	output.PrintHeader("Import Groups from File")
 
 	// Stage 1: Fetch and validate source file
-	output.PrintStage("Fetching source file...")
+	output.PrintStage("Stage 1: Fetching source file...")
+	spinner := charm.NewCircleSpinner("Fetching import file")
+	spinner.Start()
 	tempFile, cleanup, err := fetchFile(importPath)
 	if err != nil {
+		spinner.Error("Failed to fetch source file")
 		return errors.NewFileSystemError(constants.OpConfig, "fetch-file", err)
 	}
 	defer cleanup()
-	output.PrintSuccess("Source file fetched successfully")
+	spinner.Success("Source file fetched successfully")
 
 	// Stage 2: Parse and validate import data
 	output.PrintStage("Parsing import file...")
@@ -118,11 +122,14 @@ func runImportCommand(cmd *cobra.Command, importPath string) error {
 	}
 
 	// Stage 7: Import groups
-	output.PrintStage("Importing groups...")
+	output.PrintStage("Stage 7: Importing groups...")
+	spinner = charm.NewDotsSpinner(fmt.Sprintf("Importing %d groups", len(importData.Groups)))
+	spinner.Start()
 	if err := importGroups(currentConfig, importData.Groups); err != nil {
+		spinner.Error("Failed to import groups")
 		return errors.NewConfigurationError(constants.OpConfig, "import-groups", err)
 	}
-	output.PrintSuccess("Groups imported successfully")
+	spinner.Success(fmt.Sprintf("Successfully imported %d groups", len(importData.Groups)))
 
 	output.PrintInfo("\n✨ Import completed! %d groups have been added to your configuration.", len(importData.Groups))
 	return nil
