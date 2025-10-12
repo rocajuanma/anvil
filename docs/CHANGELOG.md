@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Tree View Display** 🌳 - New `--tree` flag for `install` command displays all applications in hierarchical tree format with color coding for groups and apps
+- **Enhanced Doctor Help** 📋 - Doctor command help now lists all 11 health checks with descriptions, categories, and auto-fix indicators for better discoverability
 
 ### Changed
 - **RenderBox Width** 🎨 - Adjusted box width from 120 to 100 characters for better terminal compatibility
