@@ -69,13 +69,13 @@ var InstallCmd = &cobra.Command{
 
 			// Choose rendering based on flag
 			var content string
-			var title string
+			var title = "Available Applications"
 			if treeFlag {
 				content = renderTreeView(groups, builtInGroupNames, customGroupNames, installedApps)
-				title = "Available Applications (Tree View)"
+				title = fmt.Sprintf("%s (Tree View)", title)
 			} else {
 				content = renderListView(groups, builtInGroupNames, customGroupNames, installedApps)
-				title = "Available Applications"
+				title = fmt.Sprintf("%s (List View)", title)
 			}
 
 			// Display in box
