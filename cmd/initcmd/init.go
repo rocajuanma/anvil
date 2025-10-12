@@ -57,7 +57,7 @@ func runInitCommand() error {
 	fmt.Println()
 
 	// Display initialization banner
-	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", "", "#00D9FF"))
+	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", "", "#00D9FF", true))
 	fmt.Println()
 
 	// Ensure we're running on macOS
@@ -235,7 +235,7 @@ func printInitStages(stages []struct {
 	fmt.Print("\033[2J\033[H")
 	fmt.Println(constants.AnvilLogo)
 	fmt.Println()
-	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", content.String(), "#00D9FF"))
+	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", content.String(), "#00D9FF", true))
 	fmt.Println()
 }
 

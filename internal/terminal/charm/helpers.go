@@ -24,7 +24,7 @@ import (
 )
 
 // RenderBox creates a beautiful box around content with max width of 120 chars
-func RenderBox(title, content string, borderColor string) string {
+func RenderBox(title, content string, borderColor string, centered bool) string {
 	if borderColor == "" {
 		borderColor = "#FF6B9D"
 	}
@@ -36,6 +36,10 @@ func RenderBox(title, content string, borderColor string) string {
 		MarginTop(1).
 		MarginBottom(1).
 		Width(120)
+
+	if centered {
+		boxStyle = boxStyle.Align(lipgloss.Center)
+	}
 
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).

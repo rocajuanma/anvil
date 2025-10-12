@@ -590,7 +590,7 @@ func printSummary(results []*validators.ValidationResult) {
 	dashboardContent.WriteString("\n")
 
 	// Render dashboard box
-	fmt.Println(charm.RenderBox("Summary", dashboardContent.String(), "#00D9FF"))
+	fmt.Println(charm.RenderBox("Summary", dashboardContent.String(), "#00D9FF", true))
 
 	// Show fixable issues in a separate box
 	fixableIssues := validators.GetFixableIssues(results)
@@ -602,7 +602,7 @@ func printSummary(results []*validators.ValidationResult) {
 		fixContent.WriteString("\n")
 		fixContent.WriteString("  Run 'anvil doctor --fix' to automatically fix them\n")
 
-		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700"))
+		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700", true))
 	}
 
 	// Overall status badge

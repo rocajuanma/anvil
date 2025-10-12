@@ -61,16 +61,16 @@ func Execute() {
 func showWelcomeBanner() {
 	// Main banner
 	bannerContent := fmt.Sprintf("%s\n🔥 One CLI to rule them all 🔥\n\tversion: %s\n\n", constants.AnvilLogo, version.GetVersion())
-	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D"))
+	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D", true))
 
 	// Quick start guide
 	quickStart := `
-  anvil init              		Initialize your environment
-  anvil install essentials      Install essential tools
-  anvil doctor            		Check system health
-  anvil config pull       		Sync your dotfiles
+  anvil init              			Initialize your environment
+  anvil install essentials			Install essential tools
+  anvil doctor            			Check system health
+  anvil config pull       			Sync your dotfiles
 `
-	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF"))
+	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF", true))
 
 	// Footer
 	fmt.Println()
@@ -82,7 +82,7 @@ func showWelcomeBanner() {
 // showVersionInfo displays the version information with branding
 func showVersionInfo() {
 	versionContent := fmt.Sprintf("v%s", version.GetVersion())
-	fmt.Println(charm.RenderBox("ANVIL CLI", versionContent, "#FF6B9D"))
+	fmt.Println(charm.RenderBox("ANVIL CLI", versionContent, "#FF6B9D", true))
 }
 
 func init() {
@@ -130,18 +130,18 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 		}
 		formattedDesc.WriteString("\n")
 
-		fmt.Println(charm.RenderBox("About", formattedDesc.String(), "#FF6B9D"))
+		fmt.Println(charm.RenderBox("About", formattedDesc.String(), "#FF6B9D", false))
 	} else if cmd.Short != "" {
-		fmt.Println(charm.RenderBox("", "\n  "+cmd.Short+"\n", "#FF6B9D"))
+		fmt.Println(charm.RenderBox("", "\n  "+cmd.Short+"\n", "#FF6B9D", false))
 	}
 
 	// Usage section
 	if cmd.HasAvailableSubCommands() {
 		usageContent := fmt.Sprintf("\n  %s [command] [flags]\n", cmd.Name())
-		fmt.Println(charm.RenderBox("Usage", usageContent, "#00D9FF"))
+		fmt.Println(charm.RenderBox("Usage", usageContent, "#00D9FF", false))
 	} else {
 		usageContent := fmt.Sprintf("\n  %s\n", cmd.UseLine())
-		fmt.Println(charm.RenderBox("Usage", usageContent, "#00D9FF"))
+		fmt.Println(charm.RenderBox("Usage", usageContent, "#00D9FF", false))
 	}
 
 	// Available Commands
@@ -156,7 +156,7 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 		}
 		commandsContent.WriteString("\n")
 
-		fmt.Println(charm.RenderBox("Available Commands", commandsContent.String(), "#00FF87"))
+		fmt.Println(charm.RenderBox("Available Commands", commandsContent.String(), "#00FF87", false))
 	}
 
 	// Flags
@@ -165,7 +165,7 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 		flagsContent.WriteString("\n")
 		flagsContent.WriteString(cmd.Flags().FlagUsages())
 
-		fmt.Println(charm.RenderBox("Flags", flagsContent.String(), "#FFD700"))
+		fmt.Println(charm.RenderBox("Flags", flagsContent.String(), "#FFD700", false))
 	}
 
 	// Footer
