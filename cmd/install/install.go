@@ -466,7 +466,6 @@ func checkGitConfiguration() error {
 // listAvailableGroups shows all available groups and their tools
 func listAvailableGroups() error {
 	o := getOutputHandler()
-	o.PrintHeader("Available Groups")
 
 	groups, err := config.GetAvailableGroups()
 	if err != nil {
@@ -476,29 +475,36 @@ func listAvailableGroups() error {
 
 	builtInGroups := config.GetBuiltInGroups()
 
+	var content strings.Builder
+	content.WriteString("\n")
+
 	// Show built-in groups first
-	o.PrintInfo("Built-in Groups:")
+	content.WriteString(fmt.Sprintf("%s%sBuilt-in Groups%s\n\n", palantir.ColorBold, palantir.ColorCyan, palantir.ColorReset))
 	for _, groupName := range builtInGroups {
 		if tools, exists := groups[groupName]; exists {
-			o.PrintInfo("  • %s: %s", groupName, strings.Join(tools, ", "))
+			groupNameStyled := fmt.Sprintf("%s%s%s", palantir.ColorBold, groupName, palantir.ColorReset)
+			content.WriteString(fmt.Sprintf("  %s 📁  %s\n", groupNameStyled, strings.Join(tools, ", ")))
 		}
 	}
 
 	// Show custom groups
-	hasCustomGroups := false
+	var customGroupNames []string
 	for groupName := range groups {
 		if !config.IsBuiltInGroup(groupName) {
-			if !hasCustomGroups {
-				o.PrintInfo("\nCustom Groups:")
-				hasCustomGroups = true
-			}
-			o.PrintInfo("  • %s: %s", groupName, strings.Join(groups[groupName], ", "))
+			customGroupNames = append(customGroupNames, groupName)
 		}
 	}
 
-	if !hasCustomGroups {
-		o.PrintInfo("\nNo custom groups defined.")
-		o.PrintInfo("Add custom groups in ~/%s/%s", constants.AnvilConfigDir, constants.ConfigFileName)
+	if len(customGroupNames) > 0 {
+		sort.Strings(customGroupNames)
+		content.WriteString(fmt.Sprintf("\n%s%sCustom Groups%s\n\n", palantir.ColorBold, palantir.ColorCyan, palantir.ColorReset))
+		for _, groupName := range customGroupNames {
+			groupNameStyled := fmt.Sprintf("%s%s%s", palantir.ColorBold, groupName, palantir.ColorReset)
+			content.WriteString(fmt.Sprintf("  %s 📁  %s\n", groupNameStyled, strings.Join(groups[groupName], ", ")))
+		}
+	} else {
+		content.WriteString(fmt.Sprintf("\n%s%sNo custom groups defined%s\n", palantir.ColorBold, palantir.ColorYellow, palantir.ColorReset))
+		content.WriteString(fmt.Sprintf("  Add custom groups in ~/%s/%s\n", constants.AnvilConfigDir, constants.ConfigFileName))
 	}
 
 	// Show individually tracked installed apps
@@ -506,22 +512,20 @@ func listAvailableGroups() error {
 	if err != nil {
 		o.PrintWarning("Failed to load installed apps: %v", err)
 	} else if len(installedApps) > 0 {
-		o.PrintInfo("\nIndividually Tracked Apps:")
-		o.PrintInfo("  %s", strings.Join(installedApps, ", "))
-	} else {
-		o.PrintInfo("\nNo individually tracked apps.")
-		o.PrintInfo("Apps installed via 'anvil install [app-name]' will be tracked automatically.")
+		sort.Strings(installedApps)
+		content.WriteString(fmt.Sprintf("\n%s%sIndividually Tracked Apps%s\n\n", palantir.ColorBold, palantir.ColorCyan, palantir.ColorReset))
+		for _, app := range installedApps {
+			content.WriteString(fmt.Sprintf("  %s%s%s\n", palantir.ColorGreen, app, palantir.ColorReset))
+		}
 	}
 
-	o.PrintInfo("\nUsage:")
-	o.PrintInfo("  anvil install [group-name] - Install all apps in a group")
-	o.PrintInfo("  anvil install [app-name]   - Install individual app (auto-tracked)")
-	o.PrintInfo("  anvil install [app-name] --group-name [group] - Install app and add to group")
-	o.PrintInfo("Examples:")
-	o.PrintInfo("  anvil install dev")
-	o.PrintInfo("  anvil install 1password")
-	o.PrintInfo("  anvil install firefox --group-name essentials")
-	o.PrintInfo("  anvil install final-cut --group-name editing")
+	content.WriteString("\n")
+
+	// Display content in a box
+	fmt.Println(charm.RenderBox("Available Applications", content.String(), "#00D9FF", false))
+
+	// Print usage footer
+	printUsageFooter()
 
 	return nil
 }
@@ -537,7 +541,6 @@ type AppTreeNode struct {
 // listAvailableGroupsTree shows all available groups and their tools in a tree format
 func listAvailableGroupsTree() error {
 	o := getOutputHandler()
-	o.PrintHeader("Available Applications (Tree View)")
 
 	groups, err := config.GetAvailableGroups()
 	if err != nil {
@@ -629,26 +632,23 @@ func listAvailableGroupsTree() error {
 		root.Children = append(root.Children, individualNode)
 	}
 
-	// Print the tree
-	fmt.Println()
-	printAppTreeNode(root, "", true, true)
-	fmt.Println()
+	// Build tree content
+	var content strings.Builder
+	content.WriteString("\n")
+	printAppTreeNodeToBuilder(&content, root, "", true, true)
+	content.WriteString("\n")
 
-	// Footer with helpful info
-	o.PrintInfo("Usage:")
-	o.PrintInfo("  anvil install [group-name]                        Install all apps in a group")
-	o.PrintInfo("  anvil install [app-name]                          Install individual app (auto-tracked)")
-	o.PrintInfo("  anvil install [app-name] --group-name [group]     Install app and add to group")
-	o.PrintInfo("\nExamples:")
-	o.PrintInfo("  anvil install dev")
-	o.PrintInfo("  anvil install 1password")
-	o.PrintInfo("  anvil install firefox --group-name essentials")
+	// Display content in a box
+	fmt.Println(charm.RenderBox("Available Applications (Tree View)", content.String(), "#00D9FF", false))
+
+	// Print usage footer
+	printUsageFooter()
 
 	return nil
 }
 
-// printAppTreeNode prints an app tree node with ASCII art and colors
-func printAppTreeNode(node *AppTreeNode, prefix string, isLast bool, isRoot bool) {
+// printAppTreeNodeToBuilder writes an app tree node to a string builder with ASCII art and colors
+func printAppTreeNodeToBuilder(builder *strings.Builder, node *AppTreeNode, prefix string, isLast bool, isRoot bool) {
 	if !isRoot {
 		// Choose the appropriate tree character
 		var treeChar string
@@ -671,11 +671,11 @@ func printAppTreeNode(node *AppTreeNode, prefix string, isLast bool, isRoot bool
 			coloredName = fmt.Sprintf("%s%s%s", palantir.ColorGreen, node.Name, palantir.ColorReset)
 		}
 
-		// Print the current node
-		fmt.Printf("%s%s%s\n", prefix, treeChar, coloredName)
+		// Write the current node
+		builder.WriteString(fmt.Sprintf("%s%s%s\n", prefix, treeChar, coloredName))
 	}
 
-	// Print apps within a group
+	// Write apps within a group
 	if node.IsGroup && len(node.Apps) > 0 {
 		for i, app := range node.Apps {
 			isAppLast := i == len(node.Apps)-1
@@ -697,11 +697,11 @@ func printAppTreeNode(node *AppTreeNode, prefix string, isLast bool, isRoot bool
 
 			// Color individual apps in green
 			coloredApp := fmt.Sprintf("%s%s%s", palantir.ColorGreen, app, palantir.ColorReset)
-			fmt.Printf("%s%s%s\n", appPrefix, appTreeChar, coloredApp)
+			builder.WriteString(fmt.Sprintf("%s%s%s\n", appPrefix, appTreeChar, coloredApp))
 		}
 	}
 
-	// Print children
+	// Write children
 	if node.Children != nil {
 		for i, child := range node.Children {
 			isChildLast := i == len(node.Children)-1
@@ -718,9 +718,24 @@ func printAppTreeNode(node *AppTreeNode, prefix string, isLast bool, isRoot bool
 				}
 			}
 
-			printAppTreeNode(child, childPrefix, isChildLast, false)
+			printAppTreeNodeToBuilder(builder, child, childPrefix, isChildLast, false)
 		}
 	}
+}
+
+// printUsageFooter prints the common usage and examples footer for install commands
+func printUsageFooter() {
+	fmt.Println()
+	fmt.Println(charm.RenderKeyValue("Usage:", ""))
+	fmt.Printf("  %sanvil install [group-name]%s                        Install all apps in a group\n", palantir.ColorBold, palantir.ColorReset)
+	fmt.Printf("  %sanvil install [app-name]%s                          Install individual app (auto-tracked)\n", palantir.ColorBold, palantir.ColorReset)
+	fmt.Printf("  %sanvil install [app-name] --group-name [group]%s     Install app and add to group\n", palantir.ColorBold, palantir.ColorReset)
+	fmt.Println()
+	fmt.Println(charm.RenderKeyValue("Examples:", ""))
+	fmt.Printf("  %sanvil install dev%s\n", palantir.ColorGreen, palantir.ColorReset)
+	fmt.Printf("  %sanvil install 1password%s\n", palantir.ColorGreen, palantir.ColorReset)
+	fmt.Printf("  %sanvil install firefox --group-name essentials%s\n", palantir.ColorGreen, palantir.ColorReset)
+	fmt.Println()
 }
 
 func init() {
