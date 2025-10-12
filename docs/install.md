@@ -69,6 +69,17 @@ See all available groups and tracked apps:
 anvil install --list
 ```
 
+View applications in a visual tree format:
+
+```bash
+anvil install --tree
+```
+
+The tree format displays groups and applications hierarchically with color coding:
+- **Built-in Groups** - Pre-configured groups included with Anvil
+- **Custom Groups** - Your user-defined groups
+- **Individually Tracked Apps** - Apps installed outside of groups
+
 ### Preview Mode
 
 Preview installations before execution:
@@ -190,8 +201,11 @@ anvil install safari --group-name browsers
 ### Custom Workflow
 
 ```bash
-# Preview what would be installed
+# Preview what would be installed (list format)
 anvil install --list
+
+# View in hierarchical tree format
+anvil install --tree
 
 # Install custom group
 anvil install frontend
