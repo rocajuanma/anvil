@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Tree View Display** 🌳 - New `--tree` flag for `install` command displays all applications in hierarchical tree format with color coding for groups and apps
 
 ### Changed
 - **RenderBox Width** 🎨 - Adjusted box width from 120 to 100 characters for better terminal compatibility
