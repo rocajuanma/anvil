@@ -9,13 +9,13 @@ The doctor command performs systematic validation across four key areas with **l
 ### 🏷️ **Categories** (groups of related checks)
 
 - **environment** - Verify anvil initialization and directory structure (3 checks)
-- **dependencies** - Check required tools and Homebrew installation (3 checks)
+- **dependencies** - Check required tools and Homebrew installation (2 checks)
 - **configuration** - Validate git and GitHub settings (3 checks)
 - **connectivity** - Test GitHub access and repository connections (3 checks)
 
 ### 🔍 **Specific Checks** (individual validators)
 
-Run `anvil doctor --list` to see all 12 available individual checks like `git-config`, `homebrew`, `github-access`, etc.
+Run `anvil doctor --list` to see all 11 available individual checks like `git-config`, `homebrew`, `github-auth`, etc.
 
 ## Key Features
 
@@ -42,7 +42,7 @@ Run `anvil doctor --list` to see all 12 available individual checks like `git-co
 ### Basic Commands
 
 ```bash
-# Run all health checks (12 total) with real-time progress
+# Run all health checks (11 total) with real-time progress
 anvil doctor
 
 # List available categories and checks with explanations
@@ -50,14 +50,14 @@ anvil doctor --list
 
 # Run all checks in a category with progress feedback
 anvil doctor environment        # 3 environment checks
-anvil doctor dependencies       # 3 dependency checks
+anvil doctor dependencies       # 2 dependency checks
 anvil doctor configuration      # 3 configuration checks
 anvil doctor connectivity       # 3 connectivity checks
 
 # Run a specific individual check with detailed feedback
 anvil doctor git-config
 anvil doctor homebrew
-anvil doctor github-access
+anvil doctor github-auth
 
 # Show detailed output with descriptions and step-by-step results
 anvil doctor --verbose
@@ -81,8 +81,8 @@ anvil doctor homebrew --fix
 
 **Categories** are groups of related checks that test a particular area:
 
-- When you run `anvil doctor environment`, it runs 3 checks: `init-run`, `settings-file`, and `directory-structure`
-- When you run `anvil doctor dependencies`, it runs 3 checks: `homebrew`, `required-tools`, and `optional-tools`
+- When you run `anvil doctor environment`, it runs 3 checks: `anvil-init`, `settings-valid`, and `directory-structure`
+- When you run `anvil doctor dependencies`, it runs 2 checks: `homebrew` and `required-tools`
 
 **Specific checks** are individual validators that test one particular thing:
 
@@ -97,33 +97,32 @@ Use categories when you want to check an entire area, and use specific checks wh
 
 | Check                 | Description                                     | Auto-Fix |
 | --------------------- | ----------------------------------------------- | -------- |
-| `init-run`            | Verify anvil initialization has been completed  | ❌       |
-| `settings-file`       | Validate settings.yaml file exists and is valid | ✅       |
-| `directory-structure` | Verify anvil directory structure is correct     | ✅       |
+| `anvil-init`          | Verify anvil initialization has been completed  | ❌       |
+| `settings-valid`      | Validate settings.yaml structure and content    | ❌       |
+| `directory-structure` | Check ~/.anvil directory structure              | ❌       |
 
 ### Dependencies Checks
 
-| Check            | Description                                 | Auto-Fix |
-| ---------------- | ------------------------------------------- | -------- |
-| `homebrew`       | Verify Homebrew is installed and functional | ✅       |
-| `required-tools` | Check all required tools are installed      | ✅       |
-| `optional-tools` | Check status of optional tools              | ❌       |
+| Check            | Description                                         | Auto-Fix |
+| ---------------- | --------------------------------------------------- | -------- |
+| `homebrew`       | Verify Homebrew installation and updates            | ✅       |
+| `required-tools` | Check git and curl are installed                    | ❌       |
 
 ### Configuration Checks
 
-| Check           | Description                                 | Auto-Fix |
-| --------------- | ------------------------------------------- | -------- |
-| `git-config`    | Verify git configuration is properly set    | ❌       |
-| `github-config` | Verify GitHub configuration is properly set | ❌       |
-| `sync-config`   | Verify sync configuration is valid          | ❌       |
+| Check           | Description                                  | Auto-Fix |
+| --------------- | -------------------------------------------- | -------- |
+| `git-config`    | Validate git user.name and user.email        | ✅       |
+| `github-config` | Verify GitHub repository configuration       | ❌       |
+| `sync-config`   | Check config sync settings (not implemented) | ❌       |
 
 ### Connectivity Checks
 
-| Check               | Description                                           | Auto-Fix |
-| ------------------- | ----------------------------------------------------- | -------- |
-| `github-access`     | Verify GitHub API access and authentication           | ❌       |
-| `repository-access` | Verify configured repository exists and is accessible | ❌       |
-| `git-connectivity`  | Verify git operations are functional                  | ❌       |
+| Check             | Description                              | Auto-Fix |
+| ----------------- | ---------------------------------------- | -------- |
+| `github-auth`     | Test GitHub authentication and access    | ❌       |
+| `github-repo`     | Verify repository accessibility          | ❌       |
+| `git-operations`  | Test git clone and pull operations       | ❌       |
 
 ## Check Results
 
