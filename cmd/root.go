@@ -58,22 +58,19 @@ func Execute() {
 
 // showWelcomeBanner displays the enhanced welcome banner
 func showWelcomeBanner() {
-	fmt.Println(constants.AnvilLogo)
-	fmt.Println()
-	
 	// Main banner
-	bannerContent := fmt.Sprintf("\n              🔥 One CLI to rule them all\n                     Version %s\n\n", version.GetVersion())
+	bannerContent := fmt.Sprintf("%s\n🔥 One CLI to rule them all 🔥\n\tversion: %s\n\n", constants.AnvilLogo, version.GetVersion())
 	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D"))
-	
+
 	// Quick start guide
 	quickStart := `
-  anvil init              Initialize your environment
-  anvil install dev       Install development tools
-  anvil doctor            Check system health
-  anvil config pull       Sync your dotfiles
+  anvil init              		Initialize your environment
+  anvil install essentials      Install essential tools
+  anvil doctor            		Check system health
+  anvil config pull       		Sync your dotfiles
 `
 	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF"))
-	
+
 	// Footer
 	fmt.Println()
 	fmt.Println("  📚 Documentation: anvil --help")
@@ -83,15 +80,8 @@ func showWelcomeBanner() {
 
 // showVersionInfo displays the version information with branding
 func showVersionInfo() {
-	versionContent := fmt.Sprintf(`
-                    ANVIL CLI
-                    Version %s
-
-              🔥 One CLI to rule them all
-
-`, version.GetVersion())
-	
-	fmt.Println(charm.RenderBox("", versionContent, "#FF6B9D"))
+	versionContent := fmt.Sprintf("v%s", version.GetVersion())
+	fmt.Println(charm.RenderBox("ANVIL CLI", versionContent, "#FF6B9D"))
 }
 
 func init() {
