@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [2.1.0] - 2025-10-11
+
+### Added
 - **Template-based Configuration System** 📄 - New sample configuration file system for dynamic settings generation
 - **Centralized Version Management** 🔄 - New version package for improved version control
 - **Enhanced Configuration Helpers** ⚙️ - New utility functions for cleaner configuration management
