@@ -70,7 +70,7 @@ func showWelcomeBanner() {
   anvil doctor            			Check system health
   anvil config pull       			Sync your dotfiles
 `
-	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF", true))
+	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF", false))
 
 	// Footer
 	fmt.Println()
