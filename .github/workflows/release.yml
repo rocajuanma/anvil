@@ -39,16 +39,16 @@ jobs:
         mkdir -p dist
         
         # Build for macOS Intel (amd64)
-        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-darwin-amd64 main.go
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" -o dist/anvil-darwin-amd64 main.go
         
         # Build for macOS Apple Silicon (arm64)
-        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-darwin-arm64 main.go
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" -o dist/anvil-darwin-arm64 main.go
         
         # Build for Linux amd64 (optional - for developers using Linux)
-        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-linux-amd64 main.go
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" -o dist/anvil-linux-amd64 main.go
         
         # Build for Linux arm64 (optional)
-        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o dist/anvil-linux-arm64 main.go
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" -o dist/anvil-linux-arm64 main.go
 
     - name: Generate checksums
       run: |
