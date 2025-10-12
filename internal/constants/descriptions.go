@@ -55,12 +55,36 @@ Safely applies configs with automatic backup of existing files.`
 
 const DOCTOR_COMMAND_LONG_DESCRIPTION = `Run health checks to validate your anvil environment.
 
+Health Check Categories:
+
+ENVIRONMENT (3 checks)
+  • anvil-init       - Verify anvil initialization is complete
+  • settings-valid   - Validate settings.yaml structure and content
+  • directory-structure - Check ~/.anvil directory structure
+
+DEPENDENCIES (2 checks)
+  • homebrew         - Verify Homebrew installation and updates (auto-fixable)
+  • required-tools   - Check git and curl are installed
+
+CONFIGURATION (3 checks)
+  • git-config       - Validate git user.name and user.email (auto-fixable)
+  • github-config    - Verify GitHub repository configuration
+  • sync-config      - Check config sync settings (not yet implemented)
+
+CONNECTIVITY (3 checks)
+  • github-auth      - Test GitHub authentication and access
+  • github-repo      - Verify repository accessibility
+  • git-operations   - Test git clone and pull operations
+
+Each check can be run independently by name or grouped by category.
+Add --fix flag to auto-fix issues where supported.
+
 Examples:
-  anvil doctor                    # Run all checks
-  anvil doctor environment        # Verify anvil setup and directory structure
-  anvil doctor dependencies       # Check required tools and Homebrew
-  anvil doctor configuration      # Validate git and GitHub settings
-  anvil doctor connectivity       # Run GitHub access checks`
+  anvil doctor                    # Run all 11 checks
+  anvil doctor environment        # Run category (3 checks)
+  anvil doctor git-config         # Run specific check
+  anvil doctor git-config --fix   # Run check and auto-fix
+  anvil doctor --fix              # Run all checks and auto-fix issues`
 
 // Clean command descriptions
 const CLEAN_COMMAND_LONG_DESCRIPTION = `Remove all content inside .anvil directories while preserving settings.yaml.
