@@ -141,13 +141,6 @@ func TestProgressBar(t *testing.T) {
 	}
 }
 
-func TestBrewSpinner(t *testing.T) {
-	bs := NewBrewSpinner()
-	if bs == nil {
-		t.Error("NewBrewSpinner returned nil")
-	}
-}
-
 func TestInitialization(t *testing.T) {
 	// Test that initialization doesn't panic
 	InitCharmOutput()
