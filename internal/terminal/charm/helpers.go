@@ -23,8 +23,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// RenderBox creates a beautiful box around content
-func RenderBox(title, content string, borderColor string) string {
+// RenderBox creates a beautiful box around content with max width of 120 chars
+func RenderBox(title, content string, borderColor string, centered bool) string {
 	if borderColor == "" {
 		borderColor = "#FF6B9D"
 	}
@@ -32,9 +32,14 @@ func RenderBox(title, content string, borderColor string) string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color(borderColor)).
-		Padding(1, 2).
+		Padding(0, 1).
 		MarginTop(1).
-		MarginBottom(1)
+		MarginBottom(1).
+		Width(120)
+
+	if centered {
+		boxStyle = boxStyle.Align(lipgloss.Center)
+	}
 
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).

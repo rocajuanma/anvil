@@ -148,7 +148,7 @@ func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose b
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %s check", checkName))
+	spinner := charm.NewLineSpinner(fmt.Sprintf("Executing %s check", checkName))
 	spinner.Start()
 
 	result := engine.RunCheckWithProgress(ctx, checkName, verbose)
@@ -185,7 +185,7 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 		return errors.NewValidationError(constants.OpDoctor, category, fmt.Errorf("category not found"))
 	}
 
-	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %d checks in %s category", len(categoryValidators), category))
+	spinner := charm.NewLineSpinner(fmt.Sprintf("Executing %d checks in %s category", len(categoryValidators), category))
 	spinner.Start()
 
 	results := engine.RunCategoryWithProgress(ctx, category, verbose)
@@ -223,45 +223,105 @@ func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose
 	return nil
 }
 
+// checkStatus represents the status of an individual health check
+type checkStatus struct {
+	name    string
+	status  string // "pending", "checking", "pass", "warn", "fail"
+	emoji   string
+	message string
+}
+
 // runAllChecks executes all available health checks
 func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
 	o := getOutputHandler()
 	o.PrintHeader("Running Anvil Health Check")
-	o.PrintInfo("🔍 Validating environment, dependencies, configuration, and connectivity...\n")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	// Get all validators to show total count
+	// Get all validators and initialize status tracking
 	allValidators := engine.GetAllValidators()
 	totalChecks := len(allValidators)
 
-	spinner := charm.NewCircleSpinner(fmt.Sprintf("Executing %d health checks", totalChecks))
+	// Group validators by category
+	categories := map[string][]string{
+		"environment":   {},
+		"dependencies":  {},
+		"configuration": {},
+		"connectivity":  {},
+	}
+
+	for _, v := range allValidators {
+		categories[v.Category()] = append(categories[v.Category()], v.Name())
+	}
+
+	// Initialize check statuses
+	checkStatuses := make(map[string]*checkStatus)
+	for _, v := range allValidators {
+		checkStatuses[v.Name()] = &checkStatus{
+			name:   v.Name(),
+			status: "pending",
+			emoji:  "⋯",
+		}
+	}
+
+	// Run checks with a spinner
+	spinner := charm.NewLineSpinner(fmt.Sprintf("Running %d health checks", totalChecks))
 	spinner.Start()
 
-	results := engine.RunAllWithProgress(ctx, verbose)
+	results := engine.RunAll(ctx)
 
-	// Count status
+	// Count results for spinner message
 	passed, warned, failed := 0, 0, 0
 	for _, result := range results {
-		if result.Status == validators.PASS {
+		switch result.Status {
+		case validators.PASS:
 			passed++
-		} else if result.Status == validators.WARN {
+		case validators.WARN:
 			warned++
-		} else if result.Status == validators.FAIL {
+		case validators.FAIL:
 			failed++
 		}
 	}
 
+	// Update spinner based on results
 	if failed > 0 {
-		spinner.Error(fmt.Sprintf("Health check completed: %d passed, %d failed", passed, failed))
+		spinner.Error(fmt.Sprintf("Completed: %d passed, %d failed", passed, failed))
 	} else if warned > 0 {
-		spinner.Warning(fmt.Sprintf("Health check completed: %d passed, %d warnings", passed, warned))
+		spinner.Warning(fmt.Sprintf("Completed: %d passed, %d warnings", passed, warned))
 	} else {
-		spinner.Success(fmt.Sprintf("All %d health checks passed!", totalChecks))
+		spinner.Success(fmt.Sprintf("All %d checks passed!", totalChecks))
 	}
 
-	displayResults(results, verbose)
+	// Update statuses based on results
+	for _, result := range results {
+		if cs, exists := checkStatuses[result.Name]; exists {
+			cs.message = result.Message
+			switch result.Status {
+			case validators.PASS:
+				cs.status = "pass"
+				cs.emoji = "✓"
+			case validators.WARN:
+				cs.status = "warn"
+				cs.emoji = "⚠"
+			case validators.FAIL:
+				cs.status = "fail"
+				cs.emoji = "✗"
+			case validators.SKIP:
+				cs.status = "skip"
+				cs.emoji = "○"
+			}
+		}
+	}
+
+	// Print organized results by category
+	fmt.Println()
+	for _, category := range []string{"environment", "dependencies", "configuration", "connectivity"} {
+		if checkNames, exists := categories[category]; exists && len(checkNames) > 0 {
+			printCategoryResults(category, checkNames, checkStatuses, results, verbose)
+		}
+	}
+
 	printSummary(results)
 
 	return nil
@@ -384,6 +444,62 @@ func runFixAll(engine *validators.DoctorEngine, category string) error {
 	return nil
 }
 
+// printCategoryResults prints results for a single category in a clean format
+func printCategoryResults(category string, checkNames []string, statuses map[string]*checkStatus, results []*validators.ValidationResult, verbose bool) {
+	// Count status for this category
+	passed, warned, failed := 0, 0, 0
+	for _, name := range checkNames {
+		if cs, exists := statuses[name]; exists {
+			switch cs.status {
+			case "pass":
+				passed++
+			case "warn":
+				warned++
+			case "fail":
+				failed++
+			}
+		}
+	}
+
+	categoryStatus := getCategoryStatus(passed, warned, failed, 0)
+	categoryTitle := strings.Title(category)
+
+	// Print category header with emoji
+	fmt.Printf("  %s %s\n", categoryStatus, charm.RenderHighlight(categoryTitle, "#00D9FF"))
+
+	// Print each check result
+	for _, name := range checkNames {
+		if cs, exists := statuses[name]; exists {
+			// Get full result for this check
+			var result *validators.ValidationResult
+			for _, r := range results {
+				if r.Name == name {
+					result = r
+					break
+				}
+			}
+
+			if result != nil {
+				fmt.Printf("    %s %s\n", cs.emoji, result.Message)
+
+				// Show fix hint for failed/warned checks
+				if (result.Status == validators.FAIL || result.Status == validators.WARN) && result.FixHint != "" && !verbose {
+					fmt.Printf("      💡 %s\n", result.FixHint)
+				}
+
+				// Show details in verbose mode
+				if verbose && len(result.Details) > 0 {
+					for _, detail := range result.Details {
+						fmt.Printf("        %s\n", detail)
+					}
+				}
+			}
+		}
+	}
+
+	fmt.Println()
+}
+
 // displayResults shows validation results in a formatted table
 func displayResults(results []*validators.ValidationResult, verbose bool) {
 	categories := validators.FormatResultsTable(results)
@@ -474,7 +590,7 @@ func printSummary(results []*validators.ValidationResult) {
 	dashboardContent.WriteString("\n")
 
 	// Render dashboard box
-	fmt.Println(charm.RenderBox("ANVIL HEALTH CHECK", dashboardContent.String(), "#00D9FF"))
+	fmt.Println(charm.RenderBox("Summary", dashboardContent.String(), "#00D9FF", true))
 
 	// Show fixable issues in a separate box
 	fixableIssues := validators.GetFixableIssues(results)
@@ -486,7 +602,7 @@ func printSummary(results []*validators.ValidationResult) {
 		fixContent.WriteString("\n")
 		fixContent.WriteString("  Run 'anvil doctor --fix' to automatically fix them\n")
 
-		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700"))
+		fmt.Println(charm.RenderBox("🔧 Auto-fixable Issues", fixContent.String(), "#FFD700", true))
 	}
 
 	// Overall status badge

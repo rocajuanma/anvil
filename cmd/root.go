@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rocajuanma/anvil/cmd/clean"
 	"github.com/rocajuanma/anvil/cmd/config"
@@ -58,22 +59,19 @@ func Execute() {
 
 // showWelcomeBanner displays the enhanced welcome banner
 func showWelcomeBanner() {
-	fmt.Println(constants.AnvilLogo)
-	fmt.Println()
-	
 	// Main banner
-	bannerContent := fmt.Sprintf("\n              🔥 One CLI to rule them all\n                     Version %s\n\n", version.GetVersion())
-	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D"))
-	
+	bannerContent := fmt.Sprintf("%s\n🔥 One CLI to rule them all 🔥\n\tversion: %s\n\n", constants.AnvilLogo, version.GetVersion())
+	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D", true))
+
 	// Quick start guide
 	quickStart := `
-  anvil init              Initialize your environment
-  anvil install dev       Install development tools
-  anvil doctor            Check system health
-  anvil config pull       Sync your dotfiles
+  anvil init              			Initialize your environment
+  anvil install essentials			Install essential tools
+  anvil doctor            			Check system health
+  anvil config pull       			Sync your dotfiles
 `
-	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF"))
-	
+	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF", true))
+
 	// Footer
 	fmt.Println()
 	fmt.Println("  📚 Documentation: anvil --help")
@@ -83,15 +81,8 @@ func showWelcomeBanner() {
 
 // showVersionInfo displays the version information with branding
 func showVersionInfo() {
-	versionContent := fmt.Sprintf(`
-                    ANVIL CLI
-                    Version %s
-
-              🔥 One CLI to rule them all
-
-`, version.GetVersion())
-	
-	fmt.Println(charm.RenderBox("", versionContent, "#FF6B9D"))
+	versionContent := fmt.Sprintf("v%s", version.GetVersion())
+	fmt.Println(charm.RenderBox("ANVIL CLI", versionContent, "#FF6B9D", true))
 }
 
 func init() {
@@ -105,4 +96,86 @@ func init() {
 	// Add version flag
 	rootCmd.Flags().BoolP("version", "v", false, "Show version information")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	// Set custom help template
+	rootCmd.SetHelpFunc(customHelpFunc)
+}
+
+// customHelpFunc provides an enhanced help display using Charm UI
+func customHelpFunc(cmd *cobra.Command, args []string) {
+	// Show logo for root command
+	if cmd.Name() == "anvil" {
+		fmt.Println(constants.AnvilLogo)
+		fmt.Println()
+	}
+
+	// Description box - format multiline descriptions with indentation
+	if cmd.Long != "" {
+		// Remove the logo from long description if present (already shown above)
+		description := strings.ReplaceAll(cmd.Long, constants.AnvilLogo, "")
+		description = strings.TrimSpace(description)
+
+		// Split into paragraphs and add indentation
+		var formattedDesc strings.Builder
+		formattedDesc.WriteString("\n")
+		paragraphs := strings.Split(description, "\n\n")
+		for i, para := range paragraphs {
+			lines := strings.Split(para, "\n")
+			for _, line := range lines {
+				formattedDesc.WriteString("  " + strings.TrimSpace(line) + "\n")
+			}
+			if i < len(paragraphs)-1 {
+				formattedDesc.WriteString("\n")
+			}
+		}
+		formattedDesc.WriteString("\n")
+
+		fmt.Println(charm.RenderBox("About", formattedDesc.String(), "#FF6B9D", false))
+	} else if cmd.Short != "" {
+		fmt.Println(charm.RenderBox("", "\n  "+cmd.Short+"\n", "#FF6B9D", false))
+	}
+
+	// Usage section
+	if cmd.HasAvailableSubCommands() {
+		usageContent := fmt.Sprintf("\n  %s [command] [flags]\n", cmd.Name())
+		fmt.Println(charm.RenderBox("Usage", usageContent, "#00D9FF", false))
+	} else {
+		usageContent := fmt.Sprintf("\n  %s\n", cmd.UseLine())
+		fmt.Println(charm.RenderBox("Usage", usageContent, "#00D9FF", false))
+	}
+
+	// Available Commands
+	if cmd.HasAvailableSubCommands() {
+		var commandsContent strings.Builder
+		commandsContent.WriteString("\n")
+
+		for _, subCmd := range cmd.Commands() {
+			if !subCmd.Hidden {
+				commandsContent.WriteString(fmt.Sprintf("  %-12s %s\n", subCmd.Name(), subCmd.Short))
+			}
+		}
+		commandsContent.WriteString("\n")
+
+		fmt.Println(charm.RenderBox("Available Commands", commandsContent.String(), "#00FF87", false))
+	}
+
+	// Flags
+	if cmd.HasAvailableFlags() {
+		var flagsContent strings.Builder
+		flagsContent.WriteString("\n")
+		flagsContent.WriteString(cmd.Flags().FlagUsages())
+
+		fmt.Println(charm.RenderBox("Flags", flagsContent.String(), "#FFD700", false))
+	}
+
+	// Footer
+	fmt.Println()
+	if cmd.HasAvailableSubCommands() {
+		fmt.Println("  💡 Use 'anvil [command] --help' for more information about a command")
+	}
+	if cmd.Name() == "anvil" {
+		fmt.Println("  📚 Documentation: https://github.com/rocajuanma/anvil")
+		fmt.Println("  🐛 Issues: https://github.com/rocajuanma/anvil/issues")
+	}
+	fmt.Println()
 }

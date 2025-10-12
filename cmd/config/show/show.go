@@ -112,7 +112,7 @@ func showAnvilSettings(raw bool) error {
 	boxContent.WriteString("\n")
 
 	// Display in box
-	fmt.Println(charm.RenderBox("anvil settings.yaml", boxContent.String(), "#00FF87"))
+	fmt.Println(charm.RenderBox("anvil settings.yaml", boxContent.String(), "#00FF87", false))
 
 	// Footer with helpful info
 	fmt.Println()

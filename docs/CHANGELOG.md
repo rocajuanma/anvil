@@ -15,9 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `internal/terminal/charm` package with lipgloss integration for enhanced visual experience
   - Animated spinners for long-running operations across all commands
   - Live-updating dashboards for installation progress and health checks
-  - Card-based stage visualization for initialization process
-  - Enhanced configuration display with boxed YAML views
-  - Branded welcome banner and version information
+  - Styled help output with color-coded sections for better readability
+  - Enhanced configuration display with boxed YAML views and `--raw` flag option
+  - Branded welcome banner and styled version information
+  - Progress bars and status badges across all commands
 
 ### Changed
 - **Settings Structure Refactor** 🏗️ - Major refactoring of configuration system with template-based generation
@@ -28,7 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation Updates** 📚 - Updated all references to use new group naming
 - **Simplified Settings Structure** 🧹 - Removed `tool_configs` and `optional_tools` from default settings
   - **Breaking Change**: Removed complex tool configuration system in favor of direct handling
-- **Enhanced Command UI** 🎭 - Improved visual feedback across all commands with real-time progress indicators
+- **Command UI Modernization** 🎭 - All commands now feature enhanced visual feedback and professional styling
+  - `anvil init`: Clean stage-based initialization with real-time spinners
+  - `anvil install`: Live progress dashboard for group installations
+  - `anvil doctor`: Visual health check dashboard with category breakdowns
+  - `anvil config`: Enhanced operations with spinners and formatted output
+  - `anvil --help`: Styled help menus with organized sections and boxes
 
 ### Fixed
 - **Code Duplication Elimination** 🔧 - Removed duplicate code patterns across configuration functions

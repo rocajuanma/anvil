@@ -58,7 +58,7 @@ o.PrintProgress(3, 10, "Installing packages")
 
 #### Boxes
 ```go
-content := charm.RenderBox("Configuration", "All settings valid", "#00FF87")
+content := charm.RenderBox("Configuration", "All settings valid", "#00FF87", false)
 fmt.Println(content)
 ```
 

@@ -277,7 +277,7 @@ func printInstallDashboard(groupName string, statuses []toolStatus, current, tot
 
 	// Clear previous output and print new dashboard
 	fmt.Print("\033[2J\033[H") // Clear screen and move cursor to top
-	fmt.Println(charm.RenderBox(fmt.Sprintf("Installing '%s' group (%d tools)", groupName, total), content.String(), "#00D9FF"))
+	fmt.Println(charm.RenderBox(fmt.Sprintf("Installing '%s' group (%d tools)", groupName, total), content.String(), "#00D9FF", false))
 }
 
 // installIndividualApp installs a single application using unified installation logic
