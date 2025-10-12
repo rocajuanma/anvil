@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **RenderBox Width** 🎨 - Adjusted box width from 120 to 100 characters for better terminal compatibility
 
 ### Fixed
 
