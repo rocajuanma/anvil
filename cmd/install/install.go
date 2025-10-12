@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 
@@ -44,16 +45,26 @@ var InstallCmd = &cobra.Command{
 	Short: "Install development tools and applications dynamically via Homebrew",
 	Long:  constants.INSTALL_COMMAND_LONG_DESCRIPTION,
 	Args: func(cmd *cobra.Command, args []string) error {
-		// Allow no arguments if --list flag is used
+		// Allow no arguments if --list or --tree flag is used
 		listFlag, _ := cmd.Flags().GetBool("list")
-		if listFlag {
+		treeFlag, _ := cmd.Flags().GetBool("tree")
+		if listFlag || treeFlag {
 			return nil
 		}
 		// Otherwise, require exactly one argument
 		return cobra.ExactArgs(1)(cmd, args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// Check for list flag first
+		// Check for tree flag first
+		treeFlag, _ := cmd.Flags().GetBool("tree")
+		if treeFlag {
+			if err := listAvailableGroupsTree(); err != nil {
+				getOutputHandler().PrintError("Failed to display tree: %v", err)
+			}
+			return
+		}
+
+		// Check for list flag
 		listFlag, _ := cmd.Flags().GetBool("list")
 		if listFlag {
 			if err := listAvailableGroups(); err != nil {
@@ -515,10 +526,208 @@ func listAvailableGroups() error {
 	return nil
 }
 
+// AppTreeNode represents a node in the applications tree
+type AppTreeNode struct {
+	Name     string
+	IsGroup  bool
+	Apps     []string
+	Children []*AppTreeNode
+}
+
+// listAvailableGroupsTree shows all available groups and their tools in a tree format
+func listAvailableGroupsTree() error {
+	o := getOutputHandler()
+	o.PrintHeader("Available Applications (Tree View)")
+
+	groups, err := config.GetAvailableGroups()
+	if err != nil {
+		return errors.NewConfigurationError(constants.OpInstall, "list",
+			fmt.Errorf("failed to load groups: %w", err))
+	}
+
+	builtInGroups := config.GetBuiltInGroups()
+
+	// Create root node
+	root := &AppTreeNode{
+		Name:     "Applications",
+		IsGroup:  false,
+		Children: []*AppTreeNode{},
+	}
+
+	// Add built-in groups section
+	if len(builtInGroups) > 0 {
+		builtInNode := &AppTreeNode{
+			Name:     "Built-in Groups",
+			IsGroup:  false,
+			Children: []*AppTreeNode{},
+		}
+
+		for _, groupName := range builtInGroups {
+			if tools, exists := groups[groupName]; exists {
+				groupNode := &AppTreeNode{
+					Name:    groupName,
+					IsGroup: true,
+					Apps:    tools,
+				}
+				builtInNode.Children = append(builtInNode.Children, groupNode)
+			}
+		}
+
+		if len(builtInNode.Children) > 0 {
+			root.Children = append(root.Children, builtInNode)
+		}
+	}
+
+	// Add custom groups section
+	var customGroupNames []string
+	for groupName := range groups {
+		if !config.IsBuiltInGroup(groupName) {
+			customGroupNames = append(customGroupNames, groupName)
+		}
+	}
+
+	if len(customGroupNames) > 0 {
+		sort.Strings(customGroupNames)
+		customNode := &AppTreeNode{
+			Name:     "Custom Groups",
+			IsGroup:  false,
+			Children: []*AppTreeNode{},
+		}
+
+		for _, groupName := range customGroupNames {
+			groupNode := &AppTreeNode{
+				Name:    groupName,
+				IsGroup: true,
+				Apps:    groups[groupName],
+			}
+			customNode.Children = append(customNode.Children, groupNode)
+		}
+
+		root.Children = append(root.Children, customNode)
+	}
+
+	// Add individually tracked apps section
+	installedApps, err := config.GetInstalledApps()
+	if err != nil {
+		o.PrintWarning("Failed to load installed apps: %v", err)
+	} else if len(installedApps) > 0 {
+		sort.Strings(installedApps)
+		individualNode := &AppTreeNode{
+			Name:     "Individually Tracked Apps",
+			IsGroup:  false,
+			Children: []*AppTreeNode{},
+		}
+
+		for _, appName := range installedApps {
+			appNode := &AppTreeNode{
+				Name:    appName,
+				IsGroup: false,
+			}
+			individualNode.Children = append(individualNode.Children, appNode)
+		}
+
+		root.Children = append(root.Children, individualNode)
+	}
+
+	// Print the tree
+	fmt.Println()
+	printAppTreeNode(root, "", true, true)
+	fmt.Println()
+
+	// Footer with helpful info
+	o.PrintInfo("Usage:")
+	o.PrintInfo("  anvil install [group-name]                        Install all apps in a group")
+	o.PrintInfo("  anvil install [app-name]                          Install individual app (auto-tracked)")
+	o.PrintInfo("  anvil install [app-name] --group-name [group]     Install app and add to group")
+	o.PrintInfo("\nExamples:")
+	o.PrintInfo("  anvil install dev")
+	o.PrintInfo("  anvil install 1password")
+	o.PrintInfo("  anvil install firefox --group-name essentials")
+
+	return nil
+}
+
+// printAppTreeNode prints an app tree node with ASCII art and colors
+func printAppTreeNode(node *AppTreeNode, prefix string, isLast bool, isRoot bool) {
+	if !isRoot {
+		// Choose the appropriate tree character
+		var treeChar string
+		if isLast {
+			treeChar = "└── "
+		} else {
+			treeChar = "├── "
+		}
+
+		// Color the output based on node type
+		var coloredName string
+		if node.IsGroup {
+			// Groups are colored in bold blue
+			coloredName = fmt.Sprintf("%s%s%s 📁 %s", palantir.ColorBold, palantir.ColorBlue, node.Name, palantir.ColorReset)
+		} else if len(node.Children) > 0 {
+			// Category headers (Built-in Groups, Custom Groups, etc.) in bold cyan
+			coloredName = fmt.Sprintf("%s%s%s%s", palantir.ColorBold, palantir.ColorCyan, node.Name, palantir.ColorReset)
+		} else {
+			// Individual apps in green
+			coloredName = fmt.Sprintf("%s%s%s", palantir.ColorGreen, node.Name, palantir.ColorReset)
+		}
+
+		// Print the current node
+		fmt.Printf("%s%s%s\n", prefix, treeChar, coloredName)
+	}
+
+	// Print apps within a group
+	if node.IsGroup && len(node.Apps) > 0 {
+		for i, app := range node.Apps {
+			isAppLast := i == len(node.Apps)-1
+
+			// Calculate prefix for app
+			var appPrefix string
+			if isLast {
+				appPrefix = prefix + "    "
+			} else {
+				appPrefix = prefix + "│   "
+			}
+
+			var appTreeChar string
+			if isAppLast {
+				appTreeChar = "└── "
+			} else {
+				appTreeChar = "├── "
+			}
+
+			// Color individual apps in green
+			coloredApp := fmt.Sprintf("%s%s%s", palantir.ColorGreen, app, palantir.ColorReset)
+			fmt.Printf("%s%s%s\n", appPrefix, appTreeChar, coloredApp)
+		}
+	}
+
+	// Print children
+	if node.Children != nil {
+		for i, child := range node.Children {
+			isChildLast := i == len(node.Children)-1
+
+			// Calculate prefix for child
+			var childPrefix string
+			if isRoot {
+				childPrefix = ""
+			} else {
+				if isLast {
+					childPrefix = prefix + "    "
+				} else {
+					childPrefix = prefix + "│   "
+				}
+			}
+
+			printAppTreeNode(child, childPrefix, isChildLast, false)
+		}
+	}
+}
+
 func init() {
 	// Add flags for additional functionality
 	InstallCmd.Flags().Bool("dry-run", false, "Show what would be installed without installing")
 	InstallCmd.Flags().Bool("list", false, "List all available groups")
+	InstallCmd.Flags().Bool("tree", false, "Display all applications in a tree format")
 	InstallCmd.Flags().Bool("update", false, "Update Homebrew before installation")
 	InstallCmd.Flags().String("group-name", "", "Add the installed app to a group (creates group if it doesn't exist)")
 
