@@ -81,8 +81,7 @@ func showWelcomeBanner() {
 
 // showVersionInfo displays the version information with branding
 func showVersionInfo() {
-	versionContent := fmt.Sprintf("v%s", version.GetVersion())
-	fmt.Println(charm.RenderBox("ANVIL CLI", versionContent, "#FF6B9D", true))
+	fmt.Println(charm.RenderBox("ANVIL CLI", version.GetVersion(), "#FF6B9D", true))
 }
 
 func init() {
