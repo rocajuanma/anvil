@@ -55,21 +55,31 @@ var InstallCmd = &cobra.Command{
 		return cobra.ExactArgs(1)(cmd, args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// Check for tree flag first
+		// Check for tree or list flag
 		treeFlag, _ := cmd.Flags().GetBool("tree")
-		if treeFlag {
-			if err := listAvailableGroupsTree(); err != nil {
-				getOutputHandler().PrintError("Failed to display tree: %v", err)
-			}
-			return
-		}
-
-		// Check for list flag
 		listFlag, _ := cmd.Flags().GetBool("list")
-		if listFlag {
-			if err := listAvailableGroups(); err != nil {
-				getOutputHandler().PrintError("Failed to list groups: %v", err)
+
+		if treeFlag || listFlag {
+			// Load and prepare data once
+			groups, builtInGroupNames, customGroupNames, installedApps, err := loadAndPrepareAppData()
+			if err != nil {
+				getOutputHandler().PrintError("Failed to load application data: %v", err)
+				return
 			}
+
+			// Choose rendering based on flag
+			var content string
+			var title string
+			if treeFlag {
+				content = renderTreeView(groups, builtInGroupNames, customGroupNames, installedApps)
+				title = "Available Applications (Tree View)"
+			} else {
+				content = renderListView(groups, builtInGroupNames, customGroupNames, installedApps)
+				title = "Available Applications"
+			}
+
+			// Display in box
+			fmt.Println(charm.RenderBox(title, content, "#00D9FF", false))
 			return
 		}
 
@@ -463,71 +473,92 @@ func checkGitConfiguration() error {
 	return nil
 }
 
-// listAvailableGroups shows all available groups and their tools
-func listAvailableGroups() error {
-	o := getOutputHandler()
-
-	groups, err := config.GetAvailableGroups()
+// loadAndPrepareAppData loads all application data and prepares it for rendering
+func loadAndPrepareAppData() (groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string, err error) {
+	// Load groups from config
+	groups, err = config.GetAvailableGroups()
 	if err != nil {
-		return errors.NewConfigurationError(constants.OpInstall, "list",
+		err = errors.NewConfigurationError(constants.OpInstall, "load-data",
 			fmt.Errorf("failed to load groups: %w", err))
+		return
 	}
 
-	builtInGroups := config.GetBuiltInGroups()
+	// Get built-in group names
+	builtInGroupNames = config.GetBuiltInGroups()
 
-	var content strings.Builder
-	content.WriteString("\n")
-
-	// Show built-in groups first
-	content.WriteString(fmt.Sprintf("%s%sBuilt-in Groups%s\n\n", palantir.ColorBold, palantir.ColorCyan, palantir.ColorReset))
-	for _, groupName := range builtInGroups {
-		if tools, exists := groups[groupName]; exists {
-			groupNameStyled := fmt.Sprintf("%s%s%s", palantir.ColorBold, groupName, palantir.ColorReset)
-			content.WriteString(fmt.Sprintf("  %s 📁  %s\n", groupNameStyled, strings.Join(tools, ", ")))
-		}
-	}
-
-	// Show custom groups
-	var customGroupNames []string
+	// Extract and sort custom group names
 	for groupName := range groups {
 		if !config.IsBuiltInGroup(groupName) {
 			customGroupNames = append(customGroupNames, groupName)
 		}
 	}
+	sort.Strings(customGroupNames)
 
+	// Load and sort installed apps
+	installedApps, err = config.GetInstalledApps()
+	if err != nil {
+		// Don't fail on installed apps error, just log warning
+		getOutputHandler().PrintWarning("Failed to load installed apps: %v", err)
+		installedApps = []string{}
+		err = nil // Reset error since we can continue
+	} else {
+		sort.Strings(installedApps)
+	}
+
+	return
+}
+
+// Color helper functions for consistent formatting
+func colorSectionHeader(text string) string {
+	return fmt.Sprintf("%s%s%s", palantir.ColorBold+palantir.ColorCyan, text, palantir.ColorReset)
+}
+
+func colorBoldText(text string) string {
+	return fmt.Sprintf("%s%s%s", palantir.ColorBold, text, palantir.ColorReset)
+}
+
+func colorAppName(text string) string {
+	return fmt.Sprintf("%s%s%s", palantir.ColorGreen, text, palantir.ColorReset)
+}
+
+func colorGroupNameWithIcon(text string) string {
+	return fmt.Sprintf("%s 📁", colorBoldText(text))
+}
+
+// renderListView renders applications in a flat list format
+func renderListView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+	var content strings.Builder
+	content.WriteString("\n")
+
+	// Show built-in groups first
+	content.WriteString(colorSectionHeader("Built-in Groups") + "\n\n")
+	for _, groupName := range builtInGroupNames {
+		if tools, exists := groups[groupName]; exists {
+			content.WriteString(fmt.Sprintf("  %s  %s\n", colorGroupNameWithIcon(groupName), strings.Join(tools, ", ")))
+		}
+	}
+
+	// Show custom groups
 	if len(customGroupNames) > 0 {
-		sort.Strings(customGroupNames)
-		content.WriteString(fmt.Sprintf("\n%s%sCustom Groups%s\n\n", palantir.ColorBold, palantir.ColorCyan, palantir.ColorReset))
+		content.WriteString("\n" + colorSectionHeader("Custom Groups") + "\n\n")
 		for _, groupName := range customGroupNames {
-			groupNameStyled := fmt.Sprintf("%s%s%s", palantir.ColorBold, groupName, palantir.ColorReset)
-			content.WriteString(fmt.Sprintf("  %s 📁  %s\n", groupNameStyled, strings.Join(groups[groupName], ", ")))
+			content.WriteString(fmt.Sprintf("  %s  %s\n", colorGroupNameWithIcon(groupName), strings.Join(groups[groupName], ", ")))
 		}
 	} else {
-		content.WriteString(fmt.Sprintf("\n%s%sNo custom groups defined%s\n", palantir.ColorBold, palantir.ColorYellow, palantir.ColorReset))
+		content.WriteString(fmt.Sprintf("\n%sNo custom groups defined%s\n", palantir.ColorBold+palantir.ColorYellow, palantir.ColorReset))
 		content.WriteString(fmt.Sprintf("  Add custom groups in ~/%s/%s\n", constants.AnvilConfigDir, constants.ConfigFileName))
 	}
 
 	// Show individually tracked installed apps
-	installedApps, err := config.GetInstalledApps()
-	if err != nil {
-		o.PrintWarning("Failed to load installed apps: %v", err)
-	} else if len(installedApps) > 0 {
-		sort.Strings(installedApps)
-		content.WriteString(fmt.Sprintf("\n%s%sIndividually Tracked Apps%s\n\n", palantir.ColorBold, palantir.ColorCyan, palantir.ColorReset))
+	if len(installedApps) > 0 {
+		content.WriteString("\n" + colorSectionHeader("Individually Tracked Apps") + "\n\n")
 		for _, app := range installedApps {
-			content.WriteString(fmt.Sprintf("  %s%s%s\n", palantir.ColorGreen, app, palantir.ColorReset))
+			content.WriteString(fmt.Sprintf("  %s\n", colorAppName(app)))
 		}
 	}
 
 	content.WriteString("\n")
-
-	// Display content in a box
-	fmt.Println(charm.RenderBox("Available Applications", content.String(), "#00D9FF", false))
-
-	// Print usage footer
-	printUsageFooter()
-
-	return nil
+	return content.String()
 }
 
 // AppTreeNode represents a node in the applications tree
@@ -538,18 +569,8 @@ type AppTreeNode struct {
 	Children []*AppTreeNode
 }
 
-// listAvailableGroupsTree shows all available groups and their tools in a tree format
-func listAvailableGroupsTree() error {
-	o := getOutputHandler()
-
-	groups, err := config.GetAvailableGroups()
-	if err != nil {
-		return errors.NewConfigurationError(constants.OpInstall, "list",
-			fmt.Errorf("failed to load groups: %w", err))
-	}
-
-	builtInGroups := config.GetBuiltInGroups()
-
+// renderTreeView renders applications in a hierarchical tree format
+func renderTreeView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
 	// Create root node
 	root := &AppTreeNode{
 		Name:     "Applications",
@@ -558,14 +579,14 @@ func listAvailableGroupsTree() error {
 	}
 
 	// Add built-in groups section
-	if len(builtInGroups) > 0 {
+	if len(builtInGroupNames) > 0 {
 		builtInNode := &AppTreeNode{
 			Name:     "Built-in Groups",
 			IsGroup:  false,
 			Children: []*AppTreeNode{},
 		}
 
-		for _, groupName := range builtInGroups {
+		for _, groupName := range builtInGroupNames {
 			if tools, exists := groups[groupName]; exists {
 				groupNode := &AppTreeNode{
 					Name:    groupName,
@@ -582,15 +603,7 @@ func listAvailableGroupsTree() error {
 	}
 
 	// Add custom groups section
-	var customGroupNames []string
-	for groupName := range groups {
-		if !config.IsBuiltInGroup(groupName) {
-			customGroupNames = append(customGroupNames, groupName)
-		}
-	}
-
 	if len(customGroupNames) > 0 {
-		sort.Strings(customGroupNames)
 		customNode := &AppTreeNode{
 			Name:     "Custom Groups",
 			IsGroup:  false,
@@ -610,11 +623,7 @@ func listAvailableGroupsTree() error {
 	}
 
 	// Add individually tracked apps section
-	installedApps, err := config.GetInstalledApps()
-	if err != nil {
-		o.PrintWarning("Failed to load installed apps: %v", err)
-	} else if len(installedApps) > 0 {
-		sort.Strings(installedApps)
+	if len(installedApps) > 0 {
 		individualNode := &AppTreeNode{
 			Name:     "Individually Tracked Apps",
 			IsGroup:  false,
@@ -635,20 +644,14 @@ func listAvailableGroupsTree() error {
 	// Build tree content
 	var content strings.Builder
 	content.WriteString("\n")
-	printAppTreeNodeToBuilder(&content, root, "", true, true)
+	buildTreeString(&content, root, "", true, true)
 	content.WriteString("\n")
 
-	// Display content in a box
-	fmt.Println(charm.RenderBox("Available Applications (Tree View)", content.String(), "#00D9FF", false))
-
-	// Print usage footer
-	printUsageFooter()
-
-	return nil
+	return content.String()
 }
 
-// printAppTreeNodeToBuilder writes an app tree node to a string builder with ASCII art and colors
-func printAppTreeNodeToBuilder(builder *strings.Builder, node *AppTreeNode, prefix string, isLast bool, isRoot bool) {
+// buildTreeString writes an app tree node to a string builder with ASCII art and colors
+func buildTreeString(builder *strings.Builder, node *AppTreeNode, prefix string, isLast bool, isRoot bool) {
 	if !isRoot {
 		// Choose the appropriate tree character
 		var treeChar string
@@ -718,24 +721,9 @@ func printAppTreeNodeToBuilder(builder *strings.Builder, node *AppTreeNode, pref
 				}
 			}
 
-			printAppTreeNodeToBuilder(builder, child, childPrefix, isChildLast, false)
+			buildTreeString(builder, child, childPrefix, isChildLast, false)
 		}
 	}
-}
-
-// printUsageFooter prints the common usage and examples footer for install commands
-func printUsageFooter() {
-	fmt.Println()
-	fmt.Println(charm.RenderKeyValue("Usage:", ""))
-	fmt.Printf("  %sanvil install [group-name]%s                        Install all apps in a group\n", palantir.ColorBold, palantir.ColorReset)
-	fmt.Printf("  %sanvil install [app-name]%s                          Install individual app (auto-tracked)\n", palantir.ColorBold, palantir.ColorReset)
-	fmt.Printf("  %sanvil install [app-name] --group-name [group]%s     Install app and add to group\n", palantir.ColorBold, palantir.ColorReset)
-	fmt.Println()
-	fmt.Println(charm.RenderKeyValue("Examples:", ""))
-	fmt.Printf("  %sanvil install dev%s\n", palantir.ColorGreen, palantir.ColorReset)
-	fmt.Printf("  %sanvil install 1password%s\n", palantir.ColorGreen, palantir.ColorReset)
-	fmt.Printf("  %sanvil install firefox --group-name essentials%s\n", palantir.ColorGreen, palantir.ColorReset)
-	fmt.Println()
 }
 
 func init() {
