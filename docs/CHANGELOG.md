@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **RenderBox Width** 🎨 - Adjusted box width from 120 to 100 characters for better terminal compatibility
 - **Install Command Visual Consolidation** 🎨 - Unified `--list` and `--tree` outputs with consistent lipgloss styling, color-coded sections, and shared usage footer for better UX
+- **Install Command Refactoring** ♻️ - Applied DRY principles by extracting shared data loading logic, creating reusable color helpers, and separating data preparation from rendering (~35% code reduction)
 
 ### Fixed
 
