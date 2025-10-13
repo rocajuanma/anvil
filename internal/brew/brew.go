@@ -126,7 +126,7 @@ func InstallBrew() error {
 	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
 	fmt.Println()
 
-	installScript := `curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh`
+	installScript := `curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | /bin/bash`
 
 	err = system.RunInteractiveCommand("/bin/bash", "-c", installScript)
 	fmt.Println()
