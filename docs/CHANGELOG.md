@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Homebrew Installation Confirmation Prompt** 🔧 - Fixed Homebrew installer aborting silently by ensuring user prompt
 
 ## [2.2.3] - 2025-10-13
 
@@ -28,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-- **Homebrew Installation Confirmation Prompt** 🔧 - Fixed Homebrew installer aborting silently by auto-confirming the "Press RETURN" prompt using echo to pipe newline input
 - **Homebrew Installation Interactive Mode** 🔧 - Fixed Homebrew installer running in non-interactive mode by setting INTERACTIVE=1 environment variable to force password prompts even when TTY detection fails through subprocess chain
 - **Homebrew Installation Script Execution** 🔧 - Fixed Homebrew installer script being printed instead of executed by properly piping curl output to bash
 
