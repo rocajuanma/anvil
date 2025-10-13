@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Homebrew Installation on Fresh macOS** 🔧 - Fixed permission issue when running `anvil init` on fresh Macs by using interactive command execution for Homebrew installer to properly prompt for sudo password
 
 ## [2.2.0] - 2025-10-12
 
