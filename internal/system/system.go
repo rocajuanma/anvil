@@ -142,12 +142,18 @@ func SetEnvironmentVariable(key, value string) error {
 
 // RunInteractiveCommand executes a command with stdin, stdout, and stderr connected to the terminal.
 // This is required for commands that need user interaction (e.g., sudo password prompts).
+// Sets INTERACTIVE=1 environment variable to force interactive mode even when TTY detection fails.
 func RunInteractiveCommand(command string, args ...string) error {
 	cmd := exec.Command(command, args...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	
+	// Preserve existing environment and add INTERACTIVE=1
+	// This forces tools like Homebrew installer to run in interactive mode
+	// even when they can't detect a TTY through the subprocess chain
+	cmd.Env = append(os.Environ(), "INTERACTIVE=1")
 
 	return cmd.Run()
 }
