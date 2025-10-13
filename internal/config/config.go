@@ -17,6 +17,7 @@ limitations under the License.
 package config
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -29,6 +30,9 @@ import (
 	"github.com/rocajuanma/anvil/internal/version"
 	"gopkg.in/yaml.v2"
 )
+
+//go:embed settings-sample.yaml
+var sampleConfigData []byte
 
 // Configuration cache to avoid repeated file I/O operations
 var (
@@ -192,19 +196,16 @@ func LoadSampleConfig() (*AnvilConfig, error) {
 
 // LoadSampleConfigWithVersion loads the sample configuration with a specific version
 func LoadSampleConfigWithVersion(version string) (*AnvilConfig, error) {
-	samplePath := getSampleConfigPath()
-	sampleData, err := os.ReadFile(samplePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read sample config file: %w", err)
-	}
+	// Use embedded sample config data
+	configData := string(sampleConfigData)
 
 	// Replace version placeholder if version is provided
 	if version != "" {
-		sampleData = []byte(strings.ReplaceAll(string(sampleData), "{{APP_VERSION}}", version))
+		configData = strings.ReplaceAll(configData, "{{APP_VERSION}}", version)
 	}
 
 	var config AnvilConfig
-	if err := yaml.Unmarshal(sampleData, &config); err != nil {
+	if err := yaml.Unmarshal([]byte(configData), &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal sample config: %w", err)
 	}
 
@@ -223,36 +224,6 @@ func LoadSampleConfigWithVersion(version string) (*AnvilConfig, error) {
 // GetConfigPath returns the path to the anvil configuration file
 func GetConfigPath() string {
 	return filepath.Join(getHomeDir(), constants.AnvilConfigDir, constants.ConfigFileName)
-}
-
-// getSampleConfigPath returns the path to the sample configuration file
-func getSampleConfigPath() string {
-	// Get the directory where the binary is located
-	execPath, err := os.Executable()
-	if err != nil {
-		// Fallback to current working directory
-		wd, _ := os.Getwd()
-		return filepath.Join(wd, "assets", "settings-sample.yaml")
-	}
-
-	// Get the directory containing the executable
-	execDir := filepath.Dir(execPath)
-
-	// Check if assets directory exists in the executable directory
-	assetsPath := filepath.Join(execDir, "assets", "settings-sample.yaml")
-	if _, err := os.Stat(assetsPath); err == nil {
-		return assetsPath
-	}
-
-	// If not found, try current working directory (for go run scenarios)
-	wd, _ := os.Getwd()
-	wdAssetsPath := filepath.Join(wd, "assets", "settings-sample.yaml")
-	if _, err := os.Stat(wdAssetsPath); err == nil {
-		return wdAssetsPath
-	}
-
-	// Final fallback to executable directory
-	return assetsPath
 }
 
 // CreateDirectories creates necessary directories for anvil

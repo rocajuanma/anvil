@@ -139,3 +139,15 @@ func GetEnvironmentVariable(key, defaultValue string) string {
 func SetEnvironmentVariable(key, value string) error {
 	return os.Setenv(key, value)
 }
+
+// RunInteractiveCommand executes a command with stdin, stdout, and stderr connected to the terminal.
+// This is required for commands that need user interaction (e.g., sudo password prompts).
+func RunInteractiveCommand(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}

@@ -112,33 +112,35 @@ func InstallBrew() error {
 		return nil
 	}
 
-	xcodeResult, err := system.RunCommand("xcode-select", "-p")
-	if err != nil || !xcodeResult.Success {
-		return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
-	}
-
-	spinner := charm.NewDotsSpinner("Installing Homebrew (this may take a few minutes)")
+	spinner := charm.NewDotsSpinner("Checking Xcode Command Line Tools")
 	spinner.Start()
 
-	installCmd := `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+	xcodeResult, err := system.RunCommand("xcode-select", "-p")
+	if err != nil || !xcodeResult.Success {
+		spinner.Error("Xcode Command Line Tools not found")
+		return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
+	}
+	spinner.Success("Xcode Command Line Tools verified")
 
-	result, err := system.RunCommand("/bin/bash", "-c", installCmd)
+	getOutputHandler().PrintInfo("Installing Homebrew (this may take a few minutes)")
+	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
+	fmt.Println()
+
+	installScript := `curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh`
+
+	err = system.RunInteractiveCommand("/bin/bash", "-c", installScript)
+	fmt.Println()
+
 	if err != nil {
-		spinner.Error("Failed to install Homebrew")
-		return fmt.Errorf("failed to run brew installation command: %w", err)
+		getOutputHandler().PrintError("Homebrew installation failed")
+		return fmt.Errorf("failed to install Homebrew: %w", err)
 	}
 
-	if !result.Success {
-		errorDetails := result.Error
-		if result.Output != "" {
-			errorDetails = fmt.Sprintf("%s\nOutput: %s", result.Error, strings.TrimSpace(result.Output))
-		}
-		spinner.Error("Homebrew installation failed")
-		return fmt.Errorf("brew installation failed: %s", errorDetails)
-	}
+	spinner = charm.NewDotsSpinner("Verifying Homebrew installation")
+	spinner.Start()
 
 	if !IsBrewInstalledAtPath() {
-		spinner.Error("Homebrew installation failed")
+		spinner.Error("Homebrew installation verification failed")
 		return fmt.Errorf("Homebrew installation completed but brew command not accessible")
 	}
 

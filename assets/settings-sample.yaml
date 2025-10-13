@@ -1,3 +1,11 @@
+# Sample configuration file for Anvil CLI
+# 
+# NOTE: This is the source of truth for the default configuration.
+# When making changes to this file, copy it to internal/config/settings-sample.yaml
+# so it gets embedded into the compiled binary.
+#
+# Command: cp assets/settings-sample.yaml internal/config/settings-sample.yaml
+
 version: "{{APP_VERSION}}"
 tools:
   required_tools:
