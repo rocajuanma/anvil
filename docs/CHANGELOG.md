@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Homebrew Installation Output** 🎨 - Improved UX by capturing and suppressing verbose Homebrew installer output during installation, showing only clean spinner and results (output shown only on failure for debugging)
 
 ### Fixed
 - **Homebrew Installation Confirmation Prompt** 🔧 - Fixed Homebrew installer aborting silently by ensuring user prompt

@@ -126,10 +126,16 @@ func InstallBrew() error {
 	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
 	fmt.Println()
 
+	// Start spinner for clean output during installation
+	spinner = charm.NewDotsSpinner("Installing Homebrew")
+	spinner.Start()
+
 	// Pipe a newline to auto-confirm the "Press RETURN" prompt, then pipe to bash
 	installScript := `echo | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
+	// Run installation - output is captured and only shown on error
 	err = system.RunInteractiveCommand("/bin/bash", "-c", installScript)
+	spinner.Stop()
 	fmt.Println()
 
 	if err != nil {
