@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+## [2.2.2] - 2025-10-13
+
+### Added
+
+### Changed
+
+### Fixed
 - **Homebrew Installation Script Execution** 🔧 - Fixed Homebrew installer script being printed instead of executed by properly piping curl output to bash
 
 ## [2.2.1] - 2025-10-13
