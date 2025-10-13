@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Homebrew Installation Output** 🎨 - Improved UX by capturing and suppressing verbose Homebrew installer output during installation, showing only clean spinner and results (output shown only on failure for debugging)
+- **Password Prompt Indicator** 🎨 - Added clear password prompt indicator with two-phase spinner to guide users during Homebrew installation
 
 ### Fixed
 - **Homebrew Installation Confirmation Prompt** 🔧 - Fixed Homebrew installer aborting silently by ensuring user prompt

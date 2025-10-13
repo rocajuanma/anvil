@@ -21,6 +21,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/system"
@@ -126,14 +127,17 @@ func InstallBrew() error {
 	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
 	fmt.Println()
 
-	// Start spinner for clean output during installation
-	spinner = charm.NewDotsSpinner("Installing Homebrew")
+	spinner = charm.NewDotsSpinner("Preparing Homebrew installation")
 	spinner.Start()
+	time.Sleep(200 * time.Millisecond)
+	spinner.Stop()
 
-	// Pipe a newline to auto-confirm the "Press RETURN" prompt, then pipe to bash
+	fmt.Print("\r\033[K→ Enter password when prompted: ")
+
 	installScript := `echo | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
-	// Run installation - output is captured and only shown on error
+	spinner = charm.NewDotsSpinner("Installing")
+	spinner.Start()
 	err = system.RunInteractiveCommand("/bin/bash", "-c", installScript)
 	spinner.Stop()
 	fmt.Println()
