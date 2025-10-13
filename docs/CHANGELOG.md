@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+## [2.2.1] - 2025-10-13
+
+### Added
+
+### Changed
+
+### Fixed
 - **Homebrew Installation on Fresh macOS** 🔧 - Fixed permission issue when running `anvil init` on fresh Macs by using interactive command execution for Homebrew installer to properly prompt for sudo password
 - **Settings Generation on Installed Binaries** 🔧 - Fixed `anvil init` failure on installed binaries by embedding settings-sample.yaml directly into the binary using Go's embed package
 
