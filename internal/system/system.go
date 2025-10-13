@@ -17,6 +17,7 @@ limitations under the License.
 package system
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -140,20 +141,37 @@ func SetEnvironmentVariable(key, value string) error {
 	return os.Setenv(key, value)
 }
 
-// RunInteractiveCommand executes a command with stdin, stdout, and stderr connected to the terminal.
-// This is required for commands that need user interaction (e.g., sudo password prompts).
+// RunInteractiveCommand executes a command with stdin connected for user interaction.
+// Output is captured and only shown on error for clean UX.
 // Sets INTERACTIVE=1 environment variable to force interactive mode even when TTY detection fails.
 func RunInteractiveCommand(command string, args ...string) error {
+	var outputBuffer bytes.Buffer
+
 	cmd := exec.Command(command, args...)
 
 	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	
+
+	// Capture stdout and stderr for clean output
+	cmd.Stdout = &outputBuffer
+	cmd.Stderr = &outputBuffer
+
 	// Preserve existing environment and add INTERACTIVE=1
 	// This forces tools like Homebrew installer to run in interactive mode
 	// even when they can't detect a TTY through the subprocess chain
 	cmd.Env = append(os.Environ(), "INTERACTIVE=1")
 
-	return cmd.Run()
+	err := cmd.Run()
+
+	// If command failed, show the captured output for debugging
+	if err != nil {
+		output := strings.TrimSpace(outputBuffer.String())
+		if output != "" {
+			fmt.Println("\nCommand output:")
+			fmt.Println(strings.Repeat("-", 80))
+			fmt.Println(output)
+			fmt.Println(strings.Repeat("-", 80))
+		}
+	}
+
+	return err
 }
