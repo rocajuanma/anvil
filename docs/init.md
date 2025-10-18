@@ -6,11 +6,11 @@ The `anvil init` command bootstraps your Anvil CLI environment by performing a c
 
 The init command establishes a solid foundation for all other Anvil commands by:
 
-- **✅ Validating and installing required system tools** (Git, cURL, Homebrew)
-- **📁 Creating necessary configuration directory** (`~/.anvil`)
-- **⚙️ Generating a default settings.yaml** configuration file with your system preferences
-- **🔍 Checking your local environment** for common development configurations
-- **💡 Providing actionable recommendations** for completing your setup
+- **Validating and installing required system tools** (Git, cURL, Homebrew)
+- **Creating necessary configuration directory** (`~/.anvil`)
+- **Generating a default settings.yaml** configuration file with your system preferences
+- **Checking your local environment** for common development configurations
+- **Providing actionable recommendations** for completing your setup
 
 ## Usage
 
@@ -93,44 +93,9 @@ Based on your system state, init provides personalized recommendations:
 - **GitHub Setup** - Recommends configuring GitHub repository for config sync
 - **Next Steps** - Provides specific commands to continue your setup
 
-## Example Output
+## What Happens
 
-```bash
-$ anvil init
-
- █████╗ ███╗   ██╗██╗   ██╗██╗██╗
-██╔══██╗████╗  ██║██║   ██║██║██║
-███████║██╔██╗ ██║██║   ██║██║██║
-██╔══██║██║╚██╗██║╚██╗ ██╔╝██║██║
-██║  ██║██║ ╚████║ ╚████╔╝ ██║███████╗
-╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚══════╝
-
-=== Anvil Initialization ===
-
-🔧 Validating and installing required tools...
-✅ git: Available (version 2.39.0)
-✅ curl: Available (version 7.85.0)
-✅ brew: Available (version 4.0.0)
-
-🔧 Creating necessary directories...
-✅ Created ~/.anvil directory
-✅ Created ~/.anvil/temp directory
-
-🔧 Generating default settings.yaml...
-✅ Configuration file created at ~/.anvil/settings.yaml
-
-🔍 Environment Detection:
-✅ Operating System: macOS 13.2.1
-✅ Architecture: arm64 (Apple Silicon)
-✅ Git configured: user.name and user.email set
-
-💡 Recommendations:
-• Configure GitHub repository in settings.yaml for config sync
-• Run 'anvil install dev' to set up development tools
-• See 'anvil install --list' for available tool groups
-
-🎉 Anvil initialization completed successfully!
-```
+The init command validates tools, creates directories, generates configuration, and provides recommendations for next steps.
 
 ## Next Steps
 
@@ -200,6 +165,5 @@ ls -la ~/.anvil
 
 For detailed setup guidance and examples, see:
 
-- [Getting Started Guide](GETTING_STARTED.md)
 - [Installation Guide](INSTALLATION.md)
 - [Examples & Tutorials](EXAMPLES.md)

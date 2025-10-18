@@ -2,16 +2,6 @@
 
 The `anvil update` command provides a simple and safe way to update your Anvil installation to the latest version.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Features](#features)
-- [How It Works](#how-it-works)
-- [Safety Considerations](#safety-considerations)
-- [Troubleshooting](#troubleshooting)
-
 ## Overview
 
 The update command downloads and executes the official Anvil installation script from GitHub releases, ensuring you always get the latest version with all the newest features and bug fixes.
@@ -60,23 +50,23 @@ This will:
 
 ## Features
 
-### 🛡️ Safe Update Process
+### Safe Update Process
 
 The update command uses the same trusted installation script that you used for the initial installation, ensuring consistency and reliability.
 
-### 🧪 Dry-Run Support
+### Dry-Run Support
 
 Preview exactly what will happen during the update process without making any changes to your system.
 
-### ✨ Automatic Detection
+### Automatic Detection
 
 The update script automatically detects your system architecture (Intel or Apple Silicon) and downloads the appropriate binary.
 
-### 🎯 macOS Optimized
+### macOS Optimized
 
 Specifically designed for macOS environments, following the same patterns as other Anvil commands.
 
-### 💡 Clear Feedback
+### Clear Feedback
 
 Provides step-by-step progress updates and helpful instructions throughout the update process.
 
@@ -102,14 +92,14 @@ This is the same command recommended in the README for fresh installations and u
 
 ## Safety Considerations
 
-### ✅ Safe Practices
+### Safe Practices
 
 - **Trusted Source**: Downloads only from official GitHub releases
 - **Same Script**: Uses identical installation script as initial setup
 - **Validation**: Verifies the update process completed successfully
 - **No Data Loss**: Your `~/.anvil/settings.yaml` and configurations remain unchanged
 
-### ⚠️ Important Notes
+### Important Notes
 
 - **Terminal Restart**: You may need to restart your terminal session for changes to take effect
 - **Admin Permissions**: The script may request admin permissions to install to `/usr/local/bin/`

@@ -6,12 +6,12 @@ The `anvil install` command provides automated installation of development tools
 
 The install command serves several critical functions:
 
-- **🎯 Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
-- **📝 Smart Tracking** - Individual apps automatically tracked in `tools.installed_apps`
-- **📦 Group Management** - Predefined and custom tool groups for common scenarios
-- **🚀 Zero Configuration** - Works out of the box with sensible defaults
-- **🔍 Dry-Run Support** - Preview installations before execution
-- **🍺 Homebrew Integration** - Automatic installation and management
+- **Dynamic Installation** - Install any macOS application with `anvil install [app-name]`
+- **Smart Tracking** - Individual apps automatically tracked in `tools.installed_apps`
+- **Group Management** - Predefined and custom tool groups for common scenarios
+- **Zero Configuration** - Works out of the box with sensible defaults
+- **Dry-Run Support** - Preview installations before execution
+- **Homebrew Integration** - Automatic installation and management
 
 ## Usage Modes
 
@@ -272,55 +272,3 @@ Anvil uses a unified installation architecture that ensures consistent behavior 
 
 This architecture ensures that whether you run `anvil install postman`, `anvil install coding`, or `anvil install coding --dry-run`, you get consistent and accurate detection of already-installed applications.
 
-## Troubleshooting
-
-### Common Issues
-
-**App Not Found**
-
-```bash
-# Search for correct app name
-brew search firefox
-brew search visual-studio
-
-# Use exact Homebrew name
-anvil install --dry-run visual-studio-code
-```
-
-**Permission Denied**
-
-```bash
-# Make sure Homebrew has proper permissions
-brew doctor
-
-# Check if you need admin privileges
-sudo anvil install [app-name]
-```
-
-**Network Issues**
-
-```bash
-# Update Homebrew
-brew update
-
-# Check internet connection
-brew search git
-```
-
-**Group Not Found**
-
-```bash
-# List available groups
-anvil install --list
-
-# Check settings.yaml syntax
-anvil config show
-```
-
-### Getting Help
-
-For more examples and detailed guides, see:
-
-- [Getting Started Guide](GETTING_STARTED.md)
-- [Examples & Tutorials](EXAMPLES.md)
-- [Configuration Management](config.md)

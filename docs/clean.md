@@ -6,11 +6,11 @@ The `anvil clean` command provides safe cleanup of temporary files, archives, an
 
 The clean command serves as a maintenance utility that helps you:
 
-- **🧹 Free up disk space** - Removes temporary files, old archives, and cached configurations
-- **🔄 Reset to clean state** - Clean slate for configuration operations while preserving settings
-- **📁 Smart preservation** - Keeps essential `settings.yaml` and maintains directory structure
-- **🛡️ Safe operations** - Interactive confirmations and dry-run support prevent accidental deletions
-- **🗂️ Complete git cleanup** - Fully removes dotfiles directory for clean repository state
+- **Free up disk space** - Removes temporary files, old archives, and cached configurations
+- **Reset to clean state** - Clean slate for configuration operations while preserving settings
+- **Smart preservation** - Keeps essential `settings.yaml` and maintains directory structure
+- **Safe operations** - Interactive confirmations and dry-run support prevent accidental deletions
+- **Complete git cleanup** - Fully removes dotfiles directory for clean repository state
 
 ## Usage
 
@@ -159,92 +159,25 @@ anvil config push
 ### Interactive Cleanup with Detailed Preview
 
 ```bash
-$ anvil clean
-
-=== Cleaning Anvil Directories ===
-
-🔧 Scanning .anvil directory for content to clean
-
-Found 3 root directories to clean:
-Directory structure to be cleaned:
-  📁 temp (2)
-    ├── cursor
-    ├── vscode
-  📁 archive (1)
-    ├── 2025-01-15-1430
-  📁 dotfiles (5)
-    ├── .git
-    ├── cursor
-    ├── vscode
-    ├── README.md
-    ├── .gitignore
-
-Are you sure you want to clean the contents of these 3 root directories? This action cannot be undone [y/N]: y
-
-🔧 Cleaning directories and files
-
-✅ Cleaned contents of directory temp
-✅ Cleaned contents of directory archive
-✅ Removed dotfiles directory completely
-
-Successfully cleaned contents of 3/3 root directories
+anvil clean
 ```
 
 ### Dry-Run Preview
 
 ```bash
-$ anvil clean --dry-run
-
-=== Cleaning Anvil Directories ===
-
-🔧 Scanning .anvil directory for content to clean
-
-Found 2 root directories to clean:
-Directory structure to be cleaned:
-  📁 temp (3)
-    ├── cursor
-    ├── vscode
-    ├── neovim
-  📁 archive (2)
-    ├── 2025-01-15-1430
-    ├── 2025-01-10-0900
-
-DRY RUN: Would clean contents of 2 root directories
+anvil clean --dry-run
 ```
 
 ### Force Cleanup for Scripts
 
 ```bash
-$ anvil clean --force
-
-=== Cleaning Anvil Directories ===
-
-🔧 Scanning .anvil directory for content to clean
-
-Found 1 root directories to clean:
-Directory structure to be cleaned:
-  📁 dotfiles (3)
-    ├── .git
-    ├── configurations
-    ├── README.md
-
-🔧 Cleaning directories and files
-
-✅ Removed dotfiles directory completely
-
-Successfully cleaned contents of 1/1 root directories
+anvil clean --force
 ```
 
 ### No Content to Clean
 
 ```bash
-$ anvil clean
-
-=== Cleaning Anvil Directories ===
-
-🔧 Scanning .anvil directory for content to clean
-
-✅ No root directories found to clean. Only settings.yaml exists.
+anvil clean
 ```
 
 ## Safety Features
@@ -315,25 +248,25 @@ anvil clean --force     # No interaction required
 
 ## Best Practices
 
-### 🎯 Regular Maintenance
+### Regular Maintenance
 
 1. **Run periodic cleanups** to prevent disk space accumulation
 2. **Use dry-run first** to understand what will be removed
 3. **Clean before major operations** to ensure clean starting state
 
-### 🔧 Development Workflow
+### Development Workflow
 
 1. **Clean after testing** to remove temporary configurations
 2. **Clean before git operations** to avoid conflicts
 3. **Use force flag in scripts** for automation
 
-### 📁 Configuration Management
+### Configuration Management
 
 1. **Clean before pulling** to ensure fresh configuration state
 2. **Clean before pushing** to avoid git repository conflicts
 3. **Regular cleanup** of archived configurations to manage disk space
 
-### 🛡️ Safety Practices
+### Safety Practices
 
 1. **Always preview with dry-run** when unsure
 2. **Backup important configurations** outside of ~/.anvil before cleaning

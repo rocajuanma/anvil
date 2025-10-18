@@ -1,41 +1,41 @@
 # Doctor Command
 
-The `anvil doctor` command provides comprehensive health checks to validate your development environment and troubleshoot common configuration issues with **real-time progress feedback**.
+The `anvil doctor` command provides comprehensive health checks to validate your development environment and troubleshoot common configuration issues.
 
 ## Overview
 
-The doctor command performs systematic validation across four key areas with **live progress indicators** so you always know what's happening. You can run checks at different levels of granularity:
+The doctor command performs systematic validation across four key areas. You can run checks at different levels of granularity:
 
-### 🏷️ **Categories** (groups of related checks)
+### Categories (groups of related checks)
 
 - **environment** - Verify anvil initialization and directory structure (3 checks)
 - **dependencies** - Check required tools and Homebrew installation (2 checks)
 - **configuration** - Validate git and GitHub settings (3 checks)
 - **connectivity** - Test GitHub access and repository connections (3 checks)
 
-### 🔍 **Specific Checks** (individual validators)
+### Specific Checks (individual validators)
 
-Run `anvil doctor --list` to see all 11 available individual checks like `git-config`, `homebrew`, `github-auth`, etc.
+Run `anvil doctor --list` to see all available individual checks like `git-config`, `homebrew`, `github-auth`, etc.
 
 ## Key Features
 
-### ✨ **Real-time Progress**
+### Real-time Progress
 
-- **Live feedback** - See progress as each validation runs
-- **Progress counters** - Know exactly how many checks are remaining
-- **Stage indicators** - Understand what phase the doctor is in
-- **No more hanging terminals** - Always know what's happening
+- Live feedback as each validation runs
+- Progress counters showing remaining checks
+- Stage indicators for current phase
+- No hanging terminals
 
-### 🔍 **Two Output Modes**
+### Two Output Modes
 
 - **Default mode** - Brief but informative progress messages
-- **Verbose mode (`--verbose`)** - Detailed descriptions, categories, and step-by-step results
+- **Verbose mode (`--verbose`)** - Detailed descriptions and step-by-step results
 
-### 🔒 **Secure Authentication**
+### Secure Authentication
 
-- **Non-interactive operations** - No credential prompts ever
-- **Environment-based auth** - Uses `GITHUB_TOKEN` or SSH keys only
-- **Private repository enforcement** - Clear warnings about public repos
+- Non-interactive operations - no credential prompts
+- Environment-based auth using `GITHUB_TOKEN` or SSH keys
+- Private repository enforcement with clear warnings
 
 ## Usage
 
@@ -97,191 +97,45 @@ Use categories when you want to check an entire area, and use specific checks wh
 
 | Check                 | Description                                     | Auto-Fix |
 | --------------------- | ----------------------------------------------- | -------- |
-| `anvil-init`          | Verify anvil initialization has been completed  | ❌       |
-| `settings-valid`      | Validate settings.yaml structure and content    | ❌       |
-| `directory-structure` | Check ~/.anvil directory structure              | ❌       |
+| `anvil-init`          | Verify anvil initialization has been completed  | No       |
+| `settings-valid`      | Validate settings.yaml structure and content    | No       |
+| `directory-structure` | Check ~/.anvil directory structure              | No       |
 
 ### Dependencies Checks
 
 | Check            | Description                                         | Auto-Fix |
 | ---------------- | --------------------------------------------------- | -------- |
-| `homebrew`       | Verify Homebrew installation and updates            | ✅       |
-| `required-tools` | Check git and curl are installed                    | ❌       |
+| `homebrew`       | Verify Homebrew installation and updates            | Yes      |
+| `required-tools` | Check git and curl are installed                    | No       |
 
 ### Configuration Checks
 
 | Check           | Description                                  | Auto-Fix |
 | --------------- | -------------------------------------------- | -------- |
-| `git-config`    | Validate git user.name and user.email        | ✅       |
-| `github-config` | Verify GitHub repository configuration       | ❌       |
-| `sync-config`   | Check config sync settings (not implemented) | ❌       |
+| `git-config`    | Validate git user.name and user.email        | Yes      |
+| `github-config` | Verify GitHub repository configuration       | No       |
+| `sync-config`   | Check config sync settings (not implemented) | No       |
 
 ### Connectivity Checks
 
 | Check             | Description                              | Auto-Fix |
 | ----------------- | ---------------------------------------- | -------- |
-| `github-auth`     | Test GitHub authentication and access    | ❌       |
-| `github-repo`     | Verify repository accessibility          | ❌       |
-| `git-operations`  | Test git clone and pull operations       | ❌       |
+| `github-auth`     | Test GitHub authentication and access    | No       |
+| `github-repo`     | Verify repository accessibility          | No       |
+| `git-operations`  | Test git clone and pull operations       | No       |
 
 ## Check Results
 
 Each check returns one of four statuses:
 
-- **✅ PASS** - Check completed successfully
-- **⚠️ WARN** - Check passed but has warnings or recommendations
-- **❌ FAIL** - Check failed and requires attention
-- **⏭️ SKIP** - Check was skipped (usually due to missing configuration)
+- **PASS** - Check completed successfully
+- **WARN** - Check passed but has warnings or recommendations
+- **FAIL** - Check failed and requires attention
+- **SKIP** - Check was skipped (usually due to missing configuration)
 
-## Output Examples
+## Understanding Output
 
-### Full Health Check with Real-time Progress
-
-```bash
-$ anvil doctor
-
-=== Running Anvil Health Check ===
-
-🔍 Validating environment, dependencies, configuration, and connectivity...
-
-🔧 Executing 12 health checks...
-[1/12] 8% - Running init-run
-   ✅ Anvil initialization complete
-[2/12] 17% - Running settings-file
-   ✅ Settings file is valid
-[3/12] 25% - Running directory-structure
-   ✅ Directory structure is correct
-[4/12] 33% - Running homebrew
-   ✅ Homebrew is installed and functional
-[5/12] 42% - Running required-tools
-   ✅ All required tools installed (2/2)
-[6/12] 50% - Running optional-tools
-   ⚠️ Optional tools missing: docker
-[7/12] 58% - Running git-config
-   ✅ Git configuration is complete
-[8/12] 67% - Running github-config
-   ✅ GitHub configuration is complete
-[9/12] 75% - Running sync-config
-   ⏭️ No sync configuration present (optional)
-[10/12] 83% - Running github-access
-   ✅ GitHub SSH access confirmed
-[11/12] 92% - Running repository-access
-   ✅ ✅ Private repository accessible with proper authentication
-[12/12] 100% - Running git-connectivity
-   ✅ Git operations are functional
-
-✅ All validation checks completed
-
-✅ Environment
-  ✅ Anvil initialization complete
-  ✅ Settings file is valid
-  ✅ Directory structure is correct
-
-⚠️ Dependencies
-  ✅ Homebrew is installed and functional
-  ✅ All required tools installed (2/2)
-  ⚠️ Optional tools missing: docker
-      💡 Run 'anvil install docker' to install missing tools
-
-✅ Configuration
-  ✅ Git configuration is complete
-  ✅ GitHub configuration is complete
-  ⏭️ No sync configuration present (optional)
-
-✅ Connectivity
-  ✅ GitHub SSH access confirmed
-  ✅ ✅ Private repository accessible with proper authentication
-  ✅ Git operations are functional
-
-=== Health Check Summary ===
-
-Total checks: 12
-✅ Passed: 10
-⚠️ Warnings: 1
-⏭️ Skipped: 1
-
-✅ Overall status: Healthy
-```
-
-### Category-Specific Check with Verbose Output
-
-```bash
-$ anvil doctor connectivity --verbose
-
-=== Running Connectivity Health Checks ===
-
-🔧 Executing 3 checks in connectivity category...
-[1/3] 33% - Running github-access
-   Description: Verify GitHub API access and authentication
-   Category: connectivity
-   Result: ✅ GitHub SSH access confirmed
-      Repository: rocajuanma/configs
-      Token environment variable: GITHUB_TOKEN
-      ✗ No GitHub token found in environment
-      Attempting SSH authentication...
-      ✓ SSH authentication successful
-[2/3] 67% - Running repository-access
-   Description: Verify configured repository exists and is accessible
-   Category: connectivity
-   Result: ✅ ✅ Private repository accessible with proper authentication
-      Repository: rocajuanma/configs
-      🔒 Repository is private (secure)
-      🔑 Git authentication working
-      🛡️  Configuration data is protected
-[3/3] 100% - Running git-connectivity
-   Description: Verify git operations are functional
-   Category: connectivity
-   Result: ✅ Git operations are functional
-      git version 2.39.3 (Apple Git-145)
-      Global username: Juanma Roca
-      Global email: juanma.roca@zapier.com
-
-✅ All validation checks completed
-
-✅ Connectivity
-  ✅ GitHub SSH access confirmed
-      Repository: rocajuanma/configs
-      Token environment variable: GITHUB_TOKEN
-      ✗ No GitHub token found in environment
-      Attempting SSH authentication...
-      ✓ SSH authentication successful
-  ✅ ✅ Private repository accessible with proper authentication
-      Repository: rocajuanma/configs
-      🔒 Repository is private (secure)
-      🔑 Git authentication working
-      🛡️  Configuration data is protected
-  ✅ Git operations are functional
-      git version 2.39.3 (Apple Git-145)
-      Global username: Juanma Roca
-      Global email: juanma.roca@zapier.com
-
-=== Health Check Summary ===
-
-Total checks: 3
-✅ Passed: 3
-✅ Overall status: Healthy
-```
-
-### Single Check with Detailed Output
-
-```bash
-$ anvil doctor github-access --verbose
-
-=== Running Check: github-access ===
-
-🔧 Executing github-access check...
-🔍 Running github-access check...
-   Description: Verify GitHub API access and authentication
-   Category: connectivity
-✅ GitHub SSH access confirmed
-
-✅ GitHub SSH access confirmed
-      Repository: rocajuanma/configs
-      Token environment variable: GITHUB_TOKEN
-      ✗ No GitHub token found in environment
-      Attempting SSH authentication...
-      ✓ SSH authentication successful
-```
+The doctor command provides real-time progress feedback and organized results by category. Use `--verbose` for detailed information about each check.
 
 ## Common Issues and Solutions
 

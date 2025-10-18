@@ -1,16 +1,12 @@
 # Anvil Examples & Tutorials
 
-This document provides real-world examples and tutorials for using Anvil CLI effectively. From basic scenarios to advanced team setups, these examples will help you master Anvil.
+This document provides real-world examples for using Anvil CLI effectively.
 
 ## Table of Contents
 
 - [Basic Examples](#basic-examples)
 - [Development Workflows](#development-workflows)
 - [Team Scenarios](#team-scenarios)
-- [Advanced Configurations](#advanced-configurations)
-- [Platform-Specific Examples](#platform-specific-examples)
-- [Troubleshooting Examples](#troubleshooting-examples)
-- [Integration Examples](#integration-examples)
 
 ## Basic Examples
 
@@ -19,70 +15,22 @@ This document provides real-world examples and tutorials for using Anvil CLI eff
 **Scenario**: You just installed Anvil and want to set up your development environment.
 
 **Key Points:**
-- **🚀 Complete initialization** - Sets up your Anvil environment from scratch
-- **🔍 Health verification** - Ensures everything is working correctly
-- **📦 Tool installation** - Installs essential development tools
+- Complete initialization - Sets up your Anvil environment from scratch
+- Health verification - Ensures everything is working correctly
+- Tool installation - Installs essential development tools
 
 ```bash
 # Step 1: Initialize Anvil
-$ anvil init
-
-=== Anvil Initialization ===
-🔧 Validating and installing required tools...
-✅ All required tools are available
-🔧 Creating necessary directories...
-✅ Directories created successfully
-🔧 Generating default settings.yaml...
-✅ Default settings.yaml generated
+anvil init
 
 # Step 2: Verify setup is working correctly
-$ anvil doctor
-
-=== Running Anvil Health Check ===
-
-✅ Environment
-  ✅ Anvil initialization complete
-  ✅ Settings file is valid
-  ✅ Directory structure is correct
-
-✅ Dependencies
-  ✅ Homebrew is installed and functional
-  ✅ All required tools installed (2/2)
-
-✅ Overall status: Healthy
+anvil doctor
 
 # Step 3: See what tools are available
-$ anvil install --list
-
-=== Available Setup Groups ===
-Group: dev
-  • git
-  • zsh
-  • iterm2
-  • vscode
-
-Group: essentials
-  • slack
-  • chrome
-  • 1password
+anvil install --list
 
 # Step 4: Install development tools
-$ anvil install dev
-
-=== Setting up 'dev' group ===
-Installing tools for group 'dev': git, zsh, iterm2, vscode
-[1/4] 25% - Installing git
-✅ git installed successfully
-[2/4] 50% - Installing zsh
-Installing oh-my-zsh...
-✅ zsh installed successfully
-[3/4] 75% - Installing iterm2
-✅ iterm2 installed successfully
-[4/4] 100% - Installing vscode
-✅ vscode installed successfully
-
-=== Group Setup Complete! ===
-Successfully installed 4 of 4 tools in group 'dev'
+anvil install dev
 ```
 
 ### Example 2: Selective Tool Installation
@@ -90,35 +38,18 @@ Successfully installed 4 of 4 tools in group 'dev'
 **Scenario**: You only need specific tools, not entire groups.
 
 **Key Points:**
-- **🔍 Preview capability** - See what would be installed before proceeding
-- **🎯 Selective installation** - Choose only the tools you need
-- **📝 Smart tracking** - Individual tools are automatically tracked
+- Preview capability - See what would be installed before proceeding
+- Selective installation - Choose only the tools you need
+- Smart tracking - Individual tools are automatically tracked
 
 ```bash
 # Preview what would be installed
-$ anvil install dev --dry-run
+anvil install dev --dry-run
 
-Dry run mode - no actual installations will be performed
-
-=== Individual Tool Setup ===
-Installing individual tools: git, zsh
-[1/2] 50% - Installing git
-Would install: git
-[2/2] 100% - Installing zsh
-Would install: zsh
-
-# Install the tools
-$ anvil install dev
-
-=== Individual Tool Setup ===
-Installing individual tools: git, zsh
-[1/2] 50% - Installing git
-✅ git installed successfully
-[2/2] 100% - Installing zsh
-Installing oh-my-zsh...
-✅ zsh installed successfully
-
-=== Individual Tool Setup Complete! ===
+# Install specific tools
+anvil install docker
+anvil install postman
+anvil install dev
 ```
 
 ### Example 3: New Laptop Setup
@@ -126,28 +57,16 @@ Installing oh-my-zsh...
 **Scenario**: Setting up essential applications on a new machine.
 
 **Key Points:**
-- **💻 Essential apps** - Communication, browser, and security tools
-- **🚀 Quick setup** - Get productive immediately on new hardware
-- **🔧 Team consistency** - Standard applications across team members
+- Essential apps - Communication, browser, and security tools
+- Quick setup - Get productive immediately on new hardware
+- Team consistency - Standard applications across team members
 
 ```bash
 # Initialize first
-$ anvil init
+anvil init
 
 # Install essential applications
-$ anvil install essentials
-
-=== Setting up 'essentials' group ===
-Installing tools for group 'essentials': slack, chrome, 1password
-[1/3] 33% - Installing slack
-✅ slack installed successfully
-[2/3] 67% - Installing chrome
-✅ chrome installed successfully
-[3/3] 100% - Installing 1password
-✅ 1password installed successfully
-
-=== Group Setup Complete! ===
-Successfully installed 3 of 3 tools in group 'essentials'
+anvil install essentials
 ```
 
 ### Example 3.5: Organizing Applications into Groups
