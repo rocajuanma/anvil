@@ -8,12 +8,12 @@ The import functionality provides a secure and validated way to add new tool gro
 
 ### Key Features
 
-- **🔗 Flexible Sources**: Import from local files or publicly accessible URLs
-- **✅ Comprehensive Validation**: Validates group names, application names, and structure
-- **🚫 Conflict Detection**: Prevents overwriting existing groups with clear error messages
-- **🌳 Tree Display**: Shows visual preview of groups and applications before import
-- **📋 Interactive Confirmation**: Requires user approval before making changes
-- **🛡️ Security-First**: Only imports group definitions, ignoring sensitive configuration data
+- **Flexible Sources**: Import from local files or publicly accessible URLs
+- **Comprehensive Validation**: Validates group names, application names, and structure
+- **Conflict Detection**: Prevents overwriting existing groups with clear error messages
+- **Tree Display**: Shows visual preview of groups and applications before import
+- **Interactive Confirmation**: Requires user approval before making changes
+- **Security-First**: Only imports group definitions, ignoring sensitive configuration data
 
 ## Usage
 
@@ -80,15 +80,15 @@ anvil config import import-examples/team-startup.yaml
 
 **Available Example Personas:**
 
-- **🎨 Frontend Developer**: Modern web development tools and design applications
-- **⚙️ Backend Developer**: Server-side technologies, databases, and DevOps tools
-- **📊 Data Scientist**: Data analysis, machine learning, and visualization tools
-- **🚀 DevOps Engineer**: Infrastructure, cloud tools, and monitoring stack
-- **🎭 Designer**: UI/UX design tools and prototyping applications
-- **🏢 Startup Founder**: Comprehensive setup for technical founders
-- **👥 Team Startup**: Multi-role configuration for small development teams
+- **Frontend Developer**: Modern web development tools and design applications
+- **Backend Developer**: Server-side technologies, databases, and DevOps tools
+- **Data Scientist**: Data analysis, machine learning, and visualization tools
+- **DevOps Engineer**: Infrastructure, cloud tools, and monitoring stack
+- **Designer**: UI/UX design tools and prototyping applications
+- **Startup Founder**: Comprehensive setup for technical founders
+- **Team Startup**: Multi-role configuration for small development teams
 
-> **💡 Pro Tip**: These examples are starting points only! Feel free to modify them, combine multiple configurations, or create your own custom groups that better fit your specific workflow and needs.
+> **Pro Tip**: These examples are starting points only! Feel free to modify them, combine multiple configurations, or create your own custom groups that better fit your specific workflow and needs.
 
 ## File Format
 
@@ -163,42 +163,7 @@ The import command follows a structured process to ensure data integrity and use
 Here's a complete example of importing team groups:
 
 ```bash
-$ anvil config import https://raw.githubusercontent.com/company/shared-configs/main/team-groups.yaml
-
-=== Import Groups from File ===
-🔧 Fetching source file...
-✅ Source file fetched successfully
-🔧 Parsing import file...
-✅ Import file parsed successfully
-🔧 Validating group structure...
-✅ Group structure validation passed
-🔧 Checking for conflicts...
-✅ No conflicts detected
-🔧 Preparing import summary...
-
-📋 Import Summary:
-═══════════════════
-├── 📁 backend-dev (5 tools)
-│   ├── 🔧 docker
-│   ├── 🔧 git
-│   ├── 🔧 nodejs
-│   ├── 🔧 postgresql
-│   └── 🔧 redis
-│
-├── 📁 frontend-dev (5 tools)
-│   ├── 🔧 chrome
-│   ├── 🔧 git
-│   ├── 🔧 nodejs
-│   ├── 🔧 npm
-│   └── 🔧 vscode
-│
-📊 Total: 2 groups, 10 applications
-
-? Proceed with importing these groups? (y/N): y
-🔧 Importing groups...
-✅ Groups imported successfully
-
-✨ Import completed! 2 groups have been added to your configuration.
+anvil config import https://raw.githubusercontent.com/company/shared-configs/main/team-groups.yaml
 ```
 
 ## Error Handling

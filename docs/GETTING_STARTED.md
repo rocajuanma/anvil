@@ -18,11 +18,11 @@ Welcome to Anvil! This guide will help you get up and running quickly with Anvil
 
 Anvil is a CLI automation tool that helps developers:
 
-- **🚀 Bootstrap development environments** quickly and reliably
-- **📦 Install tools in logical groups** (development, new laptop, custom)
-- **⚙️ Manage configurations** across different machines
-- **🔧 Automate repetitive setup tasks** for individuals and teams
-- **🩺 Validate environment health** with comprehensive diagnostic checks
+- **Bootstrap development environments** quickly and reliably
+- **Install tools in logical groups** (development, new laptop, custom)
+- **Manage configurations** across different machines
+- **Automate repetitive setup tasks** for individuals and teams
+- **Validate environment health** with comprehensive diagnostic checks
 
 ### Key Concepts
 

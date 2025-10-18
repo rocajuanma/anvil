@@ -2,23 +2,23 @@
 
 Anvil's configuration management system allows you to sync dotfiles and configuration files across machines using **PRIVATE** GitHub repositories for security.
 
-## 🚨 CRITICAL SECURITY REQUIREMENT
+## CRITICAL SECURITY REQUIREMENT
 
 **Anvil REQUIRES private repositories for configuration management.**
 
 Configuration files contain sensitive data that must NEVER be exposed publicly:
 
-- **🔑 API keys and tokens** - GitHub tokens, cloud provider credentials
-- **📁 Personal paths** - Home directories, SSH key paths, private file locations
-- **⚙️ System information** - Usernames, email addresses, development settings
-- **🔐 Authentication data** - SSH configurations, git credentials
+- **API keys and tokens** - GitHub tokens, cloud provider credentials
+- **Personal paths** - Home directories, SSH key paths, private file locations
+- **System information** - Usernames, email addresses, development settings
+- **Authentication data** - SSH configurations, git credentials
 
-**🛡️ Security Guarantees:**
+**Security Guarantees:**
 
-- ✅ Anvil **BLOCKS** all pushes to public repositories
-- ✅ Repository privacy is **verified before every push**
-- ✅ Clear error messages guide users to make repositories private
-- ⚠️ **Push operations will FAIL** if repository is public
+- Anvil **BLOCKS** all pushes to public repositories
+- Repository privacy is **verified before every push**
+- Clear error messages guide users to make repositories private
+- **Push operations will FAIL** if repository is public
 
 ## Overview
 
@@ -26,20 +26,20 @@ The `config` command provides centralized management of configuration files and 
 
 ### Features
 
-- **📁 Centralize Configurations** - Store all your dotfiles and configuration files in a **PRIVATE** GitHub repository
-- **🔄 Sync Across Machines** - Keep consistent configurations across all your development environments
-- **📦 Directory-Specific Operations** - Pull only the configuration directory you need
-- **🛡️ Version Control** - Track changes to your configurations over time with full privacy protection
-- **👥 Team Sharing** - Share team configurations and best practices through private repositories
-- **🔒 Security-First** - Mandatory private repository validation prevents data exposure
+- **Centralize Configurations** - Store all your dotfiles and configuration files in a **PRIVATE** GitHub repository
+- **Sync Across Machines** - Keep consistent configurations across all your development environments
+- **Directory-Specific Operations** - Pull only the configuration directory you need
+- **Version Control** - Track changes to your configurations over time with full privacy protection
+- **Team Sharing** - Share team configurations and best practices through private repositories
+- **Security-First** - Mandatory private repository validation prevents data exposure
 
 ### Current Implementation Status
 
-- ✅ **Pull**: Fully implemented with directory-specific pulling
-- ✅ **Show**: View configurations and settings
-- ✅ **Sync**: Reconcile configuration state with system reality
-- ✅ **Push**: Upload configurations to GitHub repository
-- ✅ **Import**: Import group definitions from local files or URLs
+- **Pull**: Fully implemented with directory-specific pulling
+- **Show**: View configurations and settings
+- **Sync**: Reconcile configuration state with system reality
+- **Push**: Upload configurations to GitHub repository
+- **Import**: Import group definitions from local files or URLs
 
 ## Commands
 
