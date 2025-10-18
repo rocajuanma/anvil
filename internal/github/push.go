@@ -84,7 +84,7 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 	}
 
 	// Repository appears to be private and git access works - safe to proceed
-	getOutputHandler().PrintSuccess("🔒 Repository privacy verified - safe to push configuration data")
+	getOutputHandler().PrintSuccess("Repository privacy verified - safe to push configuration data")
 	return nil
 }
 
