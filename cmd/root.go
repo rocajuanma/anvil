@@ -172,9 +172,5 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 	if cmd.HasAvailableSubCommands() {
 		fmt.Println("  💡 Use 'anvil [command] --help' for more information about a command")
 	}
-	if cmd.Name() == "anvil" {
-		fmt.Println("  📚 Documentation: https://github.com/rocajuanma/anvil")
-		fmt.Println("  🐛 Issues: https://github.com/rocajuanma/anvil/issues")
-	}
 	fmt.Println()
 }

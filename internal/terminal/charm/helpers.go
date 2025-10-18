@@ -33,8 +33,8 @@ func RenderBox(title, content string, borderColor string, centered bool) string 
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color(borderColor)).
 		Padding(0, 1).
-		MarginTop(1).
-		MarginBottom(1).
+		MarginTop(0).
+		MarginBottom(0).
 		Width(100)
 
 	if centered {
