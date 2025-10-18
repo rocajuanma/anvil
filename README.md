@@ -12,9 +12,9 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%20only-blue.svg)](#installation)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 
-</div>
 
- Tired of wasting time setting up your Mac for development? Anvil automates tool installs, syncs configs, and keeps your environment consistent—no hassle, no manual steps, just one powerful CLI.
+Save hours in your process — install the tools you need, sync your configs, and keep your environment consistent with a single command-line tool.
+</div>
 
 <div align="center">
   <img src="assets/anvil.gif" alt="Anvil Demo" width="600">
@@ -23,14 +23,14 @@
 ## What Anvil Does
 
 - **🚀 Batch App Installation** - Install development tools in groups or individually via Homebrew
-- **🔄 Configuration Sync** - Sync dotfiles across machines using private GitHub repositories  
+- **🔄 Configuration Sync** - Sync dotfiles across machines using simple commands and private GitHub repositories  
 - **🩺 Health Checks** - Auto-diagnose and fix common setup issues
 
 ## Why Choose Anvil?
-- **⏱️ Fast, Automated Setup—Focus on Coding, Not Configuration** – Anvil handles all tool installations and configuration sync automatically, letting you get started in minutes instead of hours.
-- **🧑‍💻 Effortless Onboarding & Consistency** – Onboard new machines or teammates with a single command, ensuring everyone has the same reliable, ready-to-code environment—every time, on every Mac.
-- **🛡️ Built-in Safety** – Dry-run mode, automatic backups, and smart deduplication protect your system and your work.
-- **👥 Seamless Team Collaboration** – Instantly sync dotfiles and configs from private GitHub repositories, making team onboarding and environment sharing simple and secure.
+- **Fast Setup** - Get coding in minutes, not hours
+- **Consistency** - Same configs across all machines
+- **Built-in Safety** - Dry-run mode and automatic backups
+- **Secure Collaboration** - Private GitHub repository sync
 
 ## Quick Start
 
@@ -68,19 +68,19 @@ anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/do
 anvil doctor
 
 # Sync configurations (after setting up GitHub repo)
+anvil config push neovim
 anvil config pull neovim
 anvil config sync neovim
 ```
 
 ## Key Features
 
-- **🎯 Smart Installation** - Install individual apps or predefined groups (`dev`, `essentials`)
-- **📝 Auto-tracking** - Automatically tracks installed apps and prevents duplicates
-- **📥 Group Import** - Import groups from local files or URLs with validation and conflict detection
-- **🔒 Secure Config Sync** - Uses private GitHub repositories with automatic backups
-- **🩺 Health Diagnostics** - `anvil doctor` detects and auto-fixes common issues
-- **🧹 Environment Cleanup** - Smart cleanup tools that preserve essential configs
-- **🚀 Zero Configuration** - Works out of the box with sensible defaults
+- **Smart Installation** - Install individual apps or predefined groups(`dev`, `essentials`, etc) holding many apps
+- **Group Import** - Import groups from local files or URLs with validation and conflict detection
+- **Auto-tracking** - Automatically tracks installed apps and prevents duplicates
+- **Secure Config Sync** - Uses private GitHub repositories with automatic backups
+- **Health Diagnostics** - `anvil doctor` detects and auto-fixes common issues
+- **Zero Configuration** - Works out of the box with sensible defaults
 
 ## Documentation
 
@@ -88,21 +88,20 @@ anvil config sync neovim
 |-------|-------------|
 | **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and workflows |
 | **[Configuration Management](docs/config.md)** | Config sync setup and workflows |
-| **[Import Groups](docs/import.md)** | Import tool groups from files/URLs |
 | **[Install Command](docs/install.md)** | Tool installation guide |
+| **[Import Groups](docs/import.md)** | Import tool groups from files/URLs |
 | **[Doctor Command](docs/doctor.md)** | Health checks and validation |
 | **[Examples & Tutorials](docs/EXAMPLES.md)** | Real-world usage scenarios |
 
-**[📖 View All Documentation →](docs/)**
+**[View All Documentation →](docs/)**
 
 ---
 
 <div align="center">
 
-**[⬆ Back to Top](#anvil)**
+One CLI to rule them all.
 
-Made with ❤️ for macOS developers who value automation and consistency
-
-**[⭐ Star this project](https://github.com/rocajuanma/anvil)** • **[📖 Documentation](docs/)** • **[🐛 Report Issues](https://github.com/rocajuanma/anvil/issues)**
+**Author:** [@rocajuanma](https://github.com/rocajuanma)  
+**[⭐ Star this project](https://github.com/rocajuanma/anvil)**
 
 </div>
