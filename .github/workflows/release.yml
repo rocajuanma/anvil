@@ -78,37 +78,13 @@ jobs:
         echo '```bash' >> formatted_release_notes.md
         echo 'curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash' >> formatted_release_notes.md
         echo 'anvil --version' >> formatted_release_notes.md
-        echo 'anvil init && anvil install dev' >> formatted_release_notes.md
+        echo 'anvil init && anvil install essentials' >> formatted_release_notes.md
         echo '```' >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md
         echo "### 💬 Join the Community" >> formatted_release_notes.md
-        echo "- 🎯 [Check out our docs](https://github.com/rocajuanma/anvil/blob/master/docs/GETTING_STARTED.md)" >> formatted_release_notes.md
+        echo "- 🌟 [Star us on GitHub](https://github.com/rocajuanma/anvil)" >> formatted_release_notes.md
         echo "- 🐛 [Report issues](https://github.com/rocajuanma/anvil/issues)" >> formatted_release_notes.md
-        echo "- 💡 [Request features](https://github.com/rocajuanma/anvil/discussions)" >> formatted_release_notes.md
-        echo "- ⭐ Star us if Anvil saves you time!" >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md
-        echo "### 📦 Manual Downloads" >> formatted_release_notes.md
-        echo "" >> formatted_release_notes.md
-        echo "**macOS Intel:**" >> formatted_release_notes.md
-        echo '```bash' >> formatted_release_notes.md
-        echo "curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-amd64 -o anvil" >> formatted_release_notes.md
-        echo "chmod +x anvil" >> formatted_release_notes.md
-        echo "sudo mv anvil /usr/local/bin/" >> formatted_release_notes.md
-        echo '```' >> formatted_release_notes.md
-        echo "" >> formatted_release_notes.md
-        echo "**macOS Apple Silicon:**" >> formatted_release_notes.md
-        echo '```bash' >> formatted_release_notes.md
-        echo "curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-darwin-arm64 -o anvil" >> formatted_release_notes.md
-        echo "chmod +x anvil" >> formatted_release_notes.md
-        echo "sudo mv anvil /usr/local/bin/" >> formatted_release_notes.md
-        echo '```' >> formatted_release_notes.md
-        echo "" >> formatted_release_notes.md
-        echo "**Linux:**" >> formatted_release_notes.md
-        echo '```bash' >> formatted_release_notes.md
-        echo "curl -L https://github.com/rocajuanma/anvil/releases/download/${{ steps.version.outputs.VERSION }}/anvil-linux-amd64 -o anvil" >> formatted_release_notes.md
-        echo "chmod +x anvil" >> formatted_release_notes.md
-        echo "sudo mv anvil /usr/local/bin/" >> formatted_release_notes.md
-        echo '```' >> formatted_release_notes.md
         echo "---" >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md
         echo "**📋 Checksums:** See \`checksums.txt\` for file verification" >> formatted_release_notes.md
