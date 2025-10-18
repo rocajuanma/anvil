@@ -257,7 +257,7 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *config.AnvilCon
 		Name:     v.Name(),
 		Category: v.Category(),
 		Status:   PASS,
-		Message:  "✅ Private repository accessible with proper authentication",
+		Message:  "Private repository accessible with proper authentication",
 		Details: []string{
 			fmt.Sprintf("Repository: %s", cfg.GitHub.ConfigRepo),
 			"🔒 Repository is private (secure)",

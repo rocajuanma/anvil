@@ -489,7 +489,7 @@ func getStatusEmoji(status ValidationStatus) string {
 	case PASS:
 		return "✅"
 	case WARN:
-		return "⚠️ "
+		return "⚠️"
 	case FAIL:
 		return "❌"
 	case SKIP:
