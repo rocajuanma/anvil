@@ -588,6 +588,5 @@ ssh -T git@github.com
 
 For detailed troubleshooting and examples, see:
 
-- [Getting Started Guide](GETTING_STARTED.md)
 - [Examples & Tutorials](EXAMPLES.md)
 - [Contributing Guidelines](CONTRIBUTING.md)

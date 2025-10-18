@@ -86,7 +86,6 @@ anvil config sync neovim
 
 | Guide | Description |
 |-------|-------------|
-| **[Getting Started](docs/GETTING_STARTED.md)** | Complete setup and workflows |
 | **[Configuration Management](docs/config.md)** | Config sync setup and workflows |
 | **[Install Command](docs/install.md)** | Tool installation guide |
 | **[Import Groups](docs/import.md)** | Import tool groups from files/URLs |
