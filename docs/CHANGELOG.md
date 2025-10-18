@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Documentation Refinement** 📝 - Comprehensive documentation simplification and cleanup, removing redundant content, eliminating output examples, and streamlining all documentation files for better maintainability and user experience
 - **Doctor Command Refactor** 🔧 - Restructured doctor command implementation with improved file organization, enhanced status display with text-based indicators, and better alignment in summary output
+- **Command File Organization** 🏗️ - Reorganized command implementations across multiple files for better maintainability and separation of concerns
+- **Badge Rendering Improvements** 🎨 - Enhanced RenderBadge styling with improved border alignment and visual consistency
 
 ### Fixed
 

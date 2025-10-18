@@ -33,8 +33,8 @@ func RenderBox(title, content string, borderColor string, centered bool) string 
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color(borderColor)).
 		Padding(0, 1).
-		MarginTop(1).
-		MarginBottom(1).
+		MarginTop(0).
+		MarginBottom(0).
 		Width(100)
 
 	if centered {
@@ -199,17 +199,19 @@ func RenderQuote(quote string, author string) string {
 	return result
 }
 
-// RenderBadge creates a small badge/tag
+// RenderBadge creates a distinct, highly readable badge/tag
 func RenderBadge(text string, color string) string {
 	if color == "" {
 		color = "#00D9FF"
 	}
 
 	badgeStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFFFF")).
+		Foreground(lipgloss.Color("#000000")).
 		Background(lipgloss.Color(color)).
-		Padding(0, 1).
-		Bold(true)
+		Padding(0, 2).
+		Bold(true).
+		BorderForeground(lipgloss.Color(color)).
+		Margin(0, 1)
 
 	return badgeStyle.Render(text)
 }

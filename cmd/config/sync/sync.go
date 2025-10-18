@@ -21,7 +21,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
@@ -224,56 +223,6 @@ func syncAppConfig(appName string, dryRun bool) error {
 	output.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
 
 	return nil
-}
-
-// createArchiveDirectory creates a timestamped archive directory
-func createArchiveDirectory(prefix string) (string, error) {
-
-	// Create timestamp
-	timestamp := time.Now().Format("2006-01-02-15-04-05")
-	archiveName := fmt.Sprintf("%s-%s", prefix, timestamp)
-	archivePath := filepath.Join(config.GetConfigDirectory(), "archive", archiveName)
-
-	// Create archive directory
-	if err := utils.EnsureDirectory(archivePath); err != nil {
-		return "", err
-	}
-
-	return archivePath, nil
-}
-
-// archiveExistingConfig archives the existing configuration
-func archiveExistingConfig(configType, sourcePath, archivePath string) error {
-	// Check if source exists
-	if _, err := os.Stat(sourcePath); os.IsNotExist(err) {
-		// Nothing to archive
-		return nil
-	}
-
-	// Determine destination in archive
-	var destPath string
-	if configType == "anvil-settings" {
-		destPath = filepath.Join(archivePath, "settings.yaml")
-	} else {
-		// For app configs, preserve the directory structure
-		destPath = archivePath
-	}
-
-	// Copy to archive
-	sourceInfo, err := os.Stat(sourcePath)
-	if err != nil {
-		return err
-	}
-
-	if sourceInfo.IsDir() {
-		return copyDirRecursive(sourcePath, destPath)
-	} else {
-		// Ensure parent directory exists
-		if err := utils.EnsureDirectory(filepath.Dir(destPath)); err != nil {
-			return err
-		}
-		return utils.CopyFileSimple(sourcePath, destPath)
-	}
 }
 
 // copyDirRecursive recursively copies a directory using the consolidated utils.CopyDirectorySimple

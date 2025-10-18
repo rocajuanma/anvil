@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
@@ -112,7 +111,7 @@ func getAnvilDirectoryPath() (string, error) {
 func getItemsToClean(anvilDir string) ([]string, error) {
 	output := getOutputHandler()
 	output.PrintStage("Scanning .anvil directory for content to clean")
-	
+
 	spinner := charm.NewCircleSpinner("Scanning .anvil directory")
 	spinner.Start()
 
@@ -143,42 +142,10 @@ func getItemsToClean(anvilDir string) ([]string, error) {
 	return itemsToClean, nil
 }
 
-// displayCleanPreview shows what will be cleaned
-func displayCleanPreview(output palantir.OutputHandler, itemsToClean []string) {
-	output.PrintInfo("Found %d root directories to clean:", len(itemsToClean))
-	output.PrintInfo("Directory structure to be cleaned:")
-
-	// Build and display tree structure for each directory
-	for _, itemPath := range itemsToClean {
-		itemName := filepath.Base(itemPath)
-		if info, err := os.Stat(itemPath); err == nil && info.IsDir() {
-			// Count items in directory
-			count, treeOutput := buildDirectoryTree(itemPath, itemName)
-			output.PrintInfo("  📁 %s (%d)", itemName, count)
-			fmt.Print(treeOutput)
-		} else {
-			output.PrintInfo("  📁 %s", itemName)
-		}
-	}
-}
-
-// handleUserConfirmation handles user confirmation and returns true if should proceed
-func handleUserConfirmation(output palantir.OutputHandler, force, dryRun bool, itemCount int) bool {
-	// Confirm deletion unless force flag is used
-	if !force && !dryRun {
-		confirmMsg := fmt.Sprintf("Are you sure you want to clean the contents of these %d root directories? This action cannot be undone", itemCount)
-		if !output.Confirm(confirmMsg) {
-			output.PrintInfo("Clean operation cancelled.")
-			return false
-		}
-	}
-	return true
-}
-
 // performCleaning executes the actual cleaning process
 func performCleaning(output palantir.OutputHandler, itemsToClean []string) error {
 	output.PrintStage("Cleaning directories and files")
-	
+
 	spinner := charm.NewDotsSpinner(fmt.Sprintf("Cleaning %d items", len(itemsToClean)))
 	spinner.Start()
 
@@ -208,40 +175,6 @@ func performCleaning(output palantir.OutputHandler, itemsToClean []string) error
 	}
 
 	return nil
-}
-
-// displayCleanResult shows the result of cleaning a specific item
-func displayCleanResult(output palantir.OutputHandler, itemPath string) {
-	itemName := filepath.Base(itemPath)
-	if info, err := os.Stat(itemPath); err == nil && info.IsDir() {
-		if itemName == "dotfiles" {
-			output.PrintSuccess("Removed dotfiles directory completely")
-		} else {
-			output.PrintSuccess("Cleaned contents of directory " + itemName)
-		}
-	} else {
-		output.PrintSuccess("Cleaned " + itemName)
-	}
-}
-
-// buildDirectoryTree builds a simple tree showing only immediate contents of a directory
-func buildDirectoryTree(dirPath, dirName string) (int, string) {
-	var output strings.Builder
-	var count int
-
-	// Read only the immediate contents of the directory
-	entries, err := os.ReadDir(dirPath)
-	if err != nil {
-		return 0, ""
-	}
-
-	// Count and display only immediate entries
-	for _, entry := range entries {
-		count++
-		output.WriteString(fmt.Sprintf("    ├── %s\n", entry.Name()))
-	}
-
-	return count, output.String()
 }
 
 // cleanItem removes the contents of a directory or the file itself
