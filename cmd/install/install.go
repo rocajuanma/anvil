@@ -30,6 +30,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/errors"
 	"github.com/rocajuanma/anvil/internal/installer"
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
+	"github.com/rocajuanma/anvil/internal/utils"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
@@ -506,6 +507,16 @@ func loadAndPrepareAppData() (groups map[string][]string, builtInGroupNames []st
 	}
 
 	return
+}
+
+// renderListView renders applications in a flat list format
+func renderListView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+	return utils.RenderListView(groups, builtInGroupNames, customGroupNames, installedApps)
+}
+
+// renderTreeView renders applications in a hierarchical tree format
+func renderTreeView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+	return utils.RenderTreeView(groups, builtInGroupNames, customGroupNames, installedApps)
 }
 
 func init() {
