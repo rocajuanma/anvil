@@ -18,6 +18,7 @@ package show
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/rocajuanma/anvil/internal/config"
@@ -69,50 +70,19 @@ func showAnvilSettingsSection(showGroups, showConfigs, showGit, showGitHub bool)
 	return nil
 }
 
-// showGroups displays the groups section
+// showGroupsSection displays the groups section using shared rendering functions
 func showGroupsSection(anvilConfig *config.AnvilConfig) error {
-	var boxContent strings.Builder
-	boxContent.WriteString("\n")
-
-	// Get built-in and custom groups
-	builtInGroups := config.GetBuiltInGroups()
-	var customGroups []string
-	for groupName := range anvilConfig.Groups {
-		if !config.IsBuiltInGroup(groupName) {
-			customGroups = append(customGroups, groupName)
-		}
+	// Load and prepare data using the same logic as install command
+	groups, builtInGroupNames, customGroupNames, installedApps, err := loadAndPrepareAppData()
+	if err != nil {
+		return err
 	}
 
-	// Display built-in groups
-	if len(builtInGroups) > 0 {
-		boxContent.WriteString("  Built-in Groups:\n")
-		for _, groupName := range builtInGroups {
-			if tools, exists := anvilConfig.Groups[groupName]; exists {
-				boxContent.WriteString(fmt.Sprintf("    📁 %s (%d tools)\n", groupName, len(tools)))
-				for _, tool := range tools {
-					boxContent.WriteString(fmt.Sprintf("      • %s\n", tool))
-				}
-			}
-		}
-		boxContent.WriteString("\n")
-	}
-
-	// Display custom groups
-	if len(customGroups) > 0 {
-		boxContent.WriteString("  Custom Groups:\n")
-		for _, groupName := range customGroups {
-			if tools, exists := anvilConfig.Groups[groupName]; exists {
-				boxContent.WriteString(fmt.Sprintf("    📁 %s (%d tools)\n", groupName, len(tools)))
-				for _, tool := range tools {
-					boxContent.WriteString(fmt.Sprintf("      • %s\n", tool))
-				}
-			}
-		}
-		boxContent.WriteString("\n")
-	}
+	// Use the shared tree view renderer
+	content := utils.RenderTreeView(groups, builtInGroupNames, customGroupNames, installedApps)
 
 	// Display in box
-	fmt.Println(charm.RenderBox("Groups", boxContent.String(), "#00FF87", false))
+	fmt.Println(charm.RenderBox("Groups", content, "#00FF87", false))
 
 	// Footer with helpful info
 	fmt.Println()
@@ -121,6 +91,42 @@ func showGroupsSection(anvilConfig *config.AnvilConfig) error {
 	fmt.Println()
 
 	return nil
+}
+
+// loadAndPrepareAppData loads all application data and prepares it for rendering
+// This function is copied from the install package to maintain consistency
+func loadAndPrepareAppData() (groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string, err error) {
+	// Load groups from config
+	groups, err = config.GetAvailableGroups()
+	if err != nil {
+		err = errors.NewConfigurationError(constants.OpShow, "load-data",
+			fmt.Errorf("failed to load groups: %w", err))
+		return
+	}
+
+	// Get built-in group names
+	builtInGroupNames = config.GetBuiltInGroups()
+
+	// Extract and sort custom group names
+	for groupName := range groups {
+		if !config.IsBuiltInGroup(groupName) {
+			customGroupNames = append(customGroupNames, groupName)
+		}
+	}
+	sort.Strings(customGroupNames)
+
+	// Load and sort installed apps
+	installedApps, err = config.GetInstalledApps()
+	if err != nil {
+		// Don't fail on installed apps error, just log warning
+		getOutputHandler().PrintWarning("Failed to load installed apps: %v", err)
+		installedApps = []string{}
+		err = nil // Reset error since we can continue
+	} else {
+		sort.Strings(installedApps)
+	}
+
+	return
 }
 
 // showConfigsSection displays the configs section
