@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/rocajuanma/anvil/internal/utils"
 	"github.com/rocajuanma/palantir"
 )
 
@@ -30,18 +31,18 @@ func renderListView(groups map[string][]string, builtInGroupNames []string, cust
 	content.WriteString("\n")
 
 	// Show built-in groups first
-	content.WriteString(colorSectionHeader("Built-in Groups") + "\n\n")
+	content.WriteString(utils.ColorSectionHeader("Built-in Groups") + "\n\n")
 	for _, groupName := range builtInGroupNames {
 		if tools, exists := groups[groupName]; exists {
-			content.WriteString(fmt.Sprintf("  %s  %s\n", colorGroupNameWithIcon(groupName), strings.Join(tools, ", ")))
+			content.WriteString(fmt.Sprintf("  %s  %s\n", utils.ColorGroupNameWithIcon(groupName), strings.Join(tools, ", ")))
 		}
 	}
 
 	// Show custom groups
 	if len(customGroupNames) > 0 {
-		content.WriteString("\n" + colorSectionHeader("Custom Groups") + "\n\n")
+		content.WriteString("\n" + utils.ColorSectionHeader("Custom Groups") + "\n\n")
 		for _, groupName := range customGroupNames {
-			content.WriteString(fmt.Sprintf("  %s  %s\n", colorGroupNameWithIcon(groupName), strings.Join(groups[groupName], ", ")))
+			content.WriteString(fmt.Sprintf("  %s  %s\n", utils.ColorGroupNameWithIcon(groupName), strings.Join(groups[groupName], ", ")))
 		}
 	} else {
 		content.WriteString(fmt.Sprintf("\n%sNo custom groups defined%s\n", palantir.ColorBold+palantir.ColorYellow, palantir.ColorReset))
@@ -50,9 +51,9 @@ func renderListView(groups map[string][]string, builtInGroupNames []string, cust
 
 	// Show individually tracked installed apps
 	if len(installedApps) > 0 {
-		content.WriteString("\n" + colorSectionHeader("Individually Tracked Apps") + "\n\n")
+		content.WriteString("\n" + utils.ColorSectionHeader("Individually Tracked Apps") + "\n\n")
 		for _, app := range installedApps {
-			content.WriteString(fmt.Sprintf("  %s\n", colorAppName(app)))
+			content.WriteString(fmt.Sprintf("  %s\n", utils.ColorAppName(app)))
 		}
 	}
 
@@ -139,21 +140,4 @@ func renderTreeView(groups map[string][]string, builtInGroupNames []string, cust
 	content.WriteString("\n")
 
 	return content.String()
-}
-
-// Color helper functions for consistent formatting
-func colorSectionHeader(text string) string {
-	return fmt.Sprintf("%s%s%s", palantir.ColorBold+palantir.ColorCyan, text, palantir.ColorReset)
-}
-
-func colorBoldText(text string) string {
-	return fmt.Sprintf("%s%s%s", palantir.ColorBold, text, palantir.ColorReset)
-}
-
-func colorAppName(text string) string {
-	return fmt.Sprintf("%s%s%s", palantir.ColorGreen, text, palantir.ColorReset)
-}
-
-func colorGroupNameWithIcon(text string) string {
-	return fmt.Sprintf("%s 📁", colorBoldText(text))
 }
