@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [2.3.0] - 2025-10-20
+
+### Added
 - **Config Show Section Flags** 🎯 - New targeted display flags for `anvil config show` command: `--groups/-g`, `--configs/-c`, `--git`, and `--github` for focused configuration viewing
 - **Centralized Rendering Logic** 🎨 - New shared rendering package for consistent tree and list views across commands
 - **Centralized Load Helper** 🔧 - Consolidated application data loading logic for improved maintainability
