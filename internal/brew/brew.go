@@ -331,6 +331,8 @@ func IsApplicationAvailable(packageName string) bool {
 		if err == nil && result.Success {
 			return true
 		}
+		// Skip spotlight search for known formulas - they should only be in PATH
+		return false
 	}
 
 	// Step 3: For unknown packages, check most likely /Applications path first (fast - single filesystem check)
