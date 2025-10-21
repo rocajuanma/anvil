@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package install
+package utils
 
 import (
 	"fmt"
@@ -24,24 +24,32 @@ import (
 	"github.com/rocajuanma/palantir"
 )
 
-// renderListView renders applications in a flat list format
-func renderListView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+// AppTreeNode represents a node in the applications tree
+type AppTreeNode struct {
+	Name     string
+	IsGroup  bool
+	Apps     []string
+	Children []*AppTreeNode
+}
+
+// RenderListView renders applications in a flat list format
+func RenderListView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
 	var content strings.Builder
 	content.WriteString("\n")
 
 	// Show built-in groups first
-	content.WriteString(colorSectionHeader("Built-in Groups") + "\n\n")
+	content.WriteString(ColorSectionHeader("Built-in Groups") + "\n\n")
 	for _, groupName := range builtInGroupNames {
 		if tools, exists := groups[groupName]; exists {
-			content.WriteString(fmt.Sprintf("  %s  %s\n", colorGroupNameWithIcon(groupName), strings.Join(tools, ", ")))
+			content.WriteString(fmt.Sprintf("  %s  %s\n", ColorGroupNameWithIcon(groupName), strings.Join(tools, ", ")))
 		}
 	}
 
 	// Show custom groups
 	if len(customGroupNames) > 0 {
-		content.WriteString("\n" + colorSectionHeader("Custom Groups") + "\n\n")
+		content.WriteString("\n" + ColorSectionHeader("Custom Groups") + "\n\n")
 		for _, groupName := range customGroupNames {
-			content.WriteString(fmt.Sprintf("  %s  %s\n", colorGroupNameWithIcon(groupName), strings.Join(groups[groupName], ", ")))
+			content.WriteString(fmt.Sprintf("  %s  %s\n", ColorGroupNameWithIcon(groupName), strings.Join(groups[groupName], ", ")))
 		}
 	} else {
 		content.WriteString(fmt.Sprintf("\n%sNo custom groups defined%s\n", palantir.ColorBold+palantir.ColorYellow, palantir.ColorReset))
@@ -50,9 +58,9 @@ func renderListView(groups map[string][]string, builtInGroupNames []string, cust
 
 	// Show individually tracked installed apps
 	if len(installedApps) > 0 {
-		content.WriteString("\n" + colorSectionHeader("Individually Tracked Apps") + "\n\n")
+		content.WriteString("\n" + ColorSectionHeader("Individually Tracked Apps") + "\n\n")
 		for _, app := range installedApps {
-			content.WriteString(fmt.Sprintf("  %s\n", colorAppName(app)))
+			content.WriteString(fmt.Sprintf("  %s\n", ColorAppName(app)))
 		}
 	}
 
@@ -60,8 +68,8 @@ func renderListView(groups map[string][]string, builtInGroupNames []string, cust
 	return content.String()
 }
 
-// renderTreeView renders applications in a hierarchical tree format
-func renderTreeView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+// RenderTreeView renders applications in a hierarchical tree format
+func RenderTreeView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
 	// Create root node
 	root := &AppTreeNode{
 		Name:     "Applications",
@@ -141,19 +149,75 @@ func renderTreeView(groups map[string][]string, builtInGroupNames []string, cust
 	return content.String()
 }
 
-// Color helper functions for consistent formatting
-func colorSectionHeader(text string) string {
-	return fmt.Sprintf("%s%s%s", palantir.ColorBold+palantir.ColorCyan, text, palantir.ColorReset)
-}
+// buildTreeString writes an app tree node to a string builder with ASCII art and colors
+func buildTreeString(builder *strings.Builder, node *AppTreeNode, prefix string, isLast bool, isRoot bool) {
+	if !isRoot {
+		var treeChar string
+		if isLast {
+			treeChar = "└── "
+		} else {
+			treeChar = "├── "
+		}
 
-func colorBoldText(text string) string {
-	return fmt.Sprintf("%s%s%s", palantir.ColorBold, text, palantir.ColorReset)
-}
+		// Color the output based on node type
+		var coloredName string
+		if node.IsGroup {
+			// Groups are colored in bold blue
+			coloredName = fmt.Sprintf("%s%s%s 📁 %s", palantir.ColorBold, palantir.ColorBlue, node.Name, palantir.ColorReset)
+		} else if len(node.Children) > 0 {
+			// Category headers (Built-in Groups, Custom Groups, etc.) in bold cyan
+			coloredName = fmt.Sprintf("%s%s%s%s", palantir.ColorBold, palantir.ColorCyan, node.Name, palantir.ColorReset)
+		} else {
+			// Individual apps in green
+			coloredName = fmt.Sprintf("%s%s%s", palantir.ColorGreen, node.Name, palantir.ColorReset)
+		}
+		builder.WriteString(fmt.Sprintf("%s%s%s\n", prefix, treeChar, coloredName))
+	}
 
-func colorAppName(text string) string {
-	return fmt.Sprintf("%s%s%s", palantir.ColorGreen, text, palantir.ColorReset)
-}
+	// Write apps within a group
+	if node.IsGroup && len(node.Apps) > 0 {
+		for i, app := range node.Apps {
+			isAppLast := i == len(node.Apps)-1
 
-func colorGroupNameWithIcon(text string) string {
-	return fmt.Sprintf("%s 📁", colorBoldText(text))
+			// Calculate prefix for app
+			var appPrefix string
+			if isLast {
+				appPrefix = prefix + "    "
+			} else {
+				appPrefix = prefix + "│   "
+			}
+
+			var appTreeChar string
+			if isAppLast {
+				appTreeChar = "└── "
+			} else {
+				appTreeChar = "├── "
+			}
+
+			// Color individual apps in green
+			coloredApp := fmt.Sprintf("%s%s%s", palantir.ColorGreen, app, palantir.ColorReset)
+			builder.WriteString(fmt.Sprintf("%s%s%s\n", appPrefix, appTreeChar, coloredApp))
+		}
+	}
+
+	// Write children
+	if node.Children != nil {
+		for i, child := range node.Children {
+			isChildLast := i == len(node.Children)-1
+
+			// Calculate prefix for child
+			var childPrefix string
+			if isRoot {
+				childPrefix = ""
+			} else {
+				if isLast {
+					childPrefix = prefix + "    "
+				} else {
+					childPrefix = prefix + "│   "
+				}
+			}
+
+			buildTreeString(builder, child, childPrefix, isChildLast, false)
+		}
+	}
 }

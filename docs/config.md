@@ -73,6 +73,33 @@ anvil config show cursor
 - **Multiple Files** - Shows tree structure with file listings
 - **Smart File Detection** - Automatically determines best display method
 
+#### Section-Specific Display Flags
+
+View specific sections of your anvil settings with targeted flags:
+
+```bash
+anvil config show --groups          # Show only groups
+anvil config show -g                # Short form for groups
+anvil config show --configs         # Show only config source directories
+anvil config show -c                # Short form for configs
+anvil config show --git             # Show only git configuration
+anvil config show --github          # Show only GitHub configuration
+```
+
+**Available Flags:**
+
+- **`--groups/-g`** - Display only groups (built-in and custom) with tool counts
+- **`--configs/-c`** - Display only configured source directories for apps
+- **`--git`** - Display only git configuration (username, email, SSH key path)
+- **`--github`** - Display only GitHub configuration (repository, branch, local path)
+
+**Use Cases:**
+
+- **Quick Reference** - `anvil config show --groups` for easy group overview
+- **Path Management** - `anvil config show --configs` to see configured app paths
+- **Git Setup** - `anvil config show --git` to verify git configuration
+- **Repository Check** - `anvil config show --github` to confirm GitHub settings
+
 ### anvil config sync [app-name]
 
 Move pulled configuration files from the temp directory to their local destinations with automatic archiving.
@@ -175,6 +202,22 @@ anvil config show cursor
 anvil config sync cursor
 ```
 
+### Configuration Inspection and Verification
+
+```bash
+# Check your groups setup
+anvil config show --groups
+
+# Verify configured app paths
+anvil config show --configs
+
+# Check git configuration
+anvil config show --git
+
+# Verify GitHub repository settings
+anvil config show --github
+```
+
 ### Team Development Workflow
 
 ```bash
@@ -214,6 +257,17 @@ anvil config show
 
 ```bash
 anvil doctor connectivity
+```
+
+**Section Flags Not Working**
+
+```bash
+# Ensure you're using the flags with anvil settings (no directory argument)
+anvil config show --groups
+anvil config show --git
+
+# Check if settings file exists
+anvil config show
 ```
 
 ## Best Practices

@@ -46,24 +46,51 @@ var ShowCmd = &cobra.Command{
 			return
 		}
 	},
+	Example: `  anvil config show                    # Show full anvil settings
+  anvil config show --groups          # Show only groups
+  anvil config show --configs         # Show only config sources
+  anvil config show --git             # Show only git configuration
+  anvil config show --github          # Show only GitHub configuration
+  anvil config show myapp             # Show pulled configuration for 'myapp'`,
 }
 
 func init() {
 	ShowCmd.Flags().Bool("raw", false, "Show raw file content without formatting")
+	ShowCmd.Flags().BoolP("groups", "g", false, "Show only groups (only applicable for anvil settings)")
+	ShowCmd.Flags().BoolP("configs", "c", false, "Show only config source directories (only applicable for anvil settings)")
+	ShowCmd.Flags().Bool("git", false, "Show only git configuration (only applicable for anvil settings)")
+	ShowCmd.Flags().Bool("github", false, "Show only GitHub configuration (only applicable for anvil settings)")
 }
 
 // runShowCommand executes the configuration show process
 func runShowCommand(cmd *cobra.Command, args []string) error {
 	raw, _ := cmd.Flags().GetBool("raw")
+	groups, _ := cmd.Flags().GetBool("groups")
+	configs, _ := cmd.Flags().GetBool("configs")
+	git, _ := cmd.Flags().GetBool("git")
+	github, _ := cmd.Flags().GetBool("github")
 
 	// If no arguments provided, show the anvil settings.yaml
 	if len(args) == 0 {
+		// Check if any specific section flags are set
+		if groups || configs || git || github {
+			return showAnvilSettingsSection(groups, configs, git, github)
+		}
 		return showAnvilSettings(raw)
 	}
 
 	// Show specific pulled configuration directory
 	targetDir := args[0]
 	return showPulledConfig(targetDir)
+}
+
+func checkSettingsFileExists(o palantir.OutputHandler, configPath string) error {
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		o.PrintError("Anvil settings file not found at: %s", configPath)
+		o.PrintInfo("💡 Run 'anvil init' to create the initial settings file")
+		return fmt.Errorf("settings file not found")
+	}
+	return nil
 }
 
 // showAnvilSettings displays the main anvil settings.yaml file
@@ -73,11 +100,10 @@ func showAnvilSettings(raw bool) error {
 	// Stage 1: Locate settings file
 	configPath := config.GetConfigPath()
 
-	// Check if settings file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		o.PrintError("Anvil settings file not found at: %s", configPath)
-		o.PrintInfo("💡 Run 'anvil init' to create the initial settings file")
-		return fmt.Errorf("settings file not found")
+	// Check settings file
+	err := checkSettingsFileExists(o, configPath)
+	if err != nil {
+		return err
 	}
 
 	// Stage 2: Read and display content

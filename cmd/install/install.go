@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
 
@@ -30,6 +29,8 @@ import (
 	"github.com/rocajuanma/anvil/internal/errors"
 	"github.com/rocajuanma/anvil/internal/installer"
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
+	"github.com/rocajuanma/anvil/internal/tools"
+	"github.com/rocajuanma/anvil/internal/utils"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +62,7 @@ var InstallCmd = &cobra.Command{
 
 		if treeFlag || listFlag {
 			// Load and prepare data once
-			groups, builtInGroupNames, customGroupNames, installedApps, err := loadAndPrepareAppData()
+			groups, builtInGroupNames, customGroupNames, installedApps, err := tools.LoadAndPrepareAppData()
 			if err != nil {
 				getOutputHandler().PrintError("Failed to load application data: %v", err)
 				return
@@ -473,39 +474,14 @@ func checkGitConfiguration() error {
 	return nil
 }
 
-// loadAndPrepareAppData loads all application data and prepares it for rendering
-func loadAndPrepareAppData() (groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string, err error) {
-	// Load groups from config
-	groups, err = config.GetAvailableGroups()
-	if err != nil {
-		err = errors.NewConfigurationError(constants.OpInstall, "load-data",
-			fmt.Errorf("failed to load groups: %w", err))
-		return
-	}
+// renderListView renders applications in a flat list format
+func renderListView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+	return utils.RenderListView(groups, builtInGroupNames, customGroupNames, installedApps)
+}
 
-	// Get built-in group names
-	builtInGroupNames = config.GetBuiltInGroups()
-
-	// Extract and sort custom group names
-	for groupName := range groups {
-		if !config.IsBuiltInGroup(groupName) {
-			customGroupNames = append(customGroupNames, groupName)
-		}
-	}
-	sort.Strings(customGroupNames)
-
-	// Load and sort installed apps
-	installedApps, err = config.GetInstalledApps()
-	if err != nil {
-		// Don't fail on installed apps error, just log warning
-		getOutputHandler().PrintWarning("Failed to load installed apps: %v", err)
-		installedApps = []string{}
-		err = nil // Reset error since we can continue
-	} else {
-		sort.Strings(installedApps)
-	}
-
-	return
+// renderTreeView renders applications in a hierarchical tree format
+func renderTreeView(groups map[string][]string, builtInGroupNames []string, customGroupNames []string, installedApps []string) string {
+	return utils.RenderTreeView(groups, builtInGroupNames, customGroupNames, installedApps)
 }
 
 func init() {
