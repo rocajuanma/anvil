@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+- **Installation Detection Bug** 🐛 - Fixed critical bug where known formulas (like `gh`) were incorrectly reported as "already available" due to Spotlight search matching system applications, causing installations to be skipped when packages weren't actually installed
+  
 ## [2.3.0] - 2025-10-20
 
 ### Added
