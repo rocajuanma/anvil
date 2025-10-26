@@ -19,7 +19,6 @@ package update
 import (
 	"context"
 	"fmt"
-	"runtime"
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
@@ -49,11 +48,6 @@ var UpdateCmd = &cobra.Command{
 // runUpdateCommand executes the update process
 func runUpdateCommand(cmd *cobra.Command) error {
 	o := getOutputHandler()
-	// Ensure we're running on macOS (following existing project pattern)
-	if runtime.GOOS != "darwin" {
-		return errors.NewPlatformError(constants.OpUpdate, "anvil",
-			fmt.Errorf("update command is only supported on macOS"))
-	}
 
 	o.PrintHeader("Updating Anvil to Latest Version")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")

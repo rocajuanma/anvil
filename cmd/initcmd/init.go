@@ -19,7 +19,6 @@ package initcmd
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/rocajuanma/anvil/internal/config"
@@ -54,12 +53,6 @@ func runInitCommand() error {
 	// Display initialization banner
 	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", "", "#00D9FF", true))
 	fmt.Println()
-
-	// Ensure we're running on macOS
-	if runtime.GOOS != "darwin" {
-		return errors.NewPlatformError(constants.OpInit, "platform",
-			fmt.Errorf("Anvil is only supported on macOS"))
-	}
 
 	o := getOutputHandler()
 

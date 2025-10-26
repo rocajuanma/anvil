@@ -18,7 +18,6 @@ package brew
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -52,7 +51,15 @@ type BrewPackage struct {
 func EnsureBrewIsInstalled() error {
 	if !IsBrewInstalled() {
 		getOutputHandler().PrintInfo("Homebrew not found. Installing Homebrew...")
-		if err := InstallBrew(); err != nil {
+
+		var err error
+		if system.IsMacOS() {
+			err = InstallBrew()
+		} else {
+			err = InstallBrewLinux()
+		}
+
+		if err != nil {
 			return fmt.Errorf("failed to install Homebrew: %w", err)
 		}
 		getOutputHandler().PrintSuccess("Homebrew installed successfully")
@@ -88,9 +95,21 @@ func IsBrewInstalled() bool {
 
 // IsBrewInstalledAtPath checks if Homebrew is installed at known paths
 func IsBrewInstalledAtPath() bool {
-	brewPaths := []string{
-		"/opt/homebrew/bin/brew", // Apple Silicon
-		"/usr/local/bin/brew",    // Intel
+	var brewPaths []string
+
+	// Platform-specific Homebrew paths
+	if system.IsMacOS() {
+		brewPaths = []string{
+			"/opt/homebrew/bin/brew", // Apple Silicon
+			"/usr/local/bin/brew",    // Intel
+		}
+	} else {
+		// Linux Homebrew paths
+		brewPaths = []string{
+			"/home/linuxbrew/.linuxbrew/bin/brew", // Standard Linux Homebrew
+			"~/.linuxbrew/bin/brew",               // User-local Linux Homebrew
+			"/opt/homebrew/bin/brew",              // Alternative Linux path
+		}
 	}
 
 	for _, path := range brewPaths {
@@ -105,29 +124,28 @@ func IsBrewInstalledAtPath() bool {
 
 // InstallBrew installs Homebrew if not already installed
 func InstallBrew() error {
-	if runtime.GOOS != "darwin" {
-		return fmt.Errorf("Homebrew is only supported on macOS")
-	}
-
 	if IsBrewInstalled() {
 		return nil
 	}
 
-	spinner := charm.NewDotsSpinner("Checking Xcode Command Line Tools")
-	spinner.Start()
+	// Check for Xcode Command Line Tools on macOS only
+	if system.IsMacOS() {
+		spinner := charm.NewDotsSpinner("Checking Xcode Command Line Tools")
+		spinner.Start()
 
-	xcodeResult, err := system.RunCommand("xcode-select", "-p")
-	if err != nil || !xcodeResult.Success {
-		spinner.Error("Xcode Command Line Tools not found")
-		return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
+		xcodeResult, err := system.RunCommand("xcode-select", "-p")
+		if err != nil || !xcodeResult.Success {
+			spinner.Error("Xcode Command Line Tools not found")
+			return fmt.Errorf("Xcode Command Line Tools required for Homebrew installation. Install with: xcode-select --install")
+		}
+		spinner.Success("Xcode Command Line Tools verified")
 	}
-	spinner.Success("Xcode Command Line Tools verified")
 
 	getOutputHandler().PrintInfo("Installing Homebrew (this may take a few minutes)")
 	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
 	fmt.Println()
 
-	spinner = charm.NewDotsSpinner("Preparing Homebrew installation")
+	spinner := charm.NewDotsSpinner("Preparing Homebrew installation")
 	spinner.Start()
 	time.Sleep(200 * time.Millisecond)
 	spinner.Stop()
@@ -138,7 +156,7 @@ func InstallBrew() error {
 
 	spinner = charm.NewDotsSpinner("Installing")
 	spinner.Start()
-	err = system.RunInteractiveCommand("/bin/bash", "-c", installScript)
+	err := system.RunInteractiveCommand("/bin/bash", "-c", installScript)
 	spinner.Stop()
 	fmt.Println()
 
@@ -318,8 +336,8 @@ func GetPackageInfo(packageName string) (*BrewPackage, error) {
 // IsApplicationAvailable checks if an application is available on the system
 // Optimized approach: Fastest operations first, slowest operations last
 func IsApplicationAvailable(packageName string) bool {
-	// Step 1: For known casks, check if app exists in /Applications (fastest - no system calls)
-	if isKnownCask(packageName) {
+	// Step 1: For known casks, check if app exists in /Applications (fastest - no system calls) - macOS only
+	if system.IsMacOS() && isKnownCask(packageName) {
 		if checkKnownCaskInApplications(packageName) {
 			return true
 		}
@@ -335,8 +353,8 @@ func IsApplicationAvailable(packageName string) bool {
 		return false
 	}
 
-	// Step 3: For unknown packages, check most likely /Applications path first (fast - single filesystem check)
-	if searchApplication(fmt.Sprintf("%s.app", packageName)) {
+	// Step 3: For unknown packages, check most likely /Applications path first (fast - single filesystem check) - macOS only
+	if system.IsMacOS() && searchApplication(fmt.Sprintf("%s.app", packageName)) {
 		return true
 	}
 
@@ -351,8 +369,12 @@ func IsApplicationAvailable(packageName string) bool {
 		return true
 	}
 
-	// Step 6: Fallback - Spotlight search (slowest - system-wide search)
-	return spotlightSearch(packageName)
+	// Step 6: Fallback - Spotlight search (slowest - system-wide search) - macOS only
+	if system.IsMacOS() {
+		return spotlightSearch(packageName)
+	}
+
+	return false
 }
 
 // checkKnownCaskInApplications checks if a known cask app exists in /Applications
