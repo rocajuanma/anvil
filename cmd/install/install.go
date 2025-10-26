@@ -19,7 +19,6 @@ package install
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"strings"
 	"time"
 
@@ -94,11 +93,6 @@ var InstallCmd = &cobra.Command{
 // runInstallCommand executes the dynamic install process
 func runInstallCommand(cmd *cobra.Command, target string) error {
 	o := getOutputHandler()
-	// Ensure we're running on macOS
-	if runtime.GOOS != "darwin" {
-		return errors.NewPlatformError(constants.OpInstall, target,
-			fmt.Errorf("install command is only supported on macOS"))
-	}
 
 	// Check for dry-run flag
 	dryRun, _ := cmd.Flags().GetBool("dry-run")

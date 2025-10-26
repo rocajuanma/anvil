@@ -63,10 +63,6 @@ func GetRequiredTools() []Tool {
 
 // ValidateAndInstallTools validates and installs required tools on macOS
 func ValidateAndInstallTools() error {
-	// Ensure we're running on macOS
-	if runtime.GOOS != "darwin" {
-		return fmt.Errorf("Anvil only supports macOS")
-	}
 
 	// Phase 1: Install Homebrew as a prerequisite (required for other tool installations)
 	if err := brew.EnsureBrewIsInstalled(); err != nil {
