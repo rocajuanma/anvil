@@ -18,7 +18,6 @@ package tools
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/rocajuanma/anvil/internal/brew"
 	"github.com/rocajuanma/anvil/internal/constants"
@@ -102,8 +101,8 @@ func validateTool(tool Tool) error {
 			return fmt.Errorf("failed to install %s with brew: %w", tool.Name, err)
 		}
 	case "system":
-		// cURL should be available by default on macOS
-		return fmt.Errorf("%s is not available on this macOS system", tool.Name)
+		// cURL should be available
+		return fmt.Errorf("%s is not available on this system", tool.Name)
 	default:
 		return fmt.Errorf("unknown installation method for %s", tool.Name)
 	}
@@ -132,7 +131,8 @@ func GetToolInfo(toolName string) (*Tool, error) {
 
 // CheckToolsStatus checks the status of all tools on macOS
 func CheckToolsStatus() (map[string]bool, error) {
-	if runtime.GOOS != "darwin" {
+	if !system.IsMacOS() {
+		// TODO: Implement tool status check for Linux
 		return nil, fmt.Errorf("tool status check only supported on macOS")
 	}
 

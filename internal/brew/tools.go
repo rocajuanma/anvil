@@ -16,7 +16,9 @@ limitations under the License.
 
 package brew
 
-import "sync"
+import (
+	"sync"
+)
 
 var (
 	// Static map for popular Homebrew packages(https://formulae.brew.sh/analytics) to avoid expensive brew search operations
