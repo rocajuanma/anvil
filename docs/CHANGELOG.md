@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Cross-Platform Compatibility** 🔄 - Removed macOS-only restrictions to enable Linux usage
 
 ### Fixed
 - **Installation Detection Bug** 🐛 - Fixed critical bug where known formulas (like `gh`) were incorrectly reported as "already available" due to Spotlight search matching system applications, causing installations to be skipped when packages weren't actually installed
