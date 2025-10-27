@@ -171,21 +171,3 @@ func isHidden(name string) bool {
 func EnsureDirectory(path string) error {
 	return os.MkdirAll(path, constants.DirPerm)
 }
-
-// FileExists checks if a file exists and is not a directory
-func FileExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && !info.IsDir()
-}
-
-// DirectoryExists checks if a directory exists
-func DirectoryExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
-}
-
-// PathExists checks if a path (file or directory) exists
-func PathExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
