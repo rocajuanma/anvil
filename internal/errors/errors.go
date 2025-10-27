@@ -109,16 +109,6 @@ func (e *AnvilError) Is(target error) bool {
 	return false
 }
 
-// NewAnvilError creates a new AnvilError with general type
-func NewAnvilError(op, command string, err error) *AnvilError {
-	return &AnvilError{
-		Op:      op,
-		Command: command,
-		Type:    ErrorTypeGeneral,
-		Err:     err,
-	}
-}
-
 // NewAnvilErrorWithType creates a new AnvilError with specified type
 func NewAnvilErrorWithType(op, command string, errType ErrorType, err error) *AnvilError {
 	return &AnvilError{
@@ -127,24 +117,6 @@ func NewAnvilErrorWithType(op, command string, errType ErrorType, err error) *An
 		Type:    errType,
 		Err:     err,
 	}
-}
-
-// NewAnvilErrorWithContext creates a new AnvilError with additional context
-func NewAnvilErrorWithContext(op, command, context string, errType ErrorType, err error) *AnvilError {
-	return &AnvilError{
-		Op:      op,
-		Command: command,
-		Type:    errType,
-		Context: context,
-		Err:     err,
-	}
-}
-
-// Helper functions for common error scenarios
-
-// NewPlatformError creates a platform-specific error
-func NewPlatformError(op, command string, err error) *AnvilError {
-	return NewAnvilErrorWithType(op, command, ErrorTypePlatform, err)
 }
 
 // NewValidationError creates a validation error
@@ -170,20 +142,4 @@ func NewNetworkError(op, command string, err error) *AnvilError {
 // NewFileSystemError creates a file system error
 func NewFileSystemError(op, command string, err error) *AnvilError {
 	return NewAnvilErrorWithType(op, command, ErrorTypeFileSystem, err)
-}
-
-// ErrorMatches checks if an error matches specific criteria
-func ErrorMatches(err error, op, command string, errType ErrorType) bool {
-	if anvilErr, ok := err.(*AnvilError); ok {
-		return anvilErr.Op == op && anvilErr.Command == command && anvilErr.Type == errType
-	}
-	return false
-}
-
-// GetErrorType extracts the error type from an AnvilError
-func GetErrorType(err error) ErrorType {
-	if anvilErr, ok := err.(*AnvilError); ok {
-		return anvilErr.Type
-	}
-	return ErrorTypeGeneral
 }
