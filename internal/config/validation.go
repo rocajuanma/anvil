@@ -22,9 +22,16 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/interfaces"
 	"github.com/rocajuanma/palantir"
 )
+
+// Validator defines the interface for input validation
+type Validator interface {
+	ValidateGroupName(groupName string) error
+	ValidateAppName(appName string) error
+	ValidateFont(font string) error
+	ValidateConfig(config interface{}) error
+}
 
 // getOutputHandler returns the global output handler for terminal operations
 func getOutputHandler() palantir.OutputHandler {
@@ -69,7 +76,7 @@ type ConfigValidator struct {
 }
 
 // NewConfigValidator creates a new configuration validator
-func NewConfigValidator(config *AnvilConfig) interfaces.Validator {
+func NewConfigValidator(config *AnvilConfig) Validator {
 	return &ConfigValidator{
 		config: config,
 	}
