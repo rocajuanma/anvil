@@ -23,11 +23,12 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/validators"
+	"github.com/rocajuanma/palantir"
 )
 
 // runFixCheck attempts to fix a specific check
 func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Fixing Check: %s", checkName))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -83,7 +84,7 @@ func runFixCheck(engine *validators.DoctorEngine, checkName string) error {
 
 // runFixAll attempts to fix all auto-fixable issues
 func runFixAll(engine *validators.DoctorEngine, category string) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader("Auto-fixing Issues")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)

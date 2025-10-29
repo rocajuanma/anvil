@@ -26,11 +26,12 @@ import (
 	"github.com/rocajuanma/anvil/internal/errors"
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/validators"
+	"github.com/rocajuanma/palantir"
 )
 
 // showAvailableChecks displays all available checks organized by category
 func showAvailableChecks(engine *validators.DoctorEngine) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader("Available Health Checks")
 
 	o.PrintInfo("🏷️  CATEGORIES (run all checks in a group):\n")
@@ -79,7 +80,7 @@ func showAvailableChecks(engine *validators.DoctorEngine) error {
 
 // runSingleCheck executes a specific health check
 func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose bool) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Running Check: %s", checkName))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -109,7 +110,7 @@ func runSingleCheck(engine *validators.DoctorEngine, checkName string, verbose b
 
 // runCategoryChecks executes all checks in a specific category
 func runCategoryChecks(engine *validators.DoctorEngine, category string, verbose bool) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Running %s Health Checks", strings.Title(category)))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -170,7 +171,7 @@ type checkStatus struct {
 
 // runAllChecks executes all available health checks
 func runAllChecks(engine *validators.DoctorEngine, verbose bool) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader("Running Anvil Health Check")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
