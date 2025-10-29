@@ -53,7 +53,7 @@ func RenderListView(groups map[string][]string, builtInGroupNames []string, cust
 		}
 	} else {
 		content.WriteString(fmt.Sprintf("\n%sNo custom groups defined%s\n", palantir.ColorBold+palantir.ColorYellow, palantir.ColorReset))
-		content.WriteString(fmt.Sprintf("  Add custom groups in ~/%s/%s\n", constants.AnvilConfigDir, constants.ConfigFileName))
+		content.WriteString(fmt.Sprintf("  Add custom groups in ~/%s/%s\n", constants.ANVIL_CONFIG_DIR, constants.ANVIL_CONFIG_FILE))
 	}
 
 	// Show individually tracked installed apps

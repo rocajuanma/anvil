@@ -21,12 +21,14 @@ import (
 	"strings"
 
 	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/github"
+	"github.com/rocajuanma/palantir"
 )
 
 // showNewAppInfo displays information about new app additions
 func showNewAppInfo(appName, configPath string) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintInfo("")
 	output.PrintHeader("🆕 New App Addition")
 	output.PrintInfo("App: %s", appName)
@@ -39,15 +41,15 @@ func showNewAppInfo(appName, configPath string) {
 // handleAppLocationError provides helpful error messages for app location resolution failures
 func handleAppLocationError(appName string, err error) error {
 	if strings.Contains(err.Error(), "not found in configs or temp directory") {
-		o := getOutputHandler()
+		o := palantir.GetGlobalOutputHandler()
 		o.PrintError("App '%s' is not known to anvil\n", appName)
 		o.PrintInfo("💡 To push app configurations:\n")
-		o.PrintInfo("1. Configure the app's local config path in settings.yaml:\n")
+		o.PrintInfo("1. Configure the app's local config path in %s:\n", constants.ANVIL_CONFIG_FILE)
 		o.PrintInfo("configs:")
 		o.PrintInfo("  %s: /path/to/your/%s/configs\n", appName, appName)
 		o.PrintInfo("2. Or pull the app's configs first to discover it:")
 		o.PrintInfo("   anvil config pull %s\n", appName)
-		o.PrintInfo("3. Then configure the local path in settings.yaml\n")
+		o.PrintInfo("3. Then configure the local path in %s\n", constants.ANVIL_CONFIG_FILE)
 		o.PrintInfo("4. For completely new apps, ensure the local path exists and contains config files")
 		return fmt.Errorf("app not configured")
 	}
@@ -58,7 +60,7 @@ func handleAppLocationError(appName string, err error) error {
 // showSecurityWarning displays a security warning about private repositories
 func showSecurityWarning(privateRepo string) {
 	// 🚨 SECURITY WARNING: Remind users about private repository requirement
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
 	o.PrintInfo("   • API keys, tokens, and credentials\n")
 	o.PrintInfo("   • Personal file paths and system information\n")
@@ -71,7 +73,7 @@ func showSecurityWarning(privateRepo string) {
 // displaySuccessMessage displays a success message after the push operation
 func displaySuccessMessage(appName string, result *github.PushConfigResult, diffSummary *github.DiffSummary, anvilConfig *config.AnvilConfig) {
 	// Display full success message for actual push
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader("Push Complete!")
 	o.PrintSuccess(fmt.Sprintf("%s configuration push completed successfully!\n", appName))
 	o.PrintInfo("📋 Push Summary:")
@@ -86,7 +88,7 @@ func displaySuccessMessage(appName string, result *github.PushConfigResult, diff
 
 // showDiffOutput displays diff information using Git's native output
 func showDiffOutput(diffSummary *github.DiffSummary) {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	if diffSummary.TotalFiles == 0 {
 		o.PrintInfo("No changes detected")
 		return

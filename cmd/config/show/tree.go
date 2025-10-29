@@ -48,7 +48,7 @@ func showDirectoryTree(basePath, targetDir string) error {
 	if len(root.Children) == 1 && !root.Children[0].IsDir {
 		return showSingleFile(root.Children[0].Path, targetDir)
 	}
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Configuration Directory: %s", targetDir))
 	o.PrintInfo("Path: %s\n", basePath)
 

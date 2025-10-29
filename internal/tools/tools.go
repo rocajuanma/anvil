@@ -25,11 +25,6 @@ import (
 	"github.com/rocajuanma/palantir"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // Tool represents a macOS system tool
 type Tool struct {
 	Name        string
@@ -81,7 +76,7 @@ func ValidateAndInstallTools() error {
 
 // validateTool validates a single tool on macOS
 func validateTool(tool Tool) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	if system.CommandExists(tool.Command) {
 		o.PrintInfo("✓ %s is available", tool.Name)
 		return nil

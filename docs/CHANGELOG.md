@@ -11,9 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Cross-Platform Compatibility** 🔄 - Removed macOS-only restrictions to enable Linux usage
+- **Internal Package Cleanup** 🧹 - Comprehensive refactoring of internal package structure, removing dead code and consolidating duplicate functionality
+- **Code Organization Improvements** 🏗️ - Reorganized internal packages with better separation of concerns and reduced code duplication
 
 ### Fixed
 - **Installation Detection Bug** 🐛 - Fixed critical bug where known formulas (like `gh`) were incorrectly reported as "already available" due to Spotlight search matching system applications, causing installations to be skipped when packages weren't actually installed
+- **Duplicate System Functions** 🔄 - Consolidated duplicate file system utility functions
+
+### Removed
+- **Dead Code Elimination** 🗑️ - Removed unused interfaces package and duplicate tree rendering logic
+- **Unused Error Functions** 🧽 - Cleaned up error package by removing unused helper functions
+
   
 ## [2.3.0] - 2025-10-20
 

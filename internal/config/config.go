@@ -61,16 +61,6 @@ type GitHubConfig struct {
 	TokenEnvVar string `yaml:"token_env_var,omitempty"` // Environment variable name for token
 }
 
-// AnvilConfig represents the main anvil configuration
-type AnvilConfig struct {
-	Version string            `yaml:"version"`
-	Tools   AnvilTools        `yaml:"tools"`
-	Groups  AnvilGroups       `yaml:"groups"`
-	Configs map[string]string `yaml:"configs"` // Maps app names to their local config paths
-	Git     GitConfig         `yaml:"git"`
-	GitHub  GitHubConfig      `yaml:"github"`
-}
-
 // AnvilTools represents tool configurations
 type AnvilTools struct {
 	RequiredTools []string `yaml:"required_tools"`
@@ -134,12 +124,6 @@ func ensureMap(m interface{}) {
 	}
 }
 
-// getHomeDir returns the user's home directory
-func getHomeDir() string {
-	homeDir, _ := os.UserHomeDir()
-	return homeDir
-}
-
 // PopulateGitConfigFromSystem populates git configuration from local git settings and auto-detects SSH keys
 func PopulateGitConfigFromSystem(gitConfig *GitConfig) error {
 	// Always populate username from local git config
@@ -153,7 +137,7 @@ func PopulateGitConfigFromSystem(gitConfig *GitConfig) error {
 	}
 
 	// Auto-detect SSH key path from common locations
-	homeDir, _ := os.UserHomeDir()
+	homeDir, _ := system.GetHomeDir()
 	sshDir := filepath.Join(homeDir, ".ssh")
 
 	// Common SSH key names in order of preference
@@ -194,41 +178,9 @@ func LoadSampleConfig() (*AnvilConfig, error) {
 	return LoadSampleConfigWithVersion("")
 }
 
-// LoadSampleConfigWithVersion loads the sample configuration with a specific version
-func LoadSampleConfigWithVersion(version string) (*AnvilConfig, error) {
-	// Use embedded sample config data
-	configData := string(sampleConfigData)
-
-	// Replace version placeholder if version is provided
-	if version != "" {
-		configData = strings.ReplaceAll(configData, "{{APP_VERSION}}", version)
-	}
-
-	var config AnvilConfig
-	if err := yaml.Unmarshal([]byte(configData), &config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sample config: %w", err)
-	}
-
-	// Set dynamic paths
-	homeDir, _ := os.UserHomeDir()
-	config.GitHub.LocalPath = filepath.Join(homeDir, constants.AnvilConfigDir, "dotfiles")
-
-	// Populate Git configuration from system, including auto-detecting ssh_key_path
-	if err := PopulateGitConfigFromSystem(&config.Git); err != nil {
-		return nil, fmt.Errorf("failed to populate git configuration: %w", err)
-	}
-
-	return &config, nil
-}
-
-// GetConfigPath returns the path to the anvil configuration file
-func GetConfigPath() string {
-	return filepath.Join(getHomeDir(), constants.AnvilConfigDir, constants.ConfigFileName)
-}
-
 // CreateDirectories creates necessary directories for anvil
 func CreateDirectories() error {
-	configDir := GetConfigDirectory()
+	configDir := GetAnvilConfigDirectory()
 
 	// Only create the main config directory
 	if err := utils.EnsureDirectory(configDir); err != nil {
@@ -245,7 +197,7 @@ func GenerateDefaultSettings() error {
 
 // GenerateDefaultSettingsWithVersion generates the default settings.yaml file with a specific version
 func GenerateDefaultSettingsWithVersion(version string) error {
-	configPath := GetConfigPath()
+	configPath := GetAnvilConfigPath()
 
 	// Check if settings.yaml already exists
 	if _, err := os.Stat(configPath); err == nil {
@@ -266,53 +218,8 @@ func GenerateDefaultSettingsWithVersion(version string) error {
 
 	// Write to file
 	if err := os.WriteFile(configPath, data, constants.FilePerm); err != nil {
-		return fmt.Errorf("failed to write settings.yaml: %w", err)
+		return fmt.Errorf("failed to write %s: %w", constants.ANVIL_CONFIG_FILE, err)
 	}
-
-	return nil
-}
-
-// LoadConfig loads the anvil configuration from settings.yaml
-func LoadConfig() (*AnvilConfig, error) {
-	configPath := GetConfigPath()
-
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read settings.yaml: %w", err)
-	}
-
-	var config AnvilConfig
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal settings.yaml: %w", err)
-	}
-
-	// Validate and auto-correct GitHub configuration
-	if ValidateAndFixGitHubConfig(&config) {
-		// Save the corrected configuration back to file
-		if err := SaveConfig(&config); err != nil {
-			// Don't fail loading if we can't save the correction, just warn
-			fmt.Printf("Warning: Could not save corrected GitHub configuration: %v\n", err)
-		}
-	}
-
-	return &config, nil
-}
-
-// SaveConfig saves the anvil configuration to settings.yaml
-func SaveConfig(config *AnvilConfig) error {
-	configPath := GetConfigPath()
-
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config to YAML: %w", err)
-	}
-
-	if err := os.WriteFile(configPath, data, constants.FilePerm); err != nil {
-		return fmt.Errorf("failed to write settings.yaml: %w", err)
-	}
-
-	// Invalidate cache after saving
-	invalidateCache()
 
 	return nil
 }
@@ -415,7 +322,7 @@ func CheckEnvironmentConfigurations() []string {
 	}
 
 	// Check SSH keys
-	homeDir, _ := os.UserHomeDir()
+	homeDir, _ := system.GetHomeDir()
 	sshDir := filepath.Join(homeDir, constants.SSHDir)
 	if _, err := os.Stat(sshDir); os.IsNotExist(err) {
 		warnings = append(warnings, "Set up SSH keys for GitHub: ssh-keygen -t ed25519 -C 'your.email@example.com'")
@@ -443,11 +350,6 @@ func CheckEnvironmentConfigurations() []string {
 	}
 
 	return warnings
-}
-
-// GetConfigDirectory returns the anvil configuration directory
-func GetConfigDirectory() string {
-	return filepath.Join(getHomeDir(), constants.AnvilConfigDir)
 }
 
 // AddInstalledApp adds an app to the installed apps list if it's not already there
@@ -558,7 +460,7 @@ func GetAppConfigPath(appName string) (string, bool, error) {
 
 // GetTempAppPath checks if an app directory exists in the temp directory (from previous pull)
 func GetTempAppPath(appName string) (string, bool, error) {
-	tempPath := filepath.Join(GetConfigDirectory(), "temp", appName)
+	tempPath := filepath.Join(GetAnvilConfigDirectory(), "temp", appName)
 	if _, err := os.Stat(tempPath); os.IsNotExist(err) {
 		return "", false, nil
 	}

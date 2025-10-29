@@ -34,11 +34,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // InstallCmd represents the install command
 var InstallCmd = &cobra.Command{
 	Use:   "install [group-name|app-name] [--group-name group]",
@@ -63,7 +58,7 @@ var InstallCmd = &cobra.Command{
 			// Load and prepare data once
 			groups, builtInGroupNames, customGroupNames, installedApps, err := tools.LoadAndPrepareAppData()
 			if err != nil {
-				getOutputHandler().PrintError("Failed to load application data: %v", err)
+				palantir.GetGlobalOutputHandler().PrintError("Failed to load application data: %v", err)
 				return
 			}
 
@@ -84,7 +79,7 @@ var InstallCmd = &cobra.Command{
 		}
 
 		if err := runInstallCommand(cmd, args[0]); err != nil {
-			getOutputHandler().PrintError("Install failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Install failed: %v", err)
 			return
 		}
 	},
@@ -92,7 +87,7 @@ var InstallCmd = &cobra.Command{
 
 // runInstallCommand executes the dynamic install process
 func runInstallCommand(cmd *cobra.Command, target string) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	// Check for dry-run flag
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -121,7 +116,7 @@ func runInstallCommand(cmd *cobra.Command, target string) error {
 
 // installGroup installs all tools in a group
 func installGroup(groupName string, tools []string, dryRun bool, concurrent bool, maxWorkers int, timeout time.Duration) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Installing '%s' group", groupName))
 
 	if len(tools) == 0 {
@@ -167,7 +162,7 @@ func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
 		return tools, nil
 	}
 
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintWarning("Found duplicates in group '%s': %s", groupName, strings.Join(duplicatesFound, ", "))
 	o.PrintInfo("Removing duplicates from settings file...")
 
@@ -182,7 +177,7 @@ func deduplicateGroupTools(groupName string, tools []string) ([]string, error) {
 
 // installGroupConcurrent installs tools concurrently
 func installGroupConcurrent(groupName string, tools []string, dryRun bool, maxWorkers int, timeout time.Duration) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	// Create new output handler to send into concurrent installer
 	outputHandler := palantir.NewDefaultOutputHandler()
@@ -214,7 +209,7 @@ type toolStatus struct {
 
 // installGroupSerial installs tools serially using unified installation logic
 func installGroupSerial(groupName string, tools []string, dryRun bool) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	successCount := 0
 	var installErrors []string
@@ -298,7 +293,7 @@ func printInstallDashboard(groupName string, statuses []toolStatus, current, tot
 
 // installIndividualApp installs a single application using unified installation logic
 func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader(fmt.Sprintf("Installing '%s'", appName))
 
 	// Validate app name is not empty
@@ -337,7 +332,7 @@ func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error
 
 // installSingleTool installs a single tool, handling special cases dynamically
 func installSingleTool(toolName string) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	// Install the tool via brew (availability already checked by caller)
 	if err := brew.InstallPackageDirectly(toolName); err != nil {
@@ -370,7 +365,7 @@ func installSingleTool(toolName string) error {
 // installSingleToolUnified provides unified installation logic for all installation modes
 // This is the core function that ensures consistent behavior across individual, serial, and concurrent installations
 func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled bool, err error) {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	// ALWAYS check availability first using the latest IsApplicationAvailable logic
 	if brew.IsApplicationAvailable(toolName) {
@@ -395,7 +390,7 @@ func installSingleToolUnified(toolName string, dryRun bool) (wasNewlyInstalled b
 
 // trackAppInSettings handles adding newly installed apps to settings
 func trackAppInSettings(appName string) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	// Check if already tracked to avoid duplicates
 	if isTracked, err := config.IsAppTracked(appName); err != nil {
 		o.PrintWarning("Failed to check if %s is already tracked: %v", appName, err)
@@ -420,7 +415,7 @@ func trackAppInSettings(appName string) error {
 // reportGroupInstallationResults provides unified error reporting for group installations
 func reportGroupInstallationResults(groupName string, successCount, totalCount int, installErrors []string) error {
 	// Print summary
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader("Group Installation Complete")
 	o.PrintInfo("Successfully installed %d of %d tools", successCount, totalCount)
 
@@ -439,7 +434,7 @@ func reportGroupInstallationResults(groupName string, successCount, totalCount i
 // runPostInstallScript runs a post-install script for a tool
 func runPostInstallScript(script string) error {
 	// For now, just provide instructions to the user
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintInfo("To complete installation, run:")
 	o.PrintInfo("  %s", script)
 	return nil
@@ -459,7 +454,7 @@ func checkToolConfiguration(toolName string) error {
 func checkGitConfiguration() error {
 	config, err := config.LoadConfig()
 	if err == nil && (config.Git.Username == "" || config.Git.Email == "") {
-		o := getOutputHandler()
+		o := palantir.GetGlobalOutputHandler()
 		o.PrintInfo("Git installed successfully")
 		o.PrintWarning("Consider configuring git with:")
 		o.PrintInfo("  git config --global user.name 'Your Name'")

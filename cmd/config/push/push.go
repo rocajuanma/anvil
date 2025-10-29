@@ -30,11 +30,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 var PushCmd = &cobra.Command{
 	Use:   "push [app-name]",
 	Short: "Push configuration files to GitHub repository",
@@ -42,7 +37,7 @@ var PushCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1), // Accept 0 or 1 argument
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runPushCommand(cmd, args); err != nil {
-			getOutputHandler().PrintError("Push failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Push failed: %v", err)
 			return
 		}
 	},
@@ -74,7 +69,7 @@ func runPushCommand(cmd *cobra.Command, args []string) error {
 
 // pushAppConfig pushes application-specific configuration to the repository
 func pushAppConfig(appName string) error {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintHeader(fmt.Sprintf("Push '%s' Configuration", appName))
 
 	// Stage 1: Load and validate configuration
@@ -121,7 +116,7 @@ func pushAppConfig(appName string) error {
 
 // loadAndValidateConfig loads and validates the anvil configuration
 func loadAndValidateConfig() (*config.AnvilConfig, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintStage("Loading anvil configuration...")
 
 	anvilConfig, err := config.LoadConfig()
@@ -132,7 +127,7 @@ func loadAndValidateConfig() (*config.AnvilConfig, error) {
 	// Validate GitHub configuration
 	if anvilConfig.GitHub.ConfigRepo == "" {
 		return nil, errors.NewConfigurationError(constants.OpPush, "missing-repo",
-			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your settings.yaml"))
+			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your %s", constants.ANVIL_CONFIG_FILE))
 	}
 
 	output.PrintSuccess("Configuration loaded successfully")
@@ -141,7 +136,7 @@ func loadAndValidateConfig() (*config.AnvilConfig, error) {
 
 // resolveAppLocation resolves the app configuration location
 func resolveAppLocation(appName string, anvilConfig *config.AnvilConfig) (string, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintStage("Resolving app configuration location...")
 
 	configPath, locationSource, err := config.ResolveAppLocation(appName)
@@ -163,7 +158,7 @@ func resolveAppLocation(appName string, anvilConfig *config.AnvilConfig) (string
 	// Handle different location sources
 	if locationSource == config.LocationTemp {
 		output.PrintWarning("App '%s' found in temp directory but not configured in settings\n", appName)
-		output.PrintInfo("💡 To push app configurations, you need to configure the local path in settings.yaml:\n")
+		output.PrintInfo("💡 To push app configurations, you need to configure the local path in %s:\n", constants.ANVIL_CONFIG_FILE)
 		output.PrintInfo("configs:")
 		output.PrintInfo("  %s: /path/to/your/%s/configs\n", appName, appName)
 		output.PrintInfo("This ensures anvil knows where to find your local configurations.")
@@ -178,7 +173,7 @@ func resolveAppLocation(appName string, anvilConfig *config.AnvilConfig) (string
 
 // setupAuthentication sets up GitHub authentication
 func setupAuthentication(anvilConfig *config.AnvilConfig) (*github.GitHubClient, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintStage("Setting up authentication...")
 
 	var token string
@@ -208,7 +203,7 @@ func setupAuthentication(anvilConfig *config.AnvilConfig) (*github.GitHubClient,
 
 // prepareDiffPreview prepares and shows the diff preview
 func prepareDiffPreview(githubClient *github.GitHubClient, appName, configPath string, ctx context.Context) (*github.DiffSummary, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintStage(fmt.Sprintf("Preparing to push %s configuration...", appName))
 	output.PrintInfo("Repository: %s", githubClient.RepoURL)
 	output.PrintInfo("Branch: %s", githubClient.Branch)
@@ -244,7 +239,7 @@ func handleUserConfirmation(output palantir.OutputHandler, appName string, githu
 
 // performPushOperation executes the actual push operation
 func performPushOperation(githubClient *github.GitHubClient, appName, configPath string, diffSummary *github.DiffSummary, anvilConfig *config.AnvilConfig, ctx context.Context) error {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintStage(fmt.Sprintf("Pushing %s configuration to repository...", appName))
 
 	result, err := githubClient.PushAppConfig(ctx, appName, configPath)
@@ -268,7 +263,7 @@ func performPushOperation(githubClient *github.GitHubClient, appName, configPath
 
 // pushAnvilConfig pushes the anvil settings.yaml to the repository
 func pushAnvilConfig() error {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintHeader("Push Anvil Configuration")
 
 	// Stage 1: Load and validate configuration
@@ -281,7 +276,7 @@ func pushAnvilConfig() error {
 	// Validate GitHub configuration
 	if anvilConfig.GitHub.ConfigRepo == "" {
 		return errors.NewConfigurationError(constants.OpPush, "missing-repo",
-			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your settings.yaml"))
+			fmt.Errorf("GitHub repository not configured. Please set 'github.config_repo' in your %s", constants.ANVIL_CONFIG_FILE))
 	}
 	output.PrintSuccess("Configuration loaded successfully")
 
@@ -312,7 +307,7 @@ func pushAnvilConfig() error {
 	)
 
 	// Get settings file path
-	settingsPath := config.GetConfigPath()
+	settingsPath := config.GetAnvilConfigPath()
 
 	output.PrintStage("Preparing to push anvil configuration...")
 	output.PrintInfo("Repository: %s", anvilConfig.GitHub.ConfigRepo)
@@ -322,7 +317,7 @@ func pushAnvilConfig() error {
 	// NEW: Add diff output before confirmation
 	output.PrintStage("Analyzing changes...")
 	ctx := context.Background()
-	anvilSettingsPath := fmt.Sprintf("%s/%s", constants.AnvilConfigDir, constants.ConfigFileName)
+	anvilSettingsPath := fmt.Sprintf("%s/%s", constants.ANVIL_CONFIG_DIR, constants.ANVIL_CONFIG_FILE)
 	diffSummary, err := githubClient.GetDiffPreview(ctx, settingsPath, anvilSettingsPath[1:])
 	if err != nil {
 		output.PrintWarning("Unable to generate diff preview: %v", err)
@@ -362,7 +357,7 @@ func pushAnvilConfig() error {
 	}
 
 	spinner.Success("Configuration pushed successfully")
-	displaySuccessMessage("anvil", result, diffSummary, anvilConfig)
+	displaySuccessMessage(constants.ANVIL, result, diffSummary, anvilConfig)
 
 	return nil
 }

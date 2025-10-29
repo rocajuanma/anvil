@@ -37,15 +37,10 @@ var ImportCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		importPath := args[0]
 		if err := runImportCommand(cmd, importPath); err != nil {
-			getOutputHandler().PrintError("Import failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Import failed: %v", err)
 			return
 		}
 	},
-}
-
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
 }
 
 // ImportConfig represents the structure for importing configurations
@@ -55,7 +50,7 @@ type ImportConfig struct {
 
 // runImportCommand executes the group import process
 func runImportCommand(cmd *cobra.Command, importPath string) error {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintHeader("Import Groups from File")
 
 	// Stage 1: Fetch and validate source file
@@ -172,7 +167,7 @@ func checkGroupConflicts(importGroups map[string][]string, existingGroups config
 
 // displayImportSummary shows a tree view of groups that will be imported
 func displayImportSummary(groups map[string][]string) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintInfo("\n📋 Import Summary:")
 	output.PrintInfo("═══════════════════")
 

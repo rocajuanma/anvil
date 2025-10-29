@@ -22,13 +22,15 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/interfaces"
 	"github.com/rocajuanma/palantir"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
+// Validator defines the interface for input validation
+type Validator interface {
+	ValidateGroupName(groupName string) error
+	ValidateAppName(appName string) error
+	ValidateFont(font string) error
+	ValidateConfig(config interface{}) error
 }
 
 // validateString validates a string with common rules
@@ -69,7 +71,7 @@ type ConfigValidator struct {
 }
 
 // NewConfigValidator creates a new configuration validator
-func NewConfigValidator(config *AnvilConfig) interfaces.Validator {
+func NewConfigValidator(config *AnvilConfig) Validator {
 	return &ConfigValidator{
 		config: config,
 	}
@@ -291,7 +293,7 @@ func ValidateAndFixGitHubConfig(config *AnvilConfig) bool {
 
 		if normalizedRepo != originalRepo {
 			config.GitHub.ConfigRepo = normalizedRepo
-			o := getOutputHandler()
+			o := palantir.GetGlobalOutputHandler()
 			o.PrintInfo("🔧 Auto-corrected GitHub repository URL:")
 			o.PrintInfo("   From: %s", originalRepo)
 			o.PrintInfo("   To:   %s", normalizedRepo)

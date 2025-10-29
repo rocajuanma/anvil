@@ -27,18 +27,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 var DoctorCmd = &cobra.Command{
 	Use:   "doctor [category|check]",
 	Short: "Run health checks and validate anvil environment",
 	Long:  constants.DOCTOR_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runDoctorCommand(cmd, args); err != nil {
-			getOutputHandler().PrintError("Doctor failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Doctor failed: %v", err)
 			return
 		}
 	},
@@ -52,7 +47,7 @@ func runDoctorCommand(cmd *cobra.Command, args []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
 	// Create doctor engine with terminal output
-	engine := validators.NewDoctorEngine(nil)
+	engine := validators.NewDoctorEngine(palantir.GetGlobalOutputHandler())
 
 	// Handle list command
 	if listChecks {

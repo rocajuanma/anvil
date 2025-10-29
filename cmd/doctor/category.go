@@ -22,6 +22,7 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/validators"
+	"github.com/rocajuanma/palantir"
 )
 
 // categoryStats holds statistics for a category
@@ -102,7 +103,7 @@ func displayCategory(category string, results []*validators.ValidationResult, ve
 
 	// Choose category status
 	categoryStatus := getCategoryStatus(passed, warned, failed, skipped)
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintStage(fmt.Sprintf("%s %s", categoryStatus, strings.Title(category)))
 
 	for _, result := range results {

@@ -388,16 +388,16 @@ func TestHelperFunctions(t *testing.T) {
 	_, cleanup := setupTestConfig(t)
 	defer cleanup()
 
-	// Test GetConfigDirectory
-	configDir := GetConfigDirectory()
+	// Test GetAnvilConfigDirectory
+	configDir := GetAnvilConfigDirectory()
 	if configDir == "" {
-		t.Error("Expected GetConfigDirectory to return a non-empty string")
+		t.Error("Expected GetAnvilConfigDirectory to return a non-empty string")
 	}
 
-	// Test GetConfigPath
-	configPath := GetConfigPath()
+	// Test GetAnvilConfigPath
+	configPath := GetAnvilConfigPath()
 	if configPath == "" {
-		t.Error("Expected GetConfigPath to return a non-empty string")
+		t.Error("Expected GetAnvilConfigPath to return a non-empty string")
 	}
 
 	// Test GetBuiltInGroups

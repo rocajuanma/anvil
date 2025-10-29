@@ -23,6 +23,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/palantir"
 )
 
 // LoadAndPrepareAppData loads all application data and prepares it for rendering
@@ -51,7 +52,7 @@ func LoadAndPrepareAppData() (groups map[string][]string, builtInGroupNames []st
 	installedApps, err = config.GetInstalledApps()
 	if err != nil {
 		// Don't fail on installed apps error, just log warning
-		getOutputHandler().PrintWarning("Failed to load installed apps: %v", err)
+		palantir.GetGlobalOutputHandler().PrintWarning("Failed to load installed apps: %v", err)
 		installedApps = []string{}
 		err = nil // Reset error since we can continue
 	} else {

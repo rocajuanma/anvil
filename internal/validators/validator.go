@@ -35,10 +35,6 @@ const (
 	SKIP
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
 func (vs ValidationStatus) String() string {
 	switch vs {
 	case PASS:
@@ -430,7 +426,7 @@ func (d *DoctorEngine) RunCheckWithProgress(ctx context.Context, checkName strin
 	}
 
 	// Show progress for single check
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	o.PrintInfo("🔍 Running %s check...", validator.Name())
 	if verbose {
 		o.PrintInfo("   Description: %s", validator.Description())
@@ -450,7 +446,7 @@ func (d *DoctorEngine) RunCheckWithProgress(ctx context.Context, checkName strin
 func (d *DoctorEngine) runValidatorsWithProgress(ctx context.Context, config *config.AnvilConfig, validators []Validator, verbose bool) []*ValidationResult {
 	var results []*ValidationResult
 	totalValidators := len(validators)
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 	for i, validator := range validators {
 		// Show progress
 		o.PrintProgress(i+1, totalValidators, fmt.Sprintf("Running %s", validator.Name()))
