@@ -231,7 +231,7 @@ func (gc *GitHubClient) PushAppConfig(ctx context.Context, appName, configPath s
 
 // PushAnvilConfig is a wrapper for backwards compatibility - delegates to unified PushConfig
 func (gc *GitHubClient) PushAnvilConfig(ctx context.Context, settingsPath string) (*PushConfigResult, error) {
-	return gc.PushConfig(ctx, "anvil", settingsPath)
+	return gc.PushConfig(ctx, constants.ANVIL, settingsPath)
 }
 
 // ensureRepositoryReady ensures the repository is cloned and up to date

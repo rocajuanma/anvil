@@ -100,15 +100,15 @@ func getAnvilDirectoryPath() (string, error) {
 			Err:     fmt.Errorf("failed to get home directory: %w", err),
 		}
 	}
-	return filepath.Join(homeDir, constants.AnvilConfigDir), nil
+	return filepath.Join(homeDir, constants.ANVIL_CONFIG_DIR), nil
 }
 
 // getItemsToClean scans the anvil directory and returns items to clean
 func getItemsToClean(anvilDir string) ([]string, error) {
 	output := palantir.GetGlobalOutputHandler()
-	output.PrintStage("Scanning .anvil directory for content to clean")
+	output.PrintStage(fmt.Sprintf("Scanning %s directory for content to clean", constants.ANVIL_CONFIG_DIR))
 
-	spinner := charm.NewCircleSpinner("Scanning .anvil directory")
+	spinner := charm.NewCircleSpinner(fmt.Sprintf("Scanning %s directory", constants.ANVIL_CONFIG_DIR))
 	spinner.Start()
 
 	// Get all items in .anvil directory

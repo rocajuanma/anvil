@@ -56,12 +56,10 @@ const (
 	GitUserEmail = "user.email"
 )
 
-// Directory and file constants
+// Directory constants
 const (
-	AnvilConfigDir = ".anvil"
-	SSHDir         = ".ssh"
-	OhMyZshDir     = ".oh-my-zsh"
-	ConfigFileName = "settings.yaml"
+	SSHDir     = ".ssh"
+	OhMyZshDir = ".oh-my-zsh"
 )
 
 // macOS package names (Homebrew formulae and casks)
@@ -102,6 +100,7 @@ const (
 ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚══════╝`
 )
 
+// Anvil config constants
 const (
 	ANVIL             = "anvil"
 	ANVIL_CONFIG_FILE = "settings.yaml"

@@ -356,8 +356,8 @@ Example settings.yaml section:
 		gc.Branch, gc.RepoURL, operation, gitError,
 		gc.RepoURL, gc.Branch,
 		availableBranches,
-		constants.AnvilConfigDir, constants.ConfigFileName,
-		gc.Branch, gc.RepoURL, constants.AnvilConfigDir)
+		constants.ANVIL_CONFIG_DIR, constants.ANVIL_CONFIG_FILE,
+		gc.Branch, gc.RepoURL, constants.ANVIL_CONFIG_DIR)
 
 	return errors.NewConfigurationError(constants.OpPull, "branch-not-found", fmt.Errorf(errorMsg))
 }

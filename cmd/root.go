@@ -34,7 +34,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "anvil",
+	Use:   constants.ANVIL,
 	Short: "🔥 One CLI to rule them all.",
 	Long:  fmt.Sprintf("%s\n\n%s", constants.AnvilLogo, constants.ANVIL_LONG_DESCRIPTION),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -63,20 +63,20 @@ func showWelcomeBanner() {
 	bannerContent := fmt.Sprintf("%s\n🔥 One CLI to rule them all 🔥\n\tversion: %s\n\n", constants.AnvilLogo, version.GetVersion())
 	fmt.Println(charm.RenderBox("", bannerContent, "#FF6B9D", true))
 
-	// Quick start guide
 	quickStart := `
-  anvil init              			Initialize your environment
-  anvil install essentials			Install essential tools
-  anvil doctor            			Check system health
-  anvil config pull       			Sync your dotfiles
+  anvil init              					Initialize your environment
+  anvil install essentials/[group-name]		Install essential tools
+  anvil doctor            					Check system health
+  anvil config show       					Show your anvil settings
+  anvil config push [app-name]				Push your app configurations to GitHub
+  anvil config pull [app-name]				Pull your app configurations from GitHub
+  anvil config sync [app-name]				Sync your app configurations to your local machine
 `
 	fmt.Println(charm.RenderBox("Quick Start", quickStart, "#00D9FF", false))
 
 	// Footer
 	fmt.Println()
-	fmt.Println("  📚 Documentation: anvil --help")
-	fmt.Println("  🐛 Issues: https://github.com/rocajuanma/anvil/issues")
-	fmt.Println()
+	fmt.Println("  Documentation: anvil --help")
 }
 
 // showVersionInfo displays the version information with branding
@@ -103,7 +103,7 @@ func init() {
 // customHelpFunc provides an enhanced help display using Charm UI
 func customHelpFunc(cmd *cobra.Command, args []string) {
 	// Show logo for root command
-	if cmd.Name() == "anvil" {
+	if cmd.Name() == constants.ANVIL {
 		fmt.Println(constants.AnvilLogo)
 		fmt.Println()
 	}

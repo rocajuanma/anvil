@@ -49,7 +49,7 @@ func runUpdateCommand(cmd *cobra.Command) error {
 	result, err := updateAnvil(cmd.Context(), dryRun)
 
 	if err != nil {
-		return errors.NewInstallationError(constants.OpUpdate, "anvil",
+		return errors.NewInstallationError(constants.OpUpdate, constants.ANVIL,
 			fmt.Errorf("failed to execute update script: %w", err))
 	}
 
@@ -59,7 +59,7 @@ func runUpdateCommand(cmd *cobra.Command) error {
 	}
 
 	if !result.Success {
-		return errors.NewInstallationError(constants.OpUpdate, "anvil",
+		return errors.NewInstallationError(constants.OpUpdate, constants.ANVIL,
 			fmt.Errorf("update script failed with exit code %d: %s", result.ExitCode, result.Output))
 	}
 
