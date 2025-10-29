@@ -90,7 +90,6 @@ anvil config sync neovim
 | **[Install Command](docs/install.md)** | Tool installation guide |
 | **[Import Groups](docs/import.md)** | Import tool groups from files/URLs |
 | **[Doctor Command](docs/doctor.md)** | Health checks and validation |
-| **[Examples & Tutorials](docs/EXAMPLES.md)** | Real-world usage scenarios |
 
 **[View All Documentation →](docs/)**
 
