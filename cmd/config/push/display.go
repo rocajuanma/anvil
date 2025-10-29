@@ -29,11 +29,11 @@ import (
 // showNewAppInfo displays information about new app additions
 func showNewAppInfo(appName, configPath string) {
 	output := palantir.GetGlobalOutputHandler()
-	output.PrintInfo("")
-	output.PrintHeader("🆕 New App Addition")
+	fmt.Println("")
+	output.PrintHeader("New App Addition")
 	output.PrintInfo("App: %s", appName)
 	output.PrintInfo("Local path: %s", configPath)
-	output.PrintInfo("")
+	fmt.Println("")
 	output.PrintInfo("This app will be added to the repository for the first time.")
 	output.PrintInfo("All configuration files will be committed to a new branch.")
 }
@@ -61,11 +61,10 @@ func handleAppLocationError(appName string, err error) error {
 func showSecurityWarning(privateRepo string) {
 	// 🚨 SECURITY WARNING: Remind users about private repository requirement
 	o := palantir.GetGlobalOutputHandler()
-	o.PrintWarning("🔒 SECURITY REMINDER: Configuration files contain sensitive data")
-	o.PrintInfo("   • API keys, tokens, and credentials\n")
-	o.PrintInfo("   • Personal file paths and system information\n")
-	o.PrintInfo("   • Private development environment details\n")
-	o.PrintInfo("🛡️  Anvil ENFORCES private repositories for security")
+	o.PrintWarning("SECURITY REMINDER: Configuration files may contain sensitive data")
+	o.PrintInfo("   • Personal file paths and system information")
+	o.PrintInfo("   • Private development environment details")
+	o.PrintInfo("🛡️ Anvil ENFORCES private repositories for security")
 	o.PrintInfo("   • Repository '%s' must be PRIVATE", privateRepo)
 	o.PrintInfo("   • Public repositories will be BLOCKED\n")
 }
@@ -76,12 +75,11 @@ func displaySuccessMessage(appName string, result *github.PushConfigResult, diff
 	o := palantir.GetGlobalOutputHandler()
 	o.PrintHeader("Push Complete!")
 	o.PrintSuccess(fmt.Sprintf("%s configuration push completed successfully!\n", appName))
-	o.PrintInfo("📋 Push Summary:")
+	o.PrintInfo("Push Summary:")
 	o.PrintInfo("  • Branch created: %s", result.BranchName)
 	o.PrintInfo("  • Commit message: %s", result.CommitMessage)
 	o.PrintInfo("  • Files committed: \n\n%s", diffSummary.GitStatOutput)
 	o.PrintInfo("🔗 Repository: %s", result.RepositoryURL)
-	o.PrintInfo("🌿 Branch: %s\n", result.BranchName)
 	o.PrintSuccess("You can now create a Pull Request on GitHub to merge these changes!")
 	o.PrintInfo("Direct link: %s/compare/%s...%s", result.RepositoryURL, anvilConfig.GitHub.Branch, result.BranchName)
 }
@@ -94,7 +92,7 @@ func showDiffOutput(diffSummary *github.DiffSummary) {
 		return
 	}
 
-	o.PrintHeader("\n📋 Changes to be pushed:")
+	o.PrintHeader("Changes to be pushed:")
 
 	// Show Git's native stat output directly
 	if diffSummary.GitStatOutput != "" {
@@ -106,10 +104,10 @@ func showDiffOutput(diffSummary *github.DiffSummary) {
 	if diffSummary.TotalFiles == 1 && diffSummary.FullDiff != "" {
 		lines := strings.Split(diffSummary.FullDiff, "\n")
 		if len(lines) <= 50 {
-			o.PrintInfo("\n📄 Full diff:\n")
+			o.PrintInfo("📄 Full diff:\n")
 			o.PrintInfo(diffSummary.FullDiff)
 		} else {
-			o.PrintInfo("\n📄 Diff preview (first 50 lines):\n")
+			o.PrintInfo("📄 Diff preview (first 50 lines):\n")
 			o.PrintInfo(strings.Join(lines[:50], "\n"))
 			o.PrintInfo("\n... [diff truncated] ...")
 		}
