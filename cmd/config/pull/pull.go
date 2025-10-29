@@ -66,11 +66,11 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	output := palantir.GetGlobalOutputHandler()
-	output.PrintHeader(fmt.Sprintf("Pulling Configuration Directory: %s", targetDir))
+	output.PrintHeader(fmt.Sprintf("Pull '%s' Configuration", targetDir))
 	output.PrintInfo("Repository: %s", cfg.GitHub.ConfigRepo)
 	output.PrintInfo("Branch: %s", cfg.GitHub.Branch)
 	output.PrintInfo("Target directory: %s", targetDir)
-	output.PrintInfo("")
+	fmt.Println("")
 
 	// Stage 1: Authentication check
 	output.PrintStage("Checking authentication...")
@@ -110,7 +110,7 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 			fmt.Println("")
 			output.PrintError("%s", err.Error())
 			fmt.Println("")
-			output.PrintInfo("🔄 The repository exists but the configured branch is not available.")
+			output.PrintInfo("The repository exists but the configured branch is not available.")
 			output.PrintInfo("    You may need to:")
 			output.PrintInfo("    • Update the branch in your %s", constants.ANVIL_CONFIG_FILE)
 			output.PrintInfo("    • Or check the available branches in your repository")
@@ -131,7 +131,7 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 			fmt.Println("")
 			output.PrintError("%s", err.Error())
 			fmt.Println("")
-			output.PrintInfo("🔄 The repository exists but the configured branch is not available during clone.")
+			output.PrintInfo("The repository exists but the configured branch is not available during clone.")
 			output.PrintInfo("    You may need to:")
 			output.PrintInfo("    • Update the branch in your %s", constants.ANVIL_CONFIG_FILE)
 			output.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
@@ -152,7 +152,7 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 		if strings.Contains(err.Error(), "Branch Configuration Error") {
 			output.PrintError("%s", err.Error())
 			fmt.Println("")
-			output.PrintInfo("🔄 The local repository exists but the configured branch is not available.")
+			output.PrintInfo("The local repository exists but the configured branch is not available.")
 			output.PrintInfo("    You may need to:")
 			output.PrintInfo("    • Update the branch in your %s", constants.ANVIL_CONFIG_FILE)
 			output.PrintInfo("    • Or delete the local repository at: %s", cfg.GitHub.LocalPath)
@@ -174,26 +174,22 @@ func runPullCommand(cmd *cobra.Command, args []string) error {
 	}
 	spinner.Success("Configuration directory copied to temp location")
 
-	// Display completion message
-	output.PrintHeader("Pull Complete!")
-	output.PrintInfo("Configuration directory '%s' has been pulled from: %s", targetDir, cfg.GitHub.ConfigRepo)
-	output.PrintInfo("Files are available at: %s", tempDir)
+	displaySuccessMessage(targetDir, tempDir, cfg)
+	return nil
+}
+
+func displaySuccessMessage(targetDir, tempDir string, cfg *config.AnvilConfig) {
+	o := palantir.GetGlobalOutputHandler()
+	o.PrintHeader("Pull Complete!")
+	o.PrintInfo("Configuration directory '%s' has been pulled from: %s", targetDir, cfg.GitHub.ConfigRepo)
+	o.PrintInfo("Files are available at: %s", tempDir)
 
 	// List the files that were copied
 	if err := listCopiedFiles(tempDir); err == nil {
 		// Files listed successfully
 	} else {
-		output.PrintWarning("Could not list copied files: %v", err)
+		o.PrintWarning("Could not list copied files: %v", err)
 	}
-
-	// Provide next steps
-	fmt.Println("")
-	output.PrintInfo("Next steps:")
-	output.PrintInfo("  • Review the pulled configuration files in: %s", tempDir)
-	output.PrintInfo("  • Apply/copy configurations to their destination as needed")
-	output.PrintInfo("  • Use 'anvil config push' to upload any local changes")
-
-	return nil
 }
 
 // validateGitHubConfig validates that GitHub configuration is properly set up
@@ -226,15 +222,14 @@ Example:
 
 	output := palantir.GetGlobalOutputHandler()
 	// Provide guidance about branch configuration
-	output.PrintInfo("🔧 Using branch: %s", cfg.GitHub.Branch)
 	if cfg.GitHub.Branch != "main" && cfg.GitHub.Branch != "master" {
-		output.PrintWarning("⚠️  Note: You're using branch '%s'. Make sure this branch exists in your repository.", cfg.GitHub.Branch)
+		output.PrintWarning("Note: You're using branch '%s'. Make sure this branch exists in your repository.", cfg.GitHub.Branch)
 		output.PrintInfo("💡 Common default branches are 'main' or 'master'")
 	}
 
 	// Check if git is available
 	if cfg.Git.Username == "" || cfg.Git.Email == "" {
-		output.PrintWarning(fmt.Sprintf("⚠️  Git user configuration is incomplete. Consider setting git.username and git.email in %s", constants.ANVIL_CONFIG_FILE))
+		output.PrintWarning(fmt.Sprintf("Git user configuration is incomplete. Consider setting git.username and git.email in %s", constants.ANVIL_CONFIG_FILE))
 	}
 
 	return nil
@@ -280,7 +275,8 @@ func copyDirRecursive(src, dst string) error {
 
 // listCopiedFiles lists the files that were copied to the temp directory
 func listCopiedFiles(tempDir string) error {
-	palantir.GetGlobalOutputHandler().PrintInfo("\nCopied files:")
+	fmt.Println("")
+	palantir.GetGlobalOutputHandler().PrintInfo("Copied files:")
 
 	return filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
