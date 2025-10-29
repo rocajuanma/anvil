@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/utils"
 )
 
@@ -32,7 +33,7 @@ func createArchiveDirectory(prefix string) (string, error) {
 	// Create timestamp
 	timestamp := time.Now().Format("2006-01-02-15-04-05")
 	archiveName := fmt.Sprintf("%s-%s", prefix, timestamp)
-	archivePath := filepath.Join(config.GetConfigDirectory(), "archive", archiveName)
+	archivePath := filepath.Join(config.GetAnvilConfigDirectory(), "archive", archiveName)
 
 	// Create archive directory
 	if err := utils.EnsureDirectory(archivePath); err != nil {
@@ -53,7 +54,7 @@ func archiveExistingConfig(configType, sourcePath, archivePath string) error {
 	// Determine destination in archive
 	var destPath string
 	if configType == "anvil-settings" {
-		destPath = filepath.Join(archivePath, "settings.yaml")
+		destPath = filepath.Join(archivePath, constants.ANVIL_CONFIG_FILE)
 	} else {
 		// For app configs, preserve the directory structure
 		destPath = archivePath

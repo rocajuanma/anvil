@@ -26,14 +26,15 @@ import (
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/anvil/internal/tools"
 	"github.com/rocajuanma/anvil/internal/utils"
+	"github.com/rocajuanma/palantir"
 )
 
 // showAnvilSettingsSection displays specific sections of the anvil settings
 func showAnvilSettingsSection(showGroups, showConfigs, showGit, showGitHub bool) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	// Stage 1: Locate settings file
-	configPath := config.GetConfigPath()
+	configPath := config.GetAnvilConfigPath()
 
 	// Check settings file
 	err := checkSettingsFileExists(o, configPath)

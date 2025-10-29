@@ -31,11 +31,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 var SyncCmd = &cobra.Command{
 	Use:   "sync [app-name]",
 	Short: "Sync pulled configuration files to their local destinations",
@@ -43,7 +38,7 @@ var SyncCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1), // Accept 0 or 1 argument
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runSyncCommand(cmd, args); err != nil {
-			getOutputHandler().PrintError("Sync failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Sync failed: %v", err)
 			return
 		}
 	},
@@ -66,11 +61,11 @@ func runSyncCommand(cmd *cobra.Command, args []string) error {
 
 // syncAnvilSettings syncs the main anvil settings.yaml file
 func syncAnvilSettings(dryRun bool) error {
-	o := getOutputHandler()
-	o.PrintHeader("Configuration Sync: anvil settings")
+	o := palantir.GetGlobalOutputHandler()
+	o.PrintHeader("Configuration Sync: Anvil settings")
 
 	// Check if pulled anvil settings exist
-	tempSettingsPath := filepath.Join(config.GetConfigDirectory(), "temp", "anvil", "settings.yaml")
+	tempSettingsPath := filepath.Join(config.GetAnvilConfigDirectory(), "temp", constants.ANVIL, constants.ANVIL_CONFIG_FILE)
 	if _, err := os.Stat(tempSettingsPath); os.IsNotExist(err) {
 		o.PrintError("Pulled anvil settings not found\n")
 		o.PrintInfo("💡 No pulled settings found at: %s", tempSettingsPath)
@@ -81,7 +76,7 @@ func syncAnvilSettings(dryRun bool) error {
 	}
 
 	// Get current settings path
-	currentSettingsPath := config.GetConfigPath()
+	currentSettingsPath := config.GetAnvilConfigPath()
 
 	// Display sync information
 	o.PrintInfo("Source: %s", tempSettingsPath)
@@ -101,7 +96,7 @@ func syncAnvilSettings(dryRun bool) error {
 	o.PrintInfo("Archive: %s\n", archivePath)
 
 	// Ask for confirmation
-	if !o.Confirm("Override local settings.yaml? Old copy will be archived.") {
+	if !o.Confirm(fmt.Sprintf("Override local %s? Old copy will be archived.", constants.ANVIL_CONFIG_FILE)) {
 		o.PrintInfo("Sync cancelled")
 		return nil
 	}
@@ -135,7 +130,7 @@ func syncAnvilSettings(dryRun bool) error {
 
 // syncAppConfig syncs configuration files for a specific app
 func syncAppConfig(appName string, dryRun bool) error {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintHeader(fmt.Sprintf("Configuration Sync: %s", appName))
 
 	// Load current config
@@ -145,7 +140,7 @@ func syncAppConfig(appName string, dryRun bool) error {
 	}
 
 	// Check if pulled app config exists
-	tempAppPath := filepath.Join(config.GetConfigDirectory(), "temp", appName)
+	tempAppPath := filepath.Join(config.GetAnvilConfigDirectory(), "temp", appName)
 	if _, err := os.Stat(tempAppPath); os.IsNotExist(err) {
 		output.PrintError("Pulled %s configuration not found\n", appName)
 		output.PrintInfo("💡 No pulled config found at: %s", tempAppPath)
@@ -157,7 +152,7 @@ func syncAppConfig(appName string, dryRun bool) error {
 
 	// Check if app config path is defined in settings
 	if cfg.Configs == nil {
-		return fmt.Errorf("no configs section found in settings.yaml")
+		return fmt.Errorf("no configs section found in %s", constants.ANVIL_CONFIG_FILE)
 	}
 
 	localConfigPath, exists := cfg.Configs[appName]
@@ -165,7 +160,7 @@ func syncAppConfig(appName string, dryRun bool) error {
 		output.PrintError("App config path not configured\n")
 		output.PrintInfo("💡 The app '%s' doesn't have a local config path defined", appName)
 		output.PrintInfo("🔧 To fix this:")
-		output.PrintInfo("   • Edit your settings.yaml file")
+		output.PrintInfo("   • Edit your %s file", constants.ANVIL_CONFIG_FILE)
 		output.PrintInfo("   • Add the following to the 'configs' section:\n")
 		output.PrintInfo("configs:")
 		output.PrintInfo("  %s: \"/path/to/%s/config\"\n", appName, appName)
