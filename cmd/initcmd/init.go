@@ -102,35 +102,39 @@ func runInitCommand() error {
 
 	// Provide specific guidance if there are configuration warnings
 	if len(warnings) > 0 {
-		o.PrintInfo("\nRecommended next steps to complete your setup:")
+		fmt.Println("")
+		o.PrintInfo("Recommended next steps to complete your setup:")
 		for _, warning := range warnings {
 			o.PrintInfo("  • %s", warning)
 		}
-		o.PrintInfo("\nThese steps are optional but recommended for the best experience.")
+		fmt.Println("")
+		o.PrintInfo("These steps are optional but recommended for the best experience.")
 	}
 
 	// Final usage guidance
-	o.PrintInfo("\nYou can now use:")
+	fmt.Println("")
+	o.PrintInfo("You can now use:")
 	o.PrintInfo("  • 'anvil install [group]' to install development tool groups")
 	o.PrintInfo("  • 'anvil install [app]' to install any individual application")
 	o.PrintInfo("  • Edit %s/%s to customize your configuration", config.GetAnvilConfigDirectory(), constants.ANVIL_CONFIG_FILE)
 
 	// GitHub configuration warning
-	o.PrintWarning("\n⚙️  Configuration Management Setup Required:")
-	o.PrintInfo("  • Edit the 'github.config_repo' field in settings.yaml to enable config pull/push")
+	o.PrintWarning("Configuration Management Setup Required:")
+	o.PrintInfo("  • Edit the 'github.config_repo' field in %s to enable config pull/push", constants.ANVIL_CONFIG_FILE)
 	o.PrintInfo("  • Example: 'github.config_repo: username/dotfiles'")
 	o.PrintInfo("  • Set GITHUB_TOKEN environment variable for authentication")
-	o.PrintInfo("  • Run 'anvil config pull' once configured to sync your dotfiles")
+	o.PrintInfo("  • Run 'anvil doctor' once added to validate configuration")
 
 	// Show available groups dynamically
 	if groups, err := config.GetAvailableGroups(); err == nil {
 		builtInGroups := config.GetBuiltInGroups()
-		o.PrintInfo("\nAvailable groups: %s", strings.Join(builtInGroups, ", "))
+		fmt.Println("")
+		o.PrintInfo("Available groups: %s", strings.Join(builtInGroups, ", "))
 		if len(groups) > len(builtInGroups) {
 			o.PrintInfo("Custom groups: %d defined", len(groups)-len(builtInGroups))
 		}
 	} else {
-		o.PrintInfo("\nAvailable groups: dev, essentials")
+		o.PrintInfo("Available groups: dev, essentials")
 	}
 	o.PrintInfo("Example: 'anvil install dev' or 'anvil install firefox'")
 
