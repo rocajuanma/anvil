@@ -33,11 +33,6 @@ type Validator interface {
 	ValidateConfig(config interface{}) error
 }
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // validateString validates a string with common rules
 func validateString(value, fieldName string, maxLength int, pattern string) error {
 	if value == "" {
@@ -298,7 +293,7 @@ func ValidateAndFixGitHubConfig(config *AnvilConfig) bool {
 
 		if normalizedRepo != originalRepo {
 			config.GitHub.ConfigRepo = normalizedRepo
-			o := getOutputHandler()
+			o := palantir.GetGlobalOutputHandler()
 			o.PrintInfo("🔧 Auto-corrected GitHub repository URL:")
 			o.PrintInfo("   From: %s", originalRepo)
 			o.PrintInfo("   To:   %s", normalizedRepo)

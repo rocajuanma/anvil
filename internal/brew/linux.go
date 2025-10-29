@@ -22,6 +22,7 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/system"
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
+	"github.com/rocajuanma/palantir"
 )
 
 // InstallBrewLinux installs Homebrew on Linux systems
@@ -30,8 +31,8 @@ func InstallBrewLinux() error {
 		return nil
 	}
 
-	getOutputHandler().PrintInfo("Installing Homebrew on Linux (this may take a few minutes)")
-	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
+	palantir.GetGlobalOutputHandler().PrintInfo("Installing Homebrew on Linux (this may take a few minutes)")
+	palantir.GetGlobalOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
 	fmt.Println()
 
 	spinner := charm.NewDotsSpinner("Preparing Homebrew installation for Linux")
@@ -51,7 +52,7 @@ func InstallBrewLinux() error {
 	fmt.Println()
 
 	if err != nil {
-		getOutputHandler().PrintError("Homebrew installation failed")
+		palantir.GetGlobalOutputHandler().PrintError("Homebrew installation failed")
 		return fmt.Errorf("failed to install Homebrew on Linux: %w", err)
 	}
 

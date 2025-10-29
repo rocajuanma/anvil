@@ -42,11 +42,6 @@ type PushConfigResult struct {
 	FilesCommitted []string
 }
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // verifyRepositoryPrivacy ensures the repository is private before allowing push operations
 func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 	// First test git access using the client's authentication method
@@ -66,7 +61,7 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 
 	if httpErr == nil && httpResult.Success {
 		// 🚨 CRITICAL: Repository is public - BLOCK the push
-		output := getOutputHandler()
+		output := palantir.GetGlobalOutputHandler()
 		output.PrintError("🚨 SECURITY VIOLATION: Configuration push BLOCKED")
 		output.PrintError("")
 		output.PrintError("Repository '%s' is PUBLIC", gc.RepoURL)
@@ -84,7 +79,7 @@ func (gc *GitHubClient) verifyRepositoryPrivacy(ctx context.Context) error {
 	}
 
 	// Repository appears to be private and git access works - safe to proceed
-	getOutputHandler().PrintSuccess("Repository privacy verified - safe to push configuration data")
+	palantir.GetGlobalOutputHandler().PrintSuccess("Repository privacy verified - safe to push configuration data")
 	return nil
 }
 
@@ -102,7 +97,7 @@ func (gc *GitHubClient) PushConfig(ctx context.Context, appName, configPath stri
 
 	// Check if there are differences before proceeding
 	targetPath := fmt.Sprintf("%s/", appName) // App configs go in a directory named after the app
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 
 	// Check for changes and handle new vs existing apps
 	shouldProceed, err := gc.checkForChanges(ctx, appName, configPath, targetPath)
@@ -134,7 +129,7 @@ func (gc *GitHubClient) checkForChanges(ctx context.Context, appName, configPath
 
 // handleNewApp handles the case where this is a new app not yet in the repository
 func (gc *GitHubClient) handleNewApp(appName, configPath string) (bool, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 
 	// Verify the local path actually exists and has content
 	localInfo, err := os.Stat(configPath)
@@ -163,7 +158,7 @@ func (gc *GitHubClient) handleNewApp(appName, configPath string) (bool, error) {
 
 // handleExistingApp handles the case where the app already exists in the repository
 func (gc *GitHubClient) handleExistingApp(appName, configPath, targetPath string) (bool, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 
 	// Check for changes
 	hasChanges, err := gc.hasAppConfigChanges(configPath, targetPath)
@@ -302,7 +297,7 @@ func (gc *GitHubClient) createAndCheckoutBranch(ctx context.Context, branchName 
 		return errors.NewInstallationError(constants.OpPush, "git-checkout-new-branch", err)
 	}
 
-	getOutputHandler().PrintInfo("Created and switched to branch: %s", branchName)
+	palantir.GetGlobalOutputHandler().PrintInfo("Created and switched to branch: %s", branchName)
 	return nil
 }
 
@@ -340,14 +335,14 @@ func (gc *GitHubClient) commitChanges(ctx context.Context, commitMessage string)
 	}
 
 	// Exit code 1 means there are differences - proceed with commit
-	getOutputHandler().PrintInfo("Changes detected, proceeding with commit...")
+	palantir.GetGlobalOutputHandler().PrintInfo("Changes detected, proceeding with commit...")
 
 	// Commit changes
 	if _, err := system.RunCommandWithTimeout(ctx, constants.GitCommand, "commit", "-m", commitMessage); err != nil {
 		return errors.NewInstallationError(constants.OpPush, "git-commit", err)
 	}
 
-	getOutputHandler().PrintSuccess(fmt.Sprintf("Committed changes: %s", commitMessage))
+	palantir.GetGlobalOutputHandler().PrintSuccess(fmt.Sprintf("Committed changes: %s", commitMessage))
 	return nil
 }
 
@@ -370,7 +365,7 @@ func (gc *GitHubClient) pushBranch(ctx context.Context, branchName string) error
 			fmt.Errorf("failed to push branch: %s, error: %w", result.Error, err))
 	}
 
-	getOutputHandler().PrintSuccess(fmt.Sprintf("Pushed branch '%s' to origin", branchName))
+	palantir.GetGlobalOutputHandler().PrintSuccess(fmt.Sprintf("Pushed branch '%s' to origin", branchName))
 	return nil
 }
 

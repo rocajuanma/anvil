@@ -24,6 +24,7 @@ import (
 	"github.com/rocajuanma/anvil/internal/brew"
 	"github.com/rocajuanma/anvil/internal/config"
 	"github.com/rocajuanma/anvil/internal/system"
+	"github.com/rocajuanma/palantir"
 )
 
 // BrewValidator checks if Homebrew is installed and functional
@@ -87,7 +88,7 @@ func (v *BrewValidator) Validate(ctx context.Context, cfg *config.AnvilConfig) *
 }
 
 func (v *BrewValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	if !brew.IsBrewInstalled() {
 		// Install Homebrew
@@ -126,7 +127,7 @@ func (v *BrewValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error 
 	packages := strings.Split(outdatedPackages, "\n")
 	packageCount := len(packages)
 
-	o.PrintInfo("")
+	fmt.Println("")
 	o.PrintWarning("Found %d outdated Homebrew package(s):", packageCount)
 	for i, pkg := range packages {
 		if strings.TrimSpace(pkg) != "" {
@@ -134,10 +135,12 @@ func (v *BrewValidator) Fix(ctx context.Context, cfg *config.AnvilConfig) error 
 		}
 	}
 
-	o.PrintInfo("\n💡 To upgrade these packages manually, run:")
+	fmt.Println("")
+	o.PrintInfo(" To upgrade these packages manually, run:")
 	o.PrintInfo("   brew upgrade                    # Upgrade all packages")
 	o.PrintInfo("   brew upgrade <package-name>     # Upgrade specific package")
-	o.PrintInfo("\nℹ️  Anvil does not automatically upgrade packages to prevent")
+	fmt.Println("")
+	o.PrintInfo(" Anvil does not automatically upgrade packages to prevent")
 	o.PrintInfo("   potential compatibility issues with your existing projects.")
 
 	return nil

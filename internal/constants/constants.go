@@ -102,6 +102,12 @@ const (
 ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚══════╝`
 )
 
+const (
+	ANVIL             = "anvil"
+	ANVIL_CONFIG_FILE = "settings.yaml"
+	ANVIL_CONFIG_DIR  = ".anvil"
+)
+
 // Common directory permissions
 const (
 	DirPerm  = 0755

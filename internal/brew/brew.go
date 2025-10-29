@@ -34,11 +34,6 @@ var (
 	brewCacheMutex     sync.RWMutex
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // BrewPackage represents a brew package
 type BrewPackage struct {
 	Name        string
@@ -50,7 +45,7 @@ type BrewPackage struct {
 // EnsureBrewIsInstalled ensures Homebrew is installed
 func EnsureBrewIsInstalled() error {
 	if !IsBrewInstalled() {
-		getOutputHandler().PrintInfo("Homebrew not found. Installing Homebrew...")
+		palantir.GetGlobalOutputHandler().PrintInfo("Homebrew not found. Installing Homebrew...")
 
 		var err error
 		if system.IsMacOS() {
@@ -62,7 +57,7 @@ func EnsureBrewIsInstalled() error {
 		if err != nil {
 			return fmt.Errorf("failed to install Homebrew: %w", err)
 		}
-		getOutputHandler().PrintSuccess("Homebrew installed successfully")
+		palantir.GetGlobalOutputHandler().PrintSuccess("Homebrew installed successfully")
 	}
 
 	return nil
@@ -141,8 +136,8 @@ func InstallBrew() error {
 		spinner.Success("Xcode Command Line Tools verified")
 	}
 
-	getOutputHandler().PrintInfo("Installing Homebrew (this may take a few minutes)")
-	getOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
+	palantir.GetGlobalOutputHandler().PrintInfo("Installing Homebrew (this may take a few minutes)")
+	palantir.GetGlobalOutputHandler().PrintInfo("You may be prompted for your password to complete the installation")
 	fmt.Println()
 
 	spinner := charm.NewDotsSpinner("Preparing Homebrew installation")
@@ -161,7 +156,7 @@ func InstallBrew() error {
 	fmt.Println()
 
 	if err != nil {
-		getOutputHandler().PrintError("Homebrew installation failed")
+		palantir.GetGlobalOutputHandler().PrintError("Homebrew installation failed")
 		return fmt.Errorf("failed to install Homebrew: %w", err)
 	}
 
@@ -207,7 +202,7 @@ func InstallPackage(packageName string) error {
 		return fmt.Errorf("Homebrew is not installed")
 	}
 
-	getOutputHandler().PrintInfo("Installing %s...", packageName)
+	palantir.GetGlobalOutputHandler().PrintInfo("Installing %s...", packageName)
 
 	result, err := system.RunCommand(constants.BrewCommand, constants.BrewInstall, packageName)
 	if err != nil {
@@ -280,10 +275,10 @@ func InstallPackages(packages []string) error {
 	}
 
 	for i, pkg := range packages {
-		getOutputHandler().PrintProgress(i+1, len(packages), fmt.Sprintf("Installing %s", pkg))
+		palantir.GetGlobalOutputHandler().PrintProgress(i+1, len(packages), fmt.Sprintf("Installing %s", pkg))
 
 		if IsPackageInstalled(pkg) {
-			getOutputHandler().PrintInfo("%s is already installed", pkg)
+			palantir.GetGlobalOutputHandler().PrintInfo("%s is already installed", pkg)
 			continue
 		}
 
@@ -557,7 +552,7 @@ func InstallPackageWithCheck(packageName string) error {
 	}
 
 	if IsApplicationAvailable(packageName) {
-		getOutputHandler().PrintAlreadyAvailable("%s is already available on the system", packageName)
+		palantir.GetGlobalOutputHandler().PrintAlreadyAvailable("%s is already available on the system", packageName)
 		return nil
 	}
 
