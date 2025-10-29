@@ -27,11 +27,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // UpdateCmd represents the update command
 var UpdateCmd = &cobra.Command{
 	Use:   "update",
@@ -39,7 +34,7 @@ var UpdateCmd = &cobra.Command{
 	Long:  constants.UPDATE_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runUpdateCommand(cmd); err != nil {
-			getOutputHandler().PrintError("Update failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Update failed: %v", err)
 			return
 		}
 	},
@@ -47,7 +42,7 @@ var UpdateCmd = &cobra.Command{
 
 // runUpdateCommand executes the update process
 func runUpdateCommand(cmd *cobra.Command) error {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	o.PrintHeader("Updating Anvil to Latest Version")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -78,7 +73,7 @@ func runUpdateCommand(cmd *cobra.Command) error {
 // updateAnvil updates Anvil to the latest version
 // it uses the curl command to download the latest installation script from GitHub releases
 func updateAnvil(ctx context.Context, dryRun bool) (*system.CommandResult, error) {
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	if dryRun {
 		o.PrintInfo("Dry run mode - would update Anvil to the latest version")

@@ -23,15 +23,11 @@ import (
 
 	"github.com/rocajuanma/anvil/internal/constants"
 	"github.com/rocajuanma/anvil/internal/errors"
+	"github.com/rocajuanma/anvil/internal/system"
 	"github.com/rocajuanma/anvil/internal/terminal/charm"
 	"github.com/rocajuanma/palantir"
 	"github.com/spf13/cobra"
 )
-
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
 
 var CleanCmd = &cobra.Command{
 	Use:   "clean",
@@ -39,7 +35,7 @@ var CleanCmd = &cobra.Command{
 	Long:  constants.CLEAN_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runCleanCommand(cmd, args); err != nil {
-			getOutputHandler().PrintError("Clean failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Clean failed: %v", err)
 			return
 		}
 	},
@@ -50,7 +46,7 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 	// Get command flags
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	force, _ := cmd.Flags().GetBool("force")
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintHeader("Cleaning Anvil Directories")
 
 	// Get anvil directory path
@@ -72,7 +68,7 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(itemsToClean) == 0 {
-		output.PrintSuccess("No root directories found to clean. Only settings.yaml exists.")
+		output.PrintSuccess(fmt.Sprintf("No root directories found to clean. Only %s exists.", constants.ANVIL_CONFIG_FILE))
 		return nil
 	}
 
@@ -95,7 +91,7 @@ func runCleanCommand(cmd *cobra.Command, args []string) error {
 
 // getAnvilDirectoryPath returns the path to the .anvil directory
 func getAnvilDirectoryPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := system.GetHomeDir()
 	if err != nil {
 		return "", &errors.AnvilError{
 			Op:      "clean",
@@ -109,7 +105,7 @@ func getAnvilDirectoryPath() (string, error) {
 
 // getItemsToClean scans the anvil directory and returns items to clean
 func getItemsToClean(anvilDir string) ([]string, error) {
-	output := getOutputHandler()
+	output := palantir.GetGlobalOutputHandler()
 	output.PrintStage("Scanning .anvil directory for content to clean")
 
 	spinner := charm.NewCircleSpinner("Scanning .anvil directory")
@@ -129,8 +125,8 @@ func getItemsToClean(anvilDir string) ([]string, error) {
 
 	var itemsToClean []string
 	for _, item := range items {
-		// Skip settings.yaml
-		if item.Name() == constants.ConfigFileName {
+		// Skip Anvil config file
+		if item.Name() == constants.ANVIL_CONFIG_FILE {
 			continue
 		}
 

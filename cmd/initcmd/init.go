@@ -30,11 +30,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getOutputHandler returns the global output handler for terminal operations
-func getOutputHandler() palantir.OutputHandler {
-	return palantir.GetGlobalOutputHandler()
-}
-
 // InitCmd represents the init command for macOS environment setup
 var InitCmd = &cobra.Command{
 	Use:   "init",
@@ -42,7 +37,7 @@ var InitCmd = &cobra.Command{
 	Long:  constants.INIT_COMMAND_LONG_DESCRIPTION,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runInitCommand(); err != nil {
-			getOutputHandler().PrintError("Initialization failed: %v", err)
+			palantir.GetGlobalOutputHandler().PrintError("Initialization failed: %v", err)
 			os.Exit(1)
 		}
 	},
@@ -54,7 +49,7 @@ func runInitCommand() error {
 	fmt.Println(charm.RenderBox("🔨 ANVIL INITIALIZATION", "", "#00D9FF", true))
 	fmt.Println()
 
-	o := getOutputHandler()
+	o := palantir.GetGlobalOutputHandler()
 
 	// Stage 1: Tool validation and installation
 	o.PrintStage("Stage 1: Tool Validation")
@@ -78,13 +73,13 @@ func runInitCommand() error {
 
 	// Stage 3: Generate default settings.yaml
 	o.PrintStage("Stage 3: Settings Generation")
-	spinner = charm.NewDotsSpinner("Generating default settings.yaml")
+	spinner = charm.NewDotsSpinner(fmt.Sprintf("Generating default %s", constants.ANVIL_CONFIG_FILE))
 	spinner.Start()
 	if err := config.GenerateDefaultSettings(); err != nil {
 		spinner.Error("Failed to generate settings")
 		return errors.NewConfigurationError(constants.OpInit, "generate-settings", err)
 	}
-	spinner.Success("Default settings.yaml generated")
+	spinner.Success(fmt.Sprintf("Default %s generated", constants.ANVIL_CONFIG_FILE))
 
 	// Stage 4: Check local environment configurations
 	o.PrintStage("Stage 4: Environment Check")
@@ -103,7 +98,7 @@ func runInitCommand() error {
 	// Stage 5: Print completion message and next steps
 	o.PrintHeader("Initialization Complete!")
 	o.PrintInfo("Anvil has been successfully initialized and is ready to use.")
-	o.PrintInfo("Configuration files have been created in: %s", config.GetConfigDirectory())
+	o.PrintInfo("Configuration files have been created in: %s", config.GetAnvilConfigPath())
 
 	// Provide specific guidance if there are configuration warnings
 	if len(warnings) > 0 {
@@ -118,7 +113,7 @@ func runInitCommand() error {
 	o.PrintInfo("\nYou can now use:")
 	o.PrintInfo("  • 'anvil install [group]' to install development tool groups")
 	o.PrintInfo("  • 'anvil install [app]' to install any individual application")
-	o.PrintInfo("  • Edit %s/settings.yaml to customize your configuration", config.GetConfigDirectory())
+	o.PrintInfo("  • Edit %s/%s to customize your configuration", config.GetAnvilConfigDirectory(), constants.ANVIL_CONFIG_FILE)
 
 	// GitHub configuration warning
 	o.PrintWarning("\n⚙️  Configuration Management Setup Required:")
