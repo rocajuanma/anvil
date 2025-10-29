@@ -166,4 +166,3 @@ ls -la ~/.anvil
 For detailed setup guidance and examples, see:
 
 - [Installation Guide](INSTALLATION.md)
-- [Examples & Tutorials](EXAMPLES.md)
