@@ -163,7 +163,7 @@ func buildTreeString(builder *strings.Builder, node *AppTreeNode, prefix string,
 		var coloredName string
 		if node.IsGroup {
 			// Groups are colored in bold blue
-			coloredName = fmt.Sprintf("%s%s%s 📁 %s", palantir.ColorBold, palantir.ColorBlue, node.Name, palantir.ColorReset)
+			coloredName = fmt.Sprintf("%s%s%s %s", palantir.ColorBold, palantir.ColorBlue, node.Name, palantir.ColorReset)
 		} else if len(node.Children) > 0 {
 			// Category headers (Built-in Groups, Custom Groups, etc.) in bold cyan
 			coloredName = fmt.Sprintf("%s%s%s%s", palantir.ColorBold, palantir.ColorCyan, node.Name, palantir.ColorReset)
