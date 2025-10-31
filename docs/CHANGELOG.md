@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+## [2.4.1] - 2025-10-30
+
+### Added
+
+### Changed
+
+### Fixed
 - **Formatting Consistency** 🎭 - Replaced empty info calls with fmt package for consistent formatting
 
 ## [2.4.0] - 2025-10-28
