@@ -96,7 +96,7 @@ func showDiffOutput(diffSummary *github.DiffSummary) {
 
 	// Show Git's native stat output directly
 	if diffSummary.GitStatOutput != "" {
-		o.PrintInfo("")
+		fmt.Println("")
 		o.PrintInfo(diffSummary.GitStatOutput)
 	}
 
@@ -112,5 +112,5 @@ func showDiffOutput(diffSummary *github.DiffSummary) {
 			o.PrintInfo("\n... [diff truncated] ...")
 		}
 	}
-	o.PrintInfo("")
+	fmt.Println("")
 }

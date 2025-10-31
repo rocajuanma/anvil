@@ -64,7 +64,7 @@ func showAvailableChecks(engine *validators.DoctorEngine) error {
 			for _, checkName := range checkNames {
 				o.PrintInfo("  anvil doctor %s", checkName)
 			}
-			o.PrintInfo("")
+			fmt.Println("")
 		}
 	}
 

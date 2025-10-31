@@ -121,7 +121,7 @@ func displayCategory(category string, results []*validators.ValidationResult, ve
 		}
 	}
 
-	o.PrintInfo("")
+	fmt.Println("")
 }
 
 // printCategoryResults prints results for a single category in a clean format

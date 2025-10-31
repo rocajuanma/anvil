@@ -168,7 +168,8 @@ func checkGroupConflicts(importGroups map[string][]string, existingGroups config
 // displayImportSummary shows a tree view of groups that will be imported
 func displayImportSummary(groups map[string][]string) {
 	output := palantir.GetGlobalOutputHandler()
-	output.PrintInfo("\n📋 Import Summary:")
+	fmt.Println("")
+	output.PrintInfo("📋 Import Summary:")
 	output.PrintInfo("═══════════════════")
 
 	// Sort group names for consistent output
@@ -203,8 +204,8 @@ func displayImportSummary(groups map[string][]string) {
 		output.PrintInfo("│")
 	}
 
-	output.PrintInfo("📊 Total: %d groups, %d applications", totalGroups, totalApps)
-	output.PrintInfo("")
+	output.PrintInfo("Total: %d groups, %d applications", totalGroups, totalApps)
+	fmt.Println("")
 }
 
 // importGroups adds the imported groups to the current configuration

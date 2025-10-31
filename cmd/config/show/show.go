@@ -163,7 +163,7 @@ func showPulledConfig(targetDir string) error {
 		o.PrintInfo("   • The app name is incorrect")
 		o.PrintInfo("   • The configuration was never pulled")
 		o.PrintInfo("   • Use 'anvil config pull %s' to pull this configuration first", targetDir)
-		o.PrintInfo("")
+		fmt.Println("")
 
 		// Show available pulled configurations
 		tempBasePath := filepath.Join(config.GetAnvilConfigDirectory(), "temp")
