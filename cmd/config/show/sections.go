@@ -51,7 +51,7 @@ func showAnvilSettingsSection(showGroups, showConfigs, showGit, showGitHub bool)
 	// Stage 3: Display requested section
 	switch {
 	case showGroups:
-		if err := showGroupsSection(anvilConfig); err != nil {
+		if err := showGroupsSection(); err != nil {
 			return err
 		}
 	case showConfigs:
@@ -72,7 +72,7 @@ func showAnvilSettingsSection(showGroups, showConfigs, showGit, showGitHub bool)
 }
 
 // showGroupsSection displays the groups section using shared rendering functions
-func showGroupsSection(anvilConfig *config.AnvilConfig) error {
+func showGroupsSection() error {
 	groups, builtInGroupNames, customGroupNames, installedApps, err := tools.LoadAndPrepareAppData()
 	if err != nil {
 		return err
