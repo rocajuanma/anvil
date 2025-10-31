@@ -101,7 +101,7 @@ func syncAnvilSettings(dryRun bool) error {
 		return nil
 	}
 
-	o.PrintInfo("")
+	fmt.Println("")
 
 	spinner := charm.NewDotsSpinner("Syncing anvil settings")
 	spinner.Start()
@@ -193,7 +193,7 @@ func syncAppConfig(appName string, dryRun bool) error {
 		return nil
 	}
 
-	output.PrintInfo("")
+	fmt.Println("")
 
 	spinner := charm.NewDotsSpinner(fmt.Sprintf("Syncing %s configuration", appName))
 	spinner.Start()

@@ -473,7 +473,7 @@ func (d *DoctorEngine) runValidatorsWithProgress(ctx context.Context, config *co
 		}
 	}
 
-	o.PrintInfo("")
+	fmt.Println("")
 	o.PrintSuccess("All validation checks completed")
 
 	return results
