@@ -67,7 +67,7 @@ func archiveExistingConfig(configType, sourcePath, archivePath string) error {
 	}
 
 	if sourceInfo.IsDir() {
-		return copyDirRecursive(sourcePath, destPath)
+		return utils.CopyDirectorySimple(sourcePath, destPath)
 	} else {
 		// Ensure parent directory exists
 		if err := utils.EnsureDirectory(filepath.Dir(destPath)); err != nil {

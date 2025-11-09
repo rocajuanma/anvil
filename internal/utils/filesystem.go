@@ -35,6 +35,7 @@ type CopyOptions struct {
 	// Directory-specific options (ignored for files)
 	IncludeHidden bool
 	DirMode       os.FileMode
+	Merge         bool
 
 	// File-specific options (ignored for directories)
 	CreateDirs bool
@@ -48,6 +49,7 @@ func DefaultCopyOptions() CopyOptions {
 		FileMode:      constants.FilePerm,
 		IncludeHidden: true,
 		DirMode:       constants.DirPerm,
+		Merge:         true,
 		CreateDirs:    true,
 	}
 }
@@ -114,8 +116,7 @@ func CopyDirectory(src, dst string, options CopyOptions) error {
 		return fmt.Errorf("source path is not a directory: %s", src)
 	}
 
-	// Remove destination if it exists and overwrite is enabled
-	if options.Overwrite {
+	if options.Overwrite && !options.Merge {
 		if err := os.RemoveAll(dst); err != nil {
 			return fmt.Errorf("failed to remove existing destination: %w", err)
 		}

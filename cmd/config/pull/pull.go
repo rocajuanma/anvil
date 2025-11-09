@@ -261,16 +261,11 @@ func copyDirectoryToTemp(cfg *config.AnvilConfig, targetDir string) (string, err
 	}
 
 	// Copy directory recursively
-	if err := copyDirRecursive(sourceDir, destDir); err != nil {
+	if err := utils.CopyDirectorySimple(sourceDir, destDir); err != nil {
 		return "", errors.NewFileSystemError(constants.OpPull, "copy-directory", err)
 	}
 
 	return destDir, nil
-}
-
-// copyDirRecursive recursively copies a directory using the consolidated utils.CopyDirectorySimple
-func copyDirRecursive(src, dst string) error {
-	return utils.CopyDirectorySimple(src, dst)
 }
 
 // listCopiedFiles lists the files that were copied to the temp directory
