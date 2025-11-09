@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [2.5.0] - 2025-11-09
+
+### Added
 - **Comprehensive Test Suites** - Added test coverage for filesystem utilities and sync operations
 
 ### Changed
