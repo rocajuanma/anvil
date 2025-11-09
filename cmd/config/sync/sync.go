@@ -187,8 +187,7 @@ func syncAppConfig(appName string, dryRun bool) error {
 
 	output.PrintInfo("Archive: %s\n", archivePath)
 
-	// Ask for confirmation
-	if !output.Confirm(fmt.Sprintf("Override %s configs? Old copy will be archived.", appName)) {
+	if !output.Confirm(fmt.Sprintf("Sync %s configs? Old copy will be archived.", appName)) {
 		output.PrintInfo("Sync cancelled")
 		return nil
 	}
