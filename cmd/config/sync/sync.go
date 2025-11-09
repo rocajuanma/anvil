@@ -90,8 +90,8 @@ func syncAnvilSettings(dryRun bool) error {
 		currentSettingsPath,
 		fmt.Sprintf("Sync local %s? Old copy will be archived.", constants.ANVIL_CONFIG_FILE),
 		"Syncing anvil settings",
-		"Anvil settings synced successfully",
-		"Anvil settings synced successfully",
+		"[Anvil] settings synced successfully",
+		"Sync done!",
 	)
 }
 
@@ -148,8 +148,8 @@ func syncAppConfig(appName string, dryRun bool) error {
 		localConfigPath,
 		fmt.Sprintf("Sync %s configs? Old copy will be archived.", appName),
 		fmt.Sprintf("Syncing %s configuration", appName),
-		fmt.Sprintf("%s configuration synced successfully", strings.Title(appName)),
-		fmt.Sprintf("%s configuration synced successfully", strings.Title(appName)),
+		fmt.Sprintf("[%s] configuration synced successfully", strings.Title(appName)),
+		"Sync done!",
 	)
 }
 
@@ -201,8 +201,8 @@ func performSync(archivePrefix, sourcePath, destPath, confirmMsg, spinnerMsg, sp
 	spinner.Success(spinnerSuccess)
 
 	output.PrintSuccess(successMsg)
-	output.PrintInfo("📦 Old configs archived to: %s", archivePath)
-	output.PrintInfo("💡 Manual recovery possible from archive directory (no auto-recover yet)")
+	output.PrintInfo("Old configs archived to: %s", archivePath)
+	output.PrintInfo("Manual recovery possible from archive directory (no auto-recover yet)")
 
 	return nil
 }
