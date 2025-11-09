@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Test Suites** - Added test coverage for filesystem utilities and sync operations
 
 ### Changed
+- **Sync Command Refactoring** - Consolidated duplicate sync logic into single function
 
 ### Fixed
 - **Sync Operation Merge Behavior** - Modified sync command to merge remote configs into local directories instead of replacing them, preserving local-only files while updating remote configs
