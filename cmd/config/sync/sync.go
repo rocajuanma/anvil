@@ -164,9 +164,11 @@ func performSync(archivePrefix, sourcePath, destPath, confirmMsg, spinnerMsg, sp
 
 	output.PrintInfo("Archive: %s\n", archivePath)
 
-	if !output.Confirm(confirmMsg) {
-		output.PrintInfo("Sync cancelled")
-		return nil
+	if os.Getenv("ANVIL_TEST_MODE") != "true" {
+		if !output.Confirm(confirmMsg) {
+			output.PrintInfo("Sync cancelled")
+			return nil
+		}
 	}
 
 	fmt.Println("")
