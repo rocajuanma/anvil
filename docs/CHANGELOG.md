@@ -14,8 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Source Installer Refactoring** 🔄 - Refactored source installation code to reduce duplication, extract helper functions, and improve maintainability
 
-### Changed
-
 ### Fixed
 
 ## [2.5.0] - 2025-11-09
