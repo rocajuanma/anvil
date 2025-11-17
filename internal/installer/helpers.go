@@ -72,3 +72,11 @@ func ensureExtractDirectory(filePath, appName string) (string, error) {
 	return extractDir, nil
 }
 
+// copyAppToApplications copies an application to the Applications directory
+func copyAppToApplications(appPath, destPath string) error {
+	if err := utils.CopyDirectorySimple(appPath, destPath); err != nil {
+		return fmt.Errorf("failed to copy application: %w", err)
+	}
+	return nil
+}
+

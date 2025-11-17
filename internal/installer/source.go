@@ -135,7 +135,7 @@ func extractCommandFromShC(fullCommand string) string {
 	return remaining
 }
 
-// installFromURL installs an application from a URL (existing logic)
+// installFromURL installs an application from a URL
 func installFromURL(appName, sourceURL string) error {
 	spinner := charm.NewDotsSpinner(fmt.Sprintf("Downloading %s from source", appName))
 	spinner.Start()
@@ -461,7 +461,7 @@ func handleExtractedContentsMacOS(extractDir, appName string) error {
 	appNameFromPath := filepath.Base(appPath)
 	destPath := filepath.Join(applicationsDir, appNameFromPath)
 
-	return utils.CopyDirectorySimple(appPath, destPath)
+	return copyAppToApplications(appPath, destPath)
 }
 
 // handleExtractedContentsLinux handles extracted contents on Linux
