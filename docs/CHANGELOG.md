@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Shell Command Installation** 🎯 - Extended source installation to support shell commands (curl/wget style) in addition to URLs, enabling installation of tools like oh-my-zsh via command execution
 
 ### Changed
+- **Source Installer Refactoring** 🔄 - Refactored source installation code to reduce duplication, extract helper functions, and improve maintainability
+
+### Changed
 
 ### Fixed
 
