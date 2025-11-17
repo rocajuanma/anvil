@@ -152,6 +152,22 @@ groups:
 4. **Updates settings** - Adds to `tools.installed_apps` if applicable
 5. **Reports status** - Shows installation result
 
+### Source-Based Installation
+
+For apps not available in Homebrew, you can configure custom sources in `settings.yaml`. Source installation takes priority over brew when configured:
+
+```yaml
+sources:
+  moom: https://manytricks.com/download/moom
+  oh-my-zsh: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+```
+
+**Supported formats:**
+- **URLs** - Downloads and installs files (.dmg, .pkg, .zip on macOS; .deb, .rpm, .AppImage on Linux)
+- **Shell commands** - Executes install scripts (curl/wget style commands)
+
+If source installation fails, the system automatically falls back to brew. If no source is configured, brew is used by default.
+
 ### Smart Tracking Logic
 
 Apps are automatically tracked in `tools.installed_apps` when installed individually, UNLESS they are already present in:
@@ -248,6 +264,10 @@ groups:
   # Your custom groups
   frontend: [git, node, visual-studio-code, figma]
   design: [figma, sketch, adobe-creative-cloud]
+
+sources:
+  moom: https://manytricks.com/download/moom
+  oh-my-zsh: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 ```
 
 ## Under-the-Hood: Intelligent App Detection
