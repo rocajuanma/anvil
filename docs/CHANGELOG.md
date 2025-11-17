@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Source-Based Installation** - Added optional `sources` section in settings.yaml to install apps from URLs and support shell commands
 
 ### Changed
+- **Source Installation Priority** - Source installation now takes priority over brew when configured, with automatic fallback to brew if source installation fails
 
 ### Fixed
 

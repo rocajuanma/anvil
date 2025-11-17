@@ -334,9 +334,28 @@ func installIndividualApp(appName string, dryRun bool, cmd *cobra.Command) error
 func installSingleTool(toolName string) error {
 	o := palantir.GetGlobalOutputHandler()
 
-	// Install the tool via brew (availability already checked by caller)
-	if err := brew.InstallPackageDirectly(toolName); err != nil {
-		return err
+	// Check if source is configured for this app (user explicitly configured it)
+	sourceURL, exists, sourceErr := installer.GetSourceURL(toolName)
+	if sourceErr != nil {
+		o.PrintWarning("Failed to check source URL for %s: %v", toolName, sourceErr)
+		// Fall back to brew if we can't check source
+		return brew.InstallPackageDirectly(toolName)
+	}
+
+	// If source exists, try it first (user explicitly configured it)
+	if exists && sourceURL != "" {
+		o.PrintInfo("Installing %s from configured source", toolName)
+		if err := installer.InstallFromSource(toolName, sourceURL); err != nil {
+			// Source installation failed, fall back to brew
+			o.PrintInfo("Source installation failed, falling back to brew for %s", toolName)
+			return brew.InstallPackageDirectly(toolName)
+		}
+		// Source installation succeeded, continue with post-install steps
+	} else {
+		// No source configured, use brew (default for majority of apps)
+		if err := brew.InstallPackageDirectly(toolName); err != nil {
+			return err
+		}
 	}
 
 	// Handle special cases for specific tools
