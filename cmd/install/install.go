@@ -336,7 +336,23 @@ func installSingleTool(toolName string) error {
 
 	// Install the tool via brew (availability already checked by caller)
 	if err := brew.InstallPackageDirectly(toolName); err != nil {
-		return err
+		// If brew install fails, check if there's a source URL configured
+		sourceURL, exists, sourceErr := installer.GetSourceURL(toolName)
+		if sourceErr != nil {
+			o.PrintWarning("Failed to check source URL for %s: %v", toolName, sourceErr)
+			return err
+		}
+
+		if exists && sourceURL != "" {
+			o.PrintInfo("Brew installation failed, attempting to install %s from source URL", toolName)
+			if sourceErr := installer.InstallFromSource(toolName, sourceURL); sourceErr != nil {
+				return fmt.Errorf("brew installation failed: %w; source installation also failed: %w", err, sourceErr)
+			}
+			// Source installation succeeded, continue with post-install steps
+		} else {
+			// No source URL configured, return original brew error
+			return err
+		}
 	}
 
 	// Handle special cases for specific tools
