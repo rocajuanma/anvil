@@ -60,33 +60,17 @@ func installFromCommand(appName, command string) error {
 	spinner := charm.NewDotsSpinner(fmt.Sprintf("Installing %s from command", appName))
 	spinner.Start()
 
-	// Parse the command - handle sh -c "$(curl...)" style commands
-	var cmd *exec.Cmd
-	trimmed := strings.TrimSpace(command)
-
-	if strings.HasPrefix(trimmed, "sh -c") {
-		// Extract the command inside quotes
-		cmdStr := extractCommandFromShC(trimmed)
-		cmd = exec.Command("sh", "-c", cmdStr)
-	} else if strings.HasPrefix(trimmed, "bash -c") {
-		cmdStr := extractCommandFromShC(trimmed)
-		cmd = exec.Command("bash", "-c", cmdStr)
-	} else {
-		// Direct command execution
-		parts := strings.Fields(trimmed)
-		if len(parts) == 0 {
-			spinner.Error(fmt.Sprintf("Invalid command for %s", appName))
-			return fmt.Errorf("invalid command: %s", command)
-		}
-		cmd = exec.Command(parts[0], parts[1:]...)
+	cmd, err := parseShellCommand(command)
+	if err != nil {
+		spinner.Error(fmt.Sprintf("Invalid command for %s", appName))
+		return fmt.Errorf("invalid command: %w", err)
 	}
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		spinner.Error(fmt.Sprintf("Failed to install %s", appName))
 		return fmt.Errorf("command execution failed: %w", err)
 	}
@@ -95,15 +79,37 @@ func installFromCommand(appName, command string) error {
 	return nil
 }
 
+// parseShellCommand parses a shell command string into an exec.Cmd
+func parseShellCommand(command string) (*exec.Cmd, error) {
+	trimmed := strings.TrimSpace(command)
+
+	// Handle sh -c or bash -c commands
+	if strings.HasPrefix(trimmed, "sh -c") || strings.HasPrefix(trimmed, "bash -c") {
+		shell := "sh"
+		if strings.HasPrefix(trimmed, "bash") {
+			shell = "bash"
+		}
+		cmdStr := extractCommandFromShC(trimmed)
+		return exec.Command(shell, "-c", cmdStr), nil
+	}
+
+	// Direct command execution
+	parts := strings.Fields(trimmed)
+	if len(parts) == 0 {
+		return nil, fmt.Errorf("empty command")
+	}
+	return exec.Command(parts[0], parts[1:]...), nil
+}
+
 // extractCommandFromShC extracts the command string from "sh -c 'command'" format
 func extractCommandFromShC(fullCommand string) string {
 	// Find "sh -c" or "bash -c" and extract everything after it
 	trimmed := strings.TrimSpace(fullCommand)
-	
+
 	// Look for the pattern: "sh -c" or "bash -c" followed by quoted string
 	shPattern := "sh -c"
 	bashPattern := "bash -c"
-	
+
 	var startIdx int
 	if strings.HasPrefix(trimmed, shPattern) {
 		startIdx = len(shPattern)
@@ -112,10 +118,10 @@ func extractCommandFromShC(fullCommand string) string {
 	} else {
 		return fullCommand
 	}
-	
+
 	// Skip whitespace after "sh -c" or "bash -c"
 	remaining := strings.TrimSpace(trimmed[startIdx:])
-	
+
 	// Handle quoted strings - remove outer quotes if present
 	remaining = strings.TrimSpace(remaining)
 	if len(remaining) > 0 {
@@ -125,7 +131,7 @@ func extractCommandFromShC(fullCommand string) string {
 			remaining = remaining[1 : len(remaining)-1]
 		}
 	}
-	
+
 	return remaining
 }
 
@@ -280,30 +286,23 @@ func installOnLinux(filePath, appName string) error {
 
 // installDMG mounts DMG, copies .app to Applications, and unmounts
 func installDMG(filePath, appName string) error {
-	spinner := charm.NewDotsSpinner("Mounting DMG")
-	spinner.Start()
-
 	mountResult, err := system.RunCommand("hdiutil", "attach", filePath, "-nobrowse", "-quiet")
 	if err != nil || !mountResult.Success {
-		spinner.Error("Failed to mount DMG")
 		return fmt.Errorf("failed to mount DMG: %s", mountResult.Error)
 	}
 
 	mountPath := extractMountPath(mountResult.Output)
 	if mountPath == "" {
 		system.RunCommand("hdiutil", "detach", mountPath, "-quiet")
-		spinner.Error("Failed to find mount path")
 		return fmt.Errorf("failed to extract mount path from DMG")
 	}
-	spinner.Success("DMG mounted")
 
 	defer func() {
 		system.RunCommand("hdiutil", "detach", mountPath, "-quiet")
 	}()
 
-	spinner = charm.NewDotsSpinner("Finding application")
+	spinner := charm.NewDotsSpinner("Finding application")
 	spinner.Start()
-
 	appPath := findAppInDirectory(mountPath, appName)
 	if appPath == "" {
 		spinner.Error("Application not found")
@@ -311,60 +310,46 @@ func installDMG(filePath, appName string) error {
 	}
 	spinner.Success("Application found")
 
-	spinner = charm.NewDotsSpinner("Installing to Applications")
-	spinner.Start()
-
-	homeDir, _ := system.GetHomeDir()
-	applicationsDir := filepath.Join(homeDir, "Applications")
-	if err := utils.EnsureDirectory(applicationsDir); err != nil {
-		spinner.Error("Failed to create Applications directory")
-		return fmt.Errorf("failed to create Applications directory: %w", err)
+	applicationsDir, err := ensureApplicationsDirectory()
+	if err != nil {
+		return err
 	}
 
 	appNameFromPath := filepath.Base(appPath)
 	destPath := filepath.Join(applicationsDir, appNameFromPath)
 
 	if err := utils.CopyDirectorySimple(appPath, destPath); err != nil {
-		spinner.Error("Failed to copy application")
 		return fmt.Errorf("failed to copy application: %w", err)
 	}
 
+	spinner = charm.NewDotsSpinner("Installing to Applications")
 	spinner.Success("Application installed")
 	return nil
 }
 
 // installPKG installs a .pkg file using installer command
 func installPKG(filePath string) error {
-	spinner := charm.NewDotsSpinner("Installing package")
-	spinner.Start()
-
-	result, err := system.RunCommand("sudo", "installer", "-pkg", filePath, "-target", "/")
-	if err != nil || !result.Success {
-		spinner.Error("Failed to install package")
-		return fmt.Errorf("failed to install package: %s", result.Error)
-	}
-
-	spinner.Success("Package installed")
-	return nil
+	return runCommandWithSpinner(
+		"Installing package",
+		"Failed to install package",
+		"sudo", "installer", "-pkg", filePath, "-target", "/",
+	)
 }
 
 // installZIP extracts ZIP and handles contents
 func installZIP(filePath, appName string) error {
-	spinner := charm.NewDotsSpinner("Extracting ZIP")
-	spinner.Start()
-
-	extractDir := filepath.Join(filepath.Dir(filePath), appName+"-extracted")
-	if err := utils.EnsureDirectory(extractDir); err != nil {
-		spinner.Error("Failed to create extract directory")
-		return fmt.Errorf("failed to create extract directory: %w", err)
+	extractDir, err := ensureExtractDirectory(filePath, appName)
+	if err != nil {
+		return err
 	}
 
-	result, err := system.RunCommand("unzip", "-q", filePath, "-d", extractDir)
-	if err != nil || !result.Success {
-		spinner.Error("Failed to extract ZIP")
-		return fmt.Errorf("failed to extract ZIP: %s", result.Error)
+	if err := runCommandWithSpinner(
+		"Extracting ZIP",
+		"Failed to extract ZIP",
+		"unzip", "-q", filePath, "-d", extractDir,
+	); err != nil {
+		return err
 	}
-	spinner.Success("ZIP extracted")
 
 	if system.IsMacOS() {
 		return handleExtractedContentsMacOS(extractDir, appName)
@@ -374,75 +359,63 @@ func installZIP(filePath, appName string) error {
 
 // installDEB installs a .deb package
 func installDEB(filePath string) error {
-	spinner := charm.NewDotsSpinner("Installing DEB package")
-	spinner.Start()
-
-	result, err := system.RunCommand("sudo", "dpkg", "-i", filePath)
-	if err != nil || !result.Success {
-		spinner.Error("Failed to install DEB package")
-		return fmt.Errorf("failed to install DEB package: %s", result.Error)
+	if err := runCommandWithSpinner(
+		"Installing DEB package",
+		"Failed to install DEB package",
+		"sudo", "dpkg", "-i", filePath,
+	); err != nil {
+		return err
 	}
 
-	result, err = system.RunCommand("sudo", "apt-get", "-f", "install", "-y")
-	if err != nil || !result.Success {
+	// Attempt dependency resolution (non-critical)
+	if result, err := system.RunCommand("sudo", "apt-get", "-f", "install", "-y"); err != nil || !result.Success {
+		spinner := charm.NewDotsSpinner("Installing DEB package")
 		spinner.Warning("Dependency resolution had issues")
 	}
 
-	spinner.Success("DEB package installed")
 	return nil
 }
 
 // installRPM installs an .rpm package
 func installRPM(filePath string) error {
-	spinner := charm.NewDotsSpinner("Installing RPM package")
-	spinner.Start()
-
-	var result *system.CommandResult
-	var err error
+	var command string
+	var args []string
 
 	if system.CommandExists("dnf") {
-		result, err = system.RunCommand("sudo", "dnf", "install", "-y", filePath)
+		command = "sudo"
+		args = []string{"dnf", "install", "-y", filePath}
 	} else if system.CommandExists("yum") {
-		result, err = system.RunCommand("sudo", "yum", "install", "-y", filePath)
+		command = "sudo"
+		args = []string{"yum", "install", "-y", filePath}
 	} else {
-		result, err = system.RunCommand("sudo", "rpm", "-i", filePath)
+		command = "sudo"
+		args = []string{"rpm", "-i", filePath}
 	}
 
-	if err != nil || !result.Success {
-		spinner.Error("Failed to install RPM package")
-		return fmt.Errorf("failed to install RPM package: %s", result.Error)
-	}
-
-	spinner.Success("RPM package installed")
-	return nil
+	return runCommandWithSpinner(
+		"Installing RPM package",
+		"Failed to install RPM package",
+		command, args...,
+	)
 }
 
 // installAppImage makes AppImage executable and optionally installs it
 func installAppImage(filePath, appName string) error {
-	spinner := charm.NewDotsSpinner("Setting up AppImage")
-	spinner.Start()
-
-	homeDir, _ := system.GetHomeDir()
-	appImageDir := filepath.Join(homeDir, "Applications")
-	if err := utils.EnsureDirectory(appImageDir); err != nil {
-		spinner.Error("Failed to create Applications directory")
-		return fmt.Errorf("failed to create Applications directory: %w", err)
+	appImageDir, err := ensureApplicationsDirectory()
+	if err != nil {
+		return err
 	}
 
 	destPath := filepath.Join(appImageDir, filepath.Base(filePath))
 	if err := utils.CopyFileSimple(filePath, destPath); err != nil {
-		spinner.Error("Failed to copy AppImage")
 		return fmt.Errorf("failed to copy AppImage: %w", err)
 	}
 
-	result, err := system.RunCommand("chmod", "+x", destPath)
-	if err != nil || !result.Success {
-		spinner.Error("Failed to make AppImage executable")
-		return fmt.Errorf("failed to make AppImage executable: %s", result.Error)
-	}
-
-	spinner.Success("AppImage installed")
-	return nil
+	return runCommandWithSpinner(
+		"Setting up AppImage",
+		"Failed to make AppImage executable",
+		"chmod", "+x", destPath,
+	)
 }
 
 // installTarGz extracts and installs .tar.gz archive
@@ -457,21 +430,18 @@ func installTarBz2(filePath, appName string) error {
 
 // installTarArchive extracts tar archive and handles contents
 func installTarArchive(filePath, appName, command, flags string) error {
-	spinner := charm.NewDotsSpinner("Extracting archive")
-	spinner.Start()
-
-	extractDir := filepath.Join(filepath.Dir(filePath), appName+"-extracted")
-	if err := utils.EnsureDirectory(extractDir); err != nil {
-		spinner.Error("Failed to create extract directory")
-		return fmt.Errorf("failed to create extract directory: %w", err)
+	extractDir, err := ensureExtractDirectory(filePath, appName)
+	if err != nil {
+		return err
 	}
 
-	result, err := system.RunCommand(command, flags, filePath, "-C", extractDir)
-	if err != nil || !result.Success {
-		spinner.Error("Failed to extract archive")
-		return fmt.Errorf("failed to extract archive: %s", result.Error)
+	if err := runCommandWithSpinner(
+		"Extracting archive",
+		"Failed to extract archive",
+		command, flags, filePath, "-C", extractDir,
+	); err != nil {
+		return err
 	}
-	spinner.Success("Archive extracted")
 
 	return handleExtractedContentsLinux(extractDir, appName)
 }
@@ -483,10 +453,9 @@ func handleExtractedContentsMacOS(extractDir, appName string) error {
 		return fmt.Errorf("failed to find .app in extracted contents")
 	}
 
-	homeDir, _ := system.GetHomeDir()
-	applicationsDir := filepath.Join(homeDir, "Applications")
-	if err := utils.EnsureDirectory(applicationsDir); err != nil {
-		return fmt.Errorf("failed to create Applications directory: %w", err)
+	applicationsDir, err := ensureApplicationsDirectory()
+	if err != nil {
+		return err
 	}
 
 	appNameFromPath := filepath.Base(appPath)
@@ -504,20 +473,16 @@ func handleExtractedContentsLinux(extractDir, appName string) error {
 
 	if len(entries) == 1 && entries[0].IsDir() {
 		appDir := filepath.Join(extractDir, entries[0].Name())
-		homeDir, _ := system.GetHomeDir()
-		destDir := filepath.Join(homeDir, ".local", "share", "applications", entries[0].Name())
-
-		if err := utils.EnsureDirectory(filepath.Dir(destDir)); err != nil {
-			return fmt.Errorf("failed to create destination directory: %w", err)
+		destDir, err := ensureLinuxApplicationsDirectory(entries[0].Name())
+		if err != nil {
+			return err
 		}
-
 		return utils.CopyDirectorySimple(appDir, destDir)
 	}
 
-	homeDir, _ := system.GetHomeDir()
-	destDir := filepath.Join(homeDir, ".local", "share", "applications", appName)
-	if err := utils.EnsureDirectory(filepath.Dir(destDir)); err != nil {
-		return fmt.Errorf("failed to create destination directory: %w", err)
+	destDir, err := ensureLinuxApplicationsDirectory(appName)
+	if err != nil {
+		return err
 	}
 
 	return utils.CopyDirectorySimple(extractDir, destDir)
