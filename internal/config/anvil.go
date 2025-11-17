@@ -33,6 +33,7 @@ type AnvilConfig struct {
 	Tools   AnvilTools        `yaml:"tools"`
 	Groups  AnvilGroups       `yaml:"groups"`
 	Configs map[string]string `yaml:"configs"` // Maps app names to their local config paths
+	Sources map[string]string `yaml:"sources"` // Maps app names to their download URLs
 	Git     GitConfig         `yaml:"git"`
 	GitHub  GitHubConfig      `yaml:"github"`
 }

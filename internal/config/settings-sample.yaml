@@ -24,6 +24,7 @@ groups:
   - google-chrome
   - 1password
 configs: {}
+sources: {}
 git:
   username: ""
   email: ""
