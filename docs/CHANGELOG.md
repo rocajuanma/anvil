@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Source-Based Installation** 🎯 - Added optional `sources` section in settings.yaml to install apps from URLs when brew installation fails, supporting macOS (.dmg, .pkg, .zip) and Linux (.deb, .rpm, .AppImage, .tar.gz, .tar.bz2) formats
+- **Shell Command Installation** 🎯 - Extended source installation to support shell commands (curl/wget style) in addition to URLs, enabling installation of tools like oh-my-zsh via command execution
 
 ### Changed
 
