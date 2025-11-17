@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -33,8 +34,103 @@ import (
 	"github.com/rocajuanma/anvil/internal/utils"
 )
 
-// InstallFromSource installs an application from a source URL
-func InstallFromSource(appName, sourceURL string) error {
+// InstallFromSource installs an application from a source URL or command
+func InstallFromSource(appName, source string) error {
+	// Check if source is a shell command (curl/wget style) or a URL
+	if isShellCommand(source) {
+		return installFromCommand(appName, source)
+	}
+	return installFromURL(appName, source)
+}
+
+// isShellCommand checks if the source is a shell command rather than a URL
+func isShellCommand(source string) bool {
+	trimmed := strings.TrimSpace(source)
+	// Check for common shell command patterns
+	return strings.HasPrefix(trimmed, "sh -c") ||
+		strings.HasPrefix(trimmed, "bash -c") ||
+		strings.HasPrefix(trimmed, "curl") ||
+		strings.HasPrefix(trimmed, "wget") ||
+		strings.Contains(trimmed, "$(curl") ||
+		strings.Contains(trimmed, "$(wget")
+}
+
+// installFromCommand executes a shell command to install an application
+func installFromCommand(appName, command string) error {
+	spinner := charm.NewDotsSpinner(fmt.Sprintf("Installing %s from command", appName))
+	spinner.Start()
+
+	// Parse the command - handle sh -c "$(curl...)" style commands
+	var cmd *exec.Cmd
+	trimmed := strings.TrimSpace(command)
+
+	if strings.HasPrefix(trimmed, "sh -c") {
+		// Extract the command inside quotes
+		cmdStr := extractCommandFromShC(trimmed)
+		cmd = exec.Command("sh", "-c", cmdStr)
+	} else if strings.HasPrefix(trimmed, "bash -c") {
+		cmdStr := extractCommandFromShC(trimmed)
+		cmd = exec.Command("bash", "-c", cmdStr)
+	} else {
+		// Direct command execution
+		parts := strings.Fields(trimmed)
+		if len(parts) == 0 {
+			spinner.Error(fmt.Sprintf("Invalid command for %s", appName))
+			return fmt.Errorf("invalid command: %s", command)
+		}
+		cmd = exec.Command(parts[0], parts[1:]...)
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		spinner.Error(fmt.Sprintf("Failed to install %s", appName))
+		return fmt.Errorf("command execution failed: %w", err)
+	}
+
+	spinner.Success(fmt.Sprintf("%s installed successfully", appName))
+	return nil
+}
+
+// extractCommandFromShC extracts the command string from "sh -c 'command'" format
+func extractCommandFromShC(fullCommand string) string {
+	// Find "sh -c" or "bash -c" and extract everything after it
+	trimmed := strings.TrimSpace(fullCommand)
+	
+	// Look for the pattern: "sh -c" or "bash -c" followed by quoted string
+	shPattern := "sh -c"
+	bashPattern := "bash -c"
+	
+	var startIdx int
+	if strings.HasPrefix(trimmed, shPattern) {
+		startIdx = len(shPattern)
+	} else if strings.HasPrefix(trimmed, bashPattern) {
+		startIdx = len(bashPattern)
+	} else {
+		return fullCommand
+	}
+	
+	// Skip whitespace after "sh -c" or "bash -c"
+	remaining := strings.TrimSpace(trimmed[startIdx:])
+	
+	// Handle quoted strings - remove outer quotes if present
+	remaining = strings.TrimSpace(remaining)
+	if len(remaining) > 0 {
+		// Check if it starts and ends with matching quotes
+		if (remaining[0] == '"' && remaining[len(remaining)-1] == '"') ||
+			(remaining[0] == '\'' && remaining[len(remaining)-1] == '\'') {
+			remaining = remaining[1 : len(remaining)-1]
+		}
+	}
+	
+	return remaining
+}
+
+// installFromURL installs an application from a URL (existing logic)
+func installFromURL(appName, sourceURL string) error {
 	spinner := charm.NewDotsSpinner(fmt.Sprintf("Downloading %s from source", appName))
 	spinner.Start()
 
