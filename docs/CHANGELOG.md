@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Source-Based Installation** 🎯 - Added optional `sources` section in settings.yaml to install apps from URLs when brew installation fails, supporting macOS (.dmg, .pkg, .zip) and Linux (.deb, .rpm, .AppImage, .tar.gz, .tar.bz2) formats
 
 ### Changed
 
