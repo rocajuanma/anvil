@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Source Installer Refactoring** 🔄 - Refactored source installation code to reduce duplication, extract helper functions, and improve maintainability
+- **Source Installation Priority** 🔄 - Source installation now takes priority over brew when configured, with automatic fallback to brew if source installation fails
 
 ### Fixed
 
