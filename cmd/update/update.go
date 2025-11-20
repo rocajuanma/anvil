@@ -91,12 +91,25 @@ func updateAnvil(ctx context.Context, dryRun bool) (*system.CommandResult, error
 	o.PrintStage("Downloading and executing update script...")
 	o.PrintInfo("Fetching latest version from GitHub releases...")
 
+	// Try downloading from releases first, fallback to main branch if that fails
+	// This handles cases where the install.sh in releases hasn't been updated yet
+	updateScript := `set -e
+		if ! curl -sfSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh -o /tmp/anvil-install.sh 2>/dev/null; then
+			echo "⚠️  Install script not found in releases, trying main branch..."
+			curl -sfSL https://raw.githubusercontent.com/0xjuanma/anvil/master/install.sh -o /tmp/anvil-install.sh || {
+				echo "❌ Failed to download install script"
+				exit 1
+			}
+		fi
+		bash /tmp/anvil-install.sh
+		rm -f /tmp/anvil-install.sh`
+
 	// Execute the update command using the existing system package
 	result, err := system.RunCommandWithTimeout(
 		ctx,
 		"bash",
 		"-c",
-		"curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash",
+		updateScript,
 	)
 
 	return result, err
