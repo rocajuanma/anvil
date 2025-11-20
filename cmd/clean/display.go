@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/palantir"
 )
 
 // displayCleanPreview shows what will be cleaned

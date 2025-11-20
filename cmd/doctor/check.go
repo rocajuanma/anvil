@@ -22,11 +22,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/errors"
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/anvil/internal/validators"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/errors"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/anvil/internal/validators"
+	"github.com/0xjuanma/palantir"
 )
 
 // showAvailableChecks displays all available checks organized by category

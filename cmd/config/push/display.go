@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/github"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/github"
+	"github.com/0xjuanma/palantir"
 )
 
 // showNewAppInfo displays information about new app additions

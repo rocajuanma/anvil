@@ -22,11 +22,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/errors"
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/errors"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/palantir"
 	"github.com/spf13/cobra"
 )
 

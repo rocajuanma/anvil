@@ -23,9 +23,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/errors"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/errors"
+	"github.com/0xjuanma/palantir"
 )
 
 // TreeNode represents a node in the file tree

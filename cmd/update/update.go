@@ -20,10 +20,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/errors"
-	"github.com/rocajuanma/anvil/internal/system"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/errors"
+	"github.com/0xjuanma/anvil/internal/system"
+	"github.com/0xjuanma/palantir"
 	"github.com/spf13/cobra"
 )
 
@@ -78,7 +78,7 @@ func updateAnvil(ctx context.Context, dryRun bool) (*system.CommandResult, error
 	if dryRun {
 		o.PrintInfo("Dry run mode - would update Anvil to the latest version")
 		o.PrintInfo("Command that would be executed:")
-		o.PrintInfo("curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash")
+		o.PrintInfo("curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash")
 		return nil, nil
 	}
 
@@ -96,7 +96,7 @@ func updateAnvil(ctx context.Context, dryRun bool) (*system.CommandResult, error
 		ctx,
 		"bash",
 		"-c",
-		"curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash",
+		"curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash",
 	)
 
 	return result, err

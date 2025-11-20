@@ -17,12 +17,12 @@ limitations under the License.
 package config
 
 import (
-	importcmd "github.com/rocajuanma/anvil/cmd/config/import"
-	"github.com/rocajuanma/anvil/cmd/config/pull"
-	"github.com/rocajuanma/anvil/cmd/config/push"
-	"github.com/rocajuanma/anvil/cmd/config/show"
-	"github.com/rocajuanma/anvil/cmd/config/sync"
-	"github.com/rocajuanma/anvil/internal/constants"
+	importcmd "github.com/0xjuanma/anvil/cmd/config/import"
+	"github.com/0xjuanma/anvil/cmd/config/pull"
+	"github.com/0xjuanma/anvil/cmd/config/push"
+	"github.com/0xjuanma/anvil/cmd/config/show"
+	"github.com/0xjuanma/anvil/cmd/config/sync"
+	"github.com/0xjuanma/anvil/internal/constants"
 	"github.com/spf13/cobra"
 )
 
