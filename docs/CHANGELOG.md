@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [2.6.0] - 2025-11-19
+
+### Added
 - **Source-Based Installation** - Added optional `sources` section in settings.yaml to install apps from URLs and support shell commands
 
 ### Changed
