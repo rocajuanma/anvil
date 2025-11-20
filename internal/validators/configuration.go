@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/config"
 )
 
 // GitConfigValidator checks if git configuration is properly set

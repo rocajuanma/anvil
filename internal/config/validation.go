@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/palantir"
 )
 
 // Validator defines the interface for input validation

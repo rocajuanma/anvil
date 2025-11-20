@@ -24,10 +24,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/system"
-	"github.com/rocajuanma/anvil/internal/utils"
-	"github.com/rocajuanma/anvil/internal/version"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/system"
+	"github.com/0xjuanma/anvil/internal/utils"
+	"github.com/0xjuanma/anvil/internal/version"
 	"gopkg.in/yaml.v2"
 )
 

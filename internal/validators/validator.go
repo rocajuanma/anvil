@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/palantir"
 )
 
 // ValidationStatus represents the result status of a validation check

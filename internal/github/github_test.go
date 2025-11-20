@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rocajuanma/anvil/internal/utils"
+	"github.com/0xjuanma/anvil/internal/utils"
 )
 
 // captureOutput captures stdout during function execution for github tests

@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/palantir"
 )
 
 func BoldText(text string, color string) string {

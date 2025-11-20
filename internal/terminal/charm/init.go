@@ -17,7 +17,7 @@ limitations under the License.
 package charm
 
 import (
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/palantir"
 )
 
 var (

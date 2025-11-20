@@ -28,10 +28,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/anvil/internal/system"
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/anvil/internal/utils"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/system"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/anvil/internal/utils"
 )
 
 // InstallFromSource installs an application from a source URL or command

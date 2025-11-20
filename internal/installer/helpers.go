@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/rocajuanma/anvil/internal/system"
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/anvil/internal/utils"
+	"github.com/0xjuanma/anvil/internal/system"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/anvil/internal/utils"
 )
 
 // runCommandWithSpinner executes a system command with spinner feedback
