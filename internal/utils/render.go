@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/palantir"
 )
 
 // AppTreeNode represents a node in the applications tree

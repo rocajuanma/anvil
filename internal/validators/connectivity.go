@@ -22,8 +22,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/anvil/internal/system"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/system"
 )
 
 // buildAuthenticatedURL creates an authenticated Git URL using the same logic as GitHubClient

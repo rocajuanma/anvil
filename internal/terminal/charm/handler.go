@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/palantir"
 )
 
 // CharmOutputHandler wraps the palantir OutputHandler with enhanced lipgloss styling

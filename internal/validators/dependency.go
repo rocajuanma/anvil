@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rocajuanma/anvil/internal/brew"
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/anvil/internal/system"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/brew"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/system"
+	"github.com/0xjuanma/palantir"
 )
 
 // BrewValidator checks if Homebrew is installed and functional

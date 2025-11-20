@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/anvil/internal/validators"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/anvil/internal/validators"
+	"github.com/0xjuanma/palantir"
 )
 
 // runFixCheck attempts to fix a specific check

@@ -16,9 +16,9 @@ limitations under the License.
 package main
 
 import (
-	"github.com/rocajuanma/anvil/cmd"
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/anvil/internal/version"
+	"github.com/0xjuanma/anvil/cmd"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/anvil/internal/version"
 )
 
 // appVersion is set at build time via ldflags

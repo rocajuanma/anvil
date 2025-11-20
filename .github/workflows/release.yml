@@ -76,14 +76,14 @@ jobs:
         echo "" >> formatted_release_notes.md
         echo "### 🚀 Get Started in 30 Seconds" >> formatted_release_notes.md
         echo '```bash' >> formatted_release_notes.md
-        echo 'curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash' >> formatted_release_notes.md
+        echo 'curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash' >> formatted_release_notes.md
         echo 'anvil --version' >> formatted_release_notes.md
         echo 'anvil init && anvil install essentials' >> formatted_release_notes.md
         echo '```' >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md
         echo "### 💬 Join the Community" >> formatted_release_notes.md
-        echo "- 🌟 [Star us on GitHub](https://github.com/rocajuanma/anvil)" >> formatted_release_notes.md
-        echo "- 🐛 [Report issues](https://github.com/rocajuanma/anvil/issues)" >> formatted_release_notes.md
+        echo "- 🌟 [Star us on GitHub](https://github.com/0xjuanma/anvil)" >> formatted_release_notes.md
+        echo "- 🐛 [Report issues](https://github.com/0xjuanma/anvil/issues)" >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md
         echo "---" >> formatted_release_notes.md
         echo "" >> formatted_release_notes.md

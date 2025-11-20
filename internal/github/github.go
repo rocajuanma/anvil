@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/errors"
-	"github.com/rocajuanma/anvil/internal/system"
-	"github.com/rocajuanma/anvil/internal/utils"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/errors"
+	"github.com/0xjuanma/anvil/internal/system"
+	"github.com/0xjuanma/anvil/internal/utils"
 )
 
 // GitHubClient handles GitHub operations for config management

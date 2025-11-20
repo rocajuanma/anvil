@@ -7,8 +7,8 @@
 
 [![Go Version](https://img.shields.io/badge/go-1.17+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/rocajuanma/anvil)](https://goreportcard.com/report/github.com/rocajuanma/anvil)
-[![GitHub Release](https://img.shields.io/github/v/release/rocajuanma/anvil?style=flat&label=Release)](https://github.com/rocajuanma/anvil/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/0xjuanma/anvil)](https://goreportcard.com/report/github.com/0xjuanma/anvil)
+[![GitHub Release](https://img.shields.io/github/v/release/0xjuanma/anvil?style=flat&label=Release)](https://github.com/0xjuanma/anvil/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-macOS%20only-blue.svg)](#installation)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 
@@ -38,7 +38,7 @@ Save hours in your process — install the tools you need, sync your configs, an
 
 **New installations:**
 ```bash
-curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash
 ```
 
 **Update existing installation:**
@@ -62,7 +62,7 @@ anvil install terraform  # Individual apps
 anvil config import https://example.com/team-groups.yaml
 
 # Or start with example configurations
-anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/docs/import-examples/juanma-essentials.yaml
+anvil config import https://raw.githubusercontent.com/0xjuanma/anvil/master/docs/import-examples/juanma-essentials.yaml
 
 # Check environment health
 anvil doctor
@@ -99,7 +99,7 @@ anvil config sync neovim
 
 One CLI to rule them all.
 
-**Author:** [@rocajuanma](https://github.com/rocajuanma)  
-**[⭐ Star this project](https://github.com/rocajuanma/anvil)**
+**Author:** [@0xjuanma](https://github.com/0xjuanma)  
+**[⭐ Star this project](https://github.com/0xjuanma/anvil)**
 
 </div>

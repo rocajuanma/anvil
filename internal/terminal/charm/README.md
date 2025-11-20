@@ -107,7 +107,7 @@ fmt.Println(charm.RenderHighlight("IMPORTANT", "#FFD700"))
 ### 1. Initialize (Already done in main.go)
 
 ```go
-import "github.com/rocajuanma/anvil/internal/terminal/charm"
+import "github.com/0xjuanma/anvil/internal/terminal/charm"
 
 func main() {
     charm.InitCharmOutput()
@@ -216,7 +216,7 @@ charm/
 ## Dependencies
 
 - [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss) - Terminal styling
-- [rocajuanma/palantir](https://github.com/rocajuanma/palantir) - Base output handler
+- [0xjuanma/palantir](https://github.com/0xjuanma/palantir) - Base output handler
 
 ## Future Enhancements
 

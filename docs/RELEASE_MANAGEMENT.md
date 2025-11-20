@@ -23,12 +23,12 @@ This guide covers how to create releases for Anvil, manage GitHub Actions workfl
    ```
 
 3. **Monitor the GitHub Actions workflow:**
-   - Go to: `https://github.com/rocajuanma/anvil/actions`
+   - Go to: `https://github.com/0xjuanma/anvil/actions`
    - Watch the "Release" workflow complete
    - Check for any build errors
 
 4. **Verify the release was created:**
-   - Go to: `https://github.com/rocajuanma/anvil/releases`
+   - Go to: `https://github.com/0xjuanma/anvil/releases`
    - Confirm binaries are attached
    - Test download links
 
@@ -69,7 +69,7 @@ If a release fails or needs to be updated:
    ```
 
 2. **Delete the GitHub release (if created):**
-   - Go to: `https://github.com/rocajuanma/anvil/releases`
+   - Go to: `https://github.com/0xjuanma/anvil/releases`
    - Click on the problematic release
    - Click "Delete" button
 
@@ -184,10 +184,10 @@ Before creating a public release, test the install process:
 
 ```bash
 # Test install script (after release is published)
-curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash
 
 # Test manual download
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil-test
+curl -L https://github.com/0xjuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil-test
 chmod +x anvil-test
 ./anvil-test --version
 ```
@@ -196,8 +196,8 @@ chmod +x anvil-test
 
 ```bash
 # Download and verify
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil
-curl -L https://github.com/rocajuanma/anvil/releases/latest/download/checksums.txt -o checksums.txt
+curl -L https://github.com/0xjuanma/anvil/releases/latest/download/anvil-darwin-amd64 -o anvil
+curl -L https://github.com/0xjuanma/anvil/releases/latest/download/checksums.txt -o checksums.txt
 
 # Verify checksum (macOS/Linux)
 shasum -a 256 anvil

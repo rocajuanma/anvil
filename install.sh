@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO="rocajuanma/anvil"
+REPO="0xjuanma/anvil"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="anvil"
 
@@ -70,14 +70,49 @@ detect_os() {
 
 # Get latest release version
 get_latest_version() {
-    curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | cut -d'"' -f4
+    local response=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+    
+    # Check for HTTP errors
+    local http_code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/$REPO/releases/latest")
+    if [ "$http_code" != "200" ]; then
+        print_error "GitHub API returned HTTP $http_code for repository: $REPO"
+        print_info "Please verify the repository exists and is accessible"
+        return 1
+    fi
+    
+    # Check if we got an error message from GitHub API
+    if echo "$response" | grep -q '"message"'; then
+        local error_msg=$(echo "$response" | grep '"message":' | cut -d'"' -f4)
+        print_error "GitHub API error: $error_msg"
+        print_info "Repository: $REPO"
+        return 1
+    fi
+    
+    local tag_name=$(echo "$response" | grep '"tag_name":' | cut -d'"' -f4)
+    
+    # Check if tag_name is empty
+    if [ -z "$tag_name" ]; then
+        print_error "Failed to parse version from GitHub API response"
+        print_info "Repository: $REPO"
+        print_info "API response (first 10 lines):"
+        echo "$response" | head -10
+        return 1
+    fi
+    
+    echo "$tag_name"
 }
 
 # Download and install
 install_anvil() {
     local os=$(detect_os)
     local arch=$(detect_arch)
-    local version=$(get_latest_version)
+    local version
+    
+    if ! version=$(get_latest_version); then
+        print_error "Failed to get latest version from GitHub"
+        print_info "You can manually download from: https://github.com/$REPO/releases"
+        exit 1
+    fi
     
     if [ -z "$version" ]; then
         print_error "Failed to get latest version"

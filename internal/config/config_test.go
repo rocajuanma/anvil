@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rocajuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/constants"
 )
 
 // setupTestConfig creates a test configuration with temporary directories

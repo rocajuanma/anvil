@@ -27,12 +27,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rocajuanma/anvil/internal/brew"
-	"github.com/rocajuanma/anvil/internal/config"
-	"github.com/rocajuanma/anvil/internal/constants"
-	"github.com/rocajuanma/anvil/internal/errors"
-	"github.com/rocajuanma/anvil/internal/terminal/charm"
-	"github.com/rocajuanma/palantir"
+	"github.com/0xjuanma/anvil/internal/brew"
+	"github.com/0xjuanma/anvil/internal/config"
+	"github.com/0xjuanma/anvil/internal/constants"
+	"github.com/0xjuanma/anvil/internal/errors"
+	"github.com/0xjuanma/anvil/internal/terminal/charm"
+	"github.com/0xjuanma/palantir"
 )
 
 // InstallationResult represents the result of a single tool installation
