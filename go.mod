@@ -1,10 +1,10 @@
-module github.com/rocajuanma/anvil
+module github.com/0xjuanma/anvil
 
 go 1.23.6
 
 require (
+	github.com/0xjuanma/palantir v1.1.0
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/rocajuanma/palantir v1.1.0
 	github.com/spf13/cobra v1.10.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -26,3 +26,6 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// Temporary replace directive until palantir repository is updated with new username
+replace github.com/0xjuanma/palantir => github.com/rocajuanma/palantir v1.1.0
