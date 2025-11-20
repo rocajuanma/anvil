@@ -85,7 +85,7 @@ The update command follows these steps:
 Under the hood, the update process executes:
 
 ```bash
-curl -sSL https://github.com/rocajuanma/anvil/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/0xjuanma/anvil/releases/latest/download/install.sh | bash
 ```
 
 This is the same command recommended in the README for fresh installations and updates.
@@ -129,7 +129,7 @@ which curl
 **Solutions**:
 1. **Check Internet Connection**: Ensure you have a stable internet connection
 2. **Try Again**: GitHub API has rate limits; wait a few minutes and retry
-3. **Manual Installation**: Download the binary manually from [GitHub releases](https://github.com/rocajuanma/anvil/releases)
+3. **Manual Installation**: Download the binary manually from [GitHub releases](https://github.com/0xjuanma/anvil/releases)
 
 #### "Permission Denied"
 
@@ -152,8 +152,8 @@ If you continue to experience issues:
 
 1. **Check Version**: Run `anvil --version` to verify your current version
 2. **Check Installation**: Run `which anvil` to see where Anvil is installed
-3. **Manual Download**: Visit [GitHub releases](https://github.com/rocajuanma/anvil/releases) for manual installation
-4. **Report Issues**: Open an issue on the [GitHub repository](https://github.com/rocajuanma/anvil/issues)
+3. **Manual Download**: Visit [GitHub releases](https://github.com/0xjuanma/anvil/releases) for manual installation
+4. **Report Issues**: Open an issue on the [GitHub repository](https://github.com/0xjuanma/anvil/issues)
 
 ## Integration with Other Commands
 

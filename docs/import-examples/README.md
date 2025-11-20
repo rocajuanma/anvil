@@ -49,11 +49,11 @@ Import any of these configurations using the `anvil config import` command:
 anvil config import import-examples/frontend-developer.yaml
 
 # Import from remote URL
-anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/backend-developer.yaml
+anvil config import https://raw.githubusercontent.com/0xjuanma/anvil/master/import-examples/backend-developer.yaml
 
 # Import multiple configurations
-anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/data-scientist.yaml
-anvil config import https://raw.githubusercontent.com/rocajuanma/anvil/master/import-examples/devops-engineer.yaml
+anvil config import https://raw.githubusercontent.com/0xjuanma/anvil/master/import-examples/data-scientist.yaml
+anvil config import https://raw.githubusercontent.com/0xjuanma/anvil/master/import-examples/devops-engineer.yaml
 ```
 
 ## Customization

@@ -31,7 +31,7 @@ git clone https://github.com/yourusername/anvil.git
 cd anvil
 
 # Add upstream remote
-git remote add upstream https://github.com/rocajuanma/anvil.git
+git remote add upstream https://github.com/0xjuanma/anvil.git
 
 # Build the project
 go build -o anvil main.go

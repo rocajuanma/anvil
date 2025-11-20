@@ -186,7 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced maintainability and refactoring safety for internal components
 
 - **Terminal Output Package Refactor** 🔄 - Replaced local terminal package with external Palantir dependency
-  - Removed `pkg/terminal` package (296 lines deleted) in favor of `github.com/rocajuanma/palantir v1.0.0`
+  - Removed `pkg/terminal` package (296 lines deleted) in favor of `github.com/0xjuanma/palantir v1.0.0`
   - Updated all commands and packages to use `palantir.GetGlobalOutputHandler()`
   - Improved consistency and maintainability of terminal output across the codebase
   - **Breaking Change**: Applications directly using `pkg/terminal` will need to migrate to the `palantir` package
@@ -601,6 +601,6 @@ When contributing changes, please:
 ---
 ## Support
 - **Documentation**: [docs/](.)
-- **Issues**: [GitHub Issues](https://github.com/rocajuanma/anvil/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/rocajuanma/anvil/discussions)
+- **Issues**: [GitHub Issues](https://github.com/0xjuanma/anvil/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/0xjuanma/anvil/discussions)
 
